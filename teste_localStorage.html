@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste localStorage - Dashboard Argus</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        .status-card.loaded {
+            border-color: #28a745;
+            background: #e8f5e9;
+        }
+        .status-card.empty {
+            border-color: #dc3545;
+            background: #ffebee;
+        }
+        .status-card h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+        .status-indicator {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status-loaded { color: #28a745; }
+        .status-empty { color: #dc3545; }
+        .data-size {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-clear {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-clear:hover {
+            background: #c82333;
+        }
+        .btn-export {
+            background: #28a745;
+            color: white;
+        }
+        .btn-export:hover {
+            background: #218838;
+        }
+        .btn-refresh {
+            background: #667eea;
+            color: white;
+        }
+        .btn-refresh:hover {
+            background: #5568d3;
+        }
+        .stats {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .stats div {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .quota-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .quota-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107);
+            transition: width 0.3s;
+        }
+        .log {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+        .log-item {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .log-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .log-success { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-warning { color: #ffc107; }
+        .log-info { color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico localStorage - Dashboard Argus</h1>
+        
+        <div class="stats" id="stats"></div>
+        
+        <div class="log" id="log"></div>
+        
+        <div class="status-grid" id="statusGrid"></div>
+        
+        <div class="buttons">
+            <button class="btn-refresh" onclick="checkStorage()">🔄 Atualizar Status</button>
+            <button class="btn-export" onclick="exportStorage()">💾 Exportar JSON</button>
+            <button class="btn-clear" onclick="clearAndAlert()">🗑️ Limpar Todos</button>
+        </div>
+    </div>
+
+    <script>
+        const DATA_KEYS = [
+            'statusFrotaData',
+            'usuariosData',
+            'ativosData',
+            'excecoesData',
+            'riscoColisaoData',
+            'falhasData',
+            'dispositivosData',
+            'timelineData',
+            'temporalMapasData',
+            'comparativoData',
+            'motoristasData',
+            'desempenhoData'
+        ];
+
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const item = document.createElement('div');
+            item.className = `log-item log-${type}`;
+            const time = new Date().toLocaleTimeString('pt-BR');
+            item.textContent = `[${time}] ${message}`;
+            log.appendChild(item);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function getStorageSize() {
+            let total = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    total += localStorage[key].length + key.length;
+                }
+            }
+            return total;
+        }
+
+        function checkStorage() {
+            console.clear();
+            addLog('📊 Iniciando diagnóstico...', 'info');
+            
+            const grid = document.getElementById('statusGrid');
+            grid.innerHTML = '';
+            
+            let loadedCount = 0;
+            let totalSize = 0;
+            const results = {};
+
+            DATA_KEYS.forEach(key => {
+                const data = localStorage.getItem(key);
+                const isLoaded = data !== null && data.trim() !== '';
+                
+                if (isLoaded) {
+                    loadedCount++;
+                    totalSize += data.length;
+                    
+                    try {
+                        const parsed = JSON.parse(data);
+                        const itemCount = Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length;
+                        results[key] = { loaded: true, size: data.length, items: itemCount };
+                        addLog(`✓ ${key}: ${itemCount} itens, ${formatBytes(data.length)}`, 'success');
+                    } catch (e) {
+                        results[key] = { loaded: true, size: data.length, error: e.message };
+                        addLog(`⚠ ${key}: Dados inválidos (JSON parse failed)`, 'warning');
+                    }
+                } else {
+                    results[key] = { loaded: false };
+                    addLog(`✗ ${key}: Não encontrado`, 'error');
+                }
+                
+                const card = document.createElement('div');
+                card.className = `status-card ${isLoaded ? 'loaded' : 'empty'}`;
+                
+                const indicator = isLoaded ? '✓' : '✗';
+                const color = isLoaded ? 'status-loaded' : 'status-empty';
+                
+                let content = `
+                    <div class="status-indicator ${color}">${indicator}</div>
+                    <h3>${key}</h3>
+                `;
+                
+                if (isLoaded && results[key].items !== undefined) {
+                    content += `<div class="data-size">${results[key].items} registros | ${formatBytes(results[key].size)}</div>`;
+                }
+                
+                if (results[key].error) {
+                    content += `<div class="data-size" style="color: #dc3545;">ERRO: ${results[key].error}</div>`;
+                }
+                
+                card.innerHTML = content;
+                grid.appendChild(card);
+            });
+
+            // Atualizar stats
+            const storageSize = getStorageSize();
+            const quota = 5242880; // ~5MB, padrão de maioria dos browsers
+            const percentUsed = (storageSize / quota * 100).toFixed(2);
+            
+            const statsDiv = document.getElementById('stats');
+            statsDiv.innerHTML = `
+                <div>📦 <strong>Armazenamento Total:</strong> ${formatBytes(storageSize)} / ${formatBytes(quota)} (${percentUsed}%)</div>
+                <div>✓ <strong>Fontes Carregadas:</strong> ${loadedCount}/${DATA_KEYS.length}</div>
+                <div>💾 <strong>Dados Úteis:</strong> ${formatBytes(totalSize)}</div>
+                <div><strong>Espaço Livre:</strong> ${formatBytes(quota - storageSize)}</div>
+                <div class="quota-bar">
+                    <div class="quota-fill" style="width: ${Math.min(percentUsed, 100)}%"></div>
+                </div>
+            `;
+
+            addLog(`✅ Diagnóstico completo: ${loadedCount}/${DATA_KEYS.length} fontes carregadas`, 'success');
+        }
+
+        function exportStorage() {
+            const data = {};
+            DATA_KEYS.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    try {
+                        data[key] = JSON.parse(value);
+                    } catch {
+                        data[key] = value;
+                    }
+                }
+            });
+            
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `localStorage_export_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            
+            addLog('📥 Dados exportados como JSON', 'success');
+        }
+
+        function clearAndAlert() {
+            if (confirm('⚠️ Tem certeza que deseja LIMPAR todos os dados do Dashboard Argus?\n\nIsso removerá: ' + DATA_KEYS.join(', '))) {
+                DATA_KEYS.forEach(key => {
+                    localStorage.removeItem(key);
+                    addLog(`🗑️  ${key} removido`, 'warning');
+                });
+                addLog('⚠️ Todos os dados foram limpos!', 'warning');
+                setTimeout(checkStorage, 500);
+            }
+        }
+
+        // Executar ao carregar
+        window.addEventListener('load', checkStorage);
+        
+        // Atualizar a cada 10 segundos
+        setInterval(checkStorage, 10000);
+    </script>
+
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+</body>
+</html>

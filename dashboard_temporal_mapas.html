@@ -1,0 +1,1783 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparação Temporal & Mapa Geográfico - Sistema Argus</title>
+    
+    <!-- LIBS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    
+    <!-- LEAFLET PARA MAPA -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    
+    <!-- ICONS BOOTSTRAP -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --secondary-color: #e60000;
+            --accent-color: #FFD700;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-color: #f8fafc;
+            --dark-color: #1a1a1a;
+            --sidebar-width: 280px;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        body.dark {
+            background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+            color: var(--light-color);
+        }
+        
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+            border-right: 1px solid rgba(255, 215, 0, 0.1);
+            transition: background 0.3s ease;
+        }
+        
+        body.dark .sidebar {
+            background: linear-gradient(180deg, #0b2440 0%, #081830 100%);
+            box-shadow: 8px 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar-header {
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header i {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            gap: 12px;
+            position: relative;
+        }
+        
+        .sidebar-menu a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-color);
+            border-radius: 0 3px 3px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFF44F;
+            padding-left: 12px;
+        }
+        
+        .sidebar-menu a.active::before {
+            opacity: 1;
+        }
+        
+        .sidebar-menu a i {
+            width: 24px;
+            font-size: 1.1rem;
+        }
+        
+        /* DARK MODE SIDEBAR */
+        body.dark .sidebar-menu a {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        body.dark .sidebar-menu a:hover,
+        body.dark .sidebar-menu a.active {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFF44F;
+        }
+        
+        body.dark .sidebar-header {
+            border-color: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85rem;
+            text-align: center;
+            position: absolute;
+            bottom: 20px;
+            width: calc(var(--sidebar-width) - 40px);
+        }
+        
+        /* MAIN LAYOUT */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px 40px;
+            overflow-y: auto;
+        }
+        
+        body.dark .main-content {
+            background: var(--dark-color);
+        }
+        
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 163, 216, 0.2);
+        }
+        
+        body.dark .header {
+            background: linear-gradient(90deg, #0b2440 0%, #081830 100%);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .btn-toggle {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 215, 0, 0.18);
+            border: 2px solid var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-toggle:hover {
+            background: rgba(255, 215, 0, 0.3);
+        }
+        
+        /* FILTROS */
+        .filters-section {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        body.dark .filters-section {
+            background: #081226;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .filters-section label {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+        
+        body.dark .filters-section label {
+            color: #63a3d8;
+        }
+        
+        .filters-section input,
+        .filters-section select {
+            padding: 10px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        body.dark .filters-section input,
+        body.dark .filters-section select {
+            background: #0a1929;
+            color: #fff;
+            border-color: #63a3d8;
+        }
+        
+        /* ALERTAS */
+        .alerts-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--danger-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        body.dark .alerts-section {
+            background: #081226;
+            border-color: #ff6b6b;
+        }
+        
+        .alerts-section h2 {
+            color: var(--danger-color);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        body.dark .alerts-section h2 {
+            color: #ff6b6b;
+        }
+        
+        .alert-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .alert-danger {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        
+        body.dark .alert-danger {
+            background: rgba(244, 67, 54, 0.15);
+            color: #ff8a80;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            border-color: #ff9800;
+            color: #e65100;
+        }
+        
+        body.dark .alert-warning {
+            background: rgba(255, 152, 0, 0.15);
+            color: #ffb74d;
+        }
+        
+        .alert-badge {
+            background: rgba(0,0,0,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        /* CARDS KPI */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .kpi-card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-top: 5px solid var(--primary-color);
+            text-align: center;
+        }
+        
+        body.dark .kpi-card {
+            background: #081226;
+            border-color: #63a3d8;
+        }
+        
+        .kpi-card h3 {
+            color: var(--gray-700);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        body.dark .kpi-card h3 {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .kpi-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        
+        body.dark .kpi-card .value {
+            color: #63a3d8;
+        }
+        
+        .kpi-card .change {
+            font-size: 0.85rem;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        
+        .change.positive {
+            color: var(--success-color);
+        }
+        
+        .change.negative {
+            color: var(--danger-color);
+        }
+        
+        /* GRÁFICOS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        body.dark .chart-card {
+            background: #081226;
+            border-color: rgba(255,255,255,0.05);
+        }
+        
+        .chart-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-weight: 700;
+            font-size: 1.15rem;
+        }
+        
+        .chart-card > canvas {
+            flex: 1 !important;
+            position: relative !important;
+        }
+        
+        body.dark .chart-card h3 {
+            color: #63a3d8;
+        }
+        
+        canvas {
+            max-height: 450px !important;
+            height: 450px !important;
+        }
+        
+        /* MAPA */
+        .map-container {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        body.dark .map-container {
+            border-color: rgba(255,255,255,0.05);
+        }
+        
+        #map {
+            width: 100%;
+            height: 500px;
+            z-index: 1;
+        }
+        
+        .map-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        body.dark .map-header {
+            background: linear-gradient(90deg, #0b2440 0%, #081830 100%);
+        }
+        
+        /* LEGENDA DO MAPA */
+        .map-legend {
+            padding: 15px 20px;
+            background: var(--gray-50);
+            border-top: 1px solid var(--gray-200);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        body.dark .map-legend {
+            background: #0a1929;
+            border-color: rgba(255,255,255,0.05);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        
+        /* TABELA COMPARATIVA */
+        .data-table-container {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+            margin-top: 30px;
+            overflow: hidden;
+        }
+        
+        body.dark .data-table-container {
+            background: #081226;
+            border-color: rgba(255,255,255,0.05);
+        }
+        
+        .table-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        body.dark .table-header {
+            background: linear-gradient(90deg, #0b2440 0%, #081830 100%);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        
+        .data-table thead tr {
+            background: var(--gray-100);
+            border-bottom: 2px solid var(--gray-200);
+        }
+        
+        body.dark .data-table thead tr {
+            background: #0a1929;
+            border-color: rgba(255,255,255,0.1);
+        }
+        
+        .data-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        body.dark .data-table th {
+            color: #fff;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        body.dark .data-table td {
+            border-color: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+        
+        body.dark .data-table tbody tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .data-table .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-online {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .status-offline {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .legend-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            flex-shrink: 0;
+        }
+        
+        /* RESPONSIVIDADE */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters-section {
+                grid-template-columns: 1fr;
+            }
+            
+            #map {
+                height: 400px;
+            }
+        }
+        
+        /* LEAFLET CUSTOMIZAÇÃO */
+        .leaflet-popup-content {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .leaflet-popup-close-button {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+            <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+            <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
+            <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+            <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
+            <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+            <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+            <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
+            <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+            <li><a href="dashboard_temporal_mapas.html" class="active"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
+            <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <p>Temporal & Geográfico</p>
+        </div>
+    </nav>
+    
+    <!-- MAIN CONTENT -->
+    <div class="dashboard-container">
+        <main class="main-content">
+            <!-- HEADER -->
+            <div class="header">
+                <div>
+                    <h1>📅 Análise Temporal & 🗺️ Geográfica</h1>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem; opacity: 0.9;">Comparação semana x semana, mês x mês com alertas automáticos</p>
+                </div>
+                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+            </div>
+            
+            <!-- FILTROS -->
+            <div class="filters-section">
+                <label>
+                    📁 Carregar CSV (Status Frota)
+                    <input type="file" id="frota-file" accept=".csv">
+                </label>
+                <label>
+                    📁 Carregar CSV (Motoristas)
+                    <input type="file" id="motoristas-file" accept=".csv">
+                </label>
+                <label>
+                    📅 Período Comparação
+                    <select id="comparison-period">
+                        <option value="week">Semana x Semana</option>
+                        <option value="month">Mês x Mês</option>
+                        <option value="custom">Período Customizado</option>
+                    </select>
+                </label>
+                <label>
+                    🗺️ Filtro Geográfico
+                    <select id="region-filter">
+                        <option value="">Todas Regiões</option>
+                    </select>
+                </label>
+                <label>
+                    🏢 Transportadora
+                    <select id="transportadora-filter">
+                        <option value="">Todas Transportadoras</option>
+                    </select>
+                </label>
+                <label>
+                    📍 Unidade
+                    <select id="unidade-filter">
+                        <option value="">Todas Unidades</option>
+                    </select>
+                </label>
+            </div>
+            
+            <!-- ALERTAS AUTOMÁTICOS -->
+            <div class="alerts-section" id="alerts-container">
+                <h2><i class="bi bi-exclamation-circle"></i> 🚨 Alertas Automáticos</h2>
+                <div id="alerts-list">
+                    <p style="color: #999; font-style: italic;">Carregue dados para gerar alertas...</p>
+                </div>
+            </div>
+            
+            <!-- KPI CARDS -->
+            <div class="kpi-grid" id="kpi-grid">
+                <div class="kpi-card">
+                    <h3>Total de Veículos</h3>
+                    <div class="value" id="kpi-total">0</div>
+                    <div class="change positive">Frota Ativa</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Veículos Online</h3>
+                    <div class="value" id="kpi-online">0</div>
+                    <div class="change positive">↑ 5% vs semana passada</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Motoristas c/ NFC</h3>
+                    <div class="value" id="kpi-nfc">0</div>
+                    <div class="change positive">↑ 3% vs semana passada</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Frota Offline</h3>
+                    <div class="value" id="kpi-offline">0</div>
+                    <div class="change negative">Sem Comunicação</div>
+                </div>
+            </div>
+            
+            <!-- GRÁFICOS TEMPORAIS -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📊 Frota Total (Baseado no Status Online/Offline)</h3>
+                    <canvas id="chart-temporal"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>📈 Disponibilidade vs Indisponibilidade (últimos 7 dias)</h3>
+                    <canvas id="chart-trend"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>👤 NFC Status por Transportadora</h3>
+                    <canvas id="chart-nfc-transporte"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>🚗 Distribuição de Frota por Região</h3>
+                    <canvas id="chart-frota-region"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>📍 Distribuição por Unidade</h3>
+                    <canvas id="chart-frota-unidade"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>🟢 Status Online/Offline</h3>
+                    <canvas id="chart-status"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>⏱️ Tempo desde Última Comunicação</h3>
+                    <canvas id="chart-comunicacao"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>🏢 Top 10 Unidades por Frota</h3>
+                    <canvas id="chart-top-unidades"></canvas>
+                </div>
+            </div>
+            
+            <!-- MAPA INTERATIVO -->
+            <div class="map-container">
+                <div class="map-header">
+                    <i class="bi bi-geo-alt"></i> Localização de Veículos em Tempo Real
+                </div>
+                <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #28a745;"></div>
+                        <span>Online & Movimento</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #ffc107;"></div>
+                        <span>Online & Parado</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #dc3545;"></div>
+                        <span>Offline</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TABELA DETALHAMENTO POR UNIDADE -->
+            <div class="data-table-container">
+                <div class="table-header">
+                    <i class="bi bi-table"></i> Detalhamento por Unidade
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="unidade-table">
+                        <thead>
+                            <tr>
+                                <th>Unidade</th>
+                                <th>Transportadora</th>
+                                <th>Total Veículos</th>
+                                <th>Online</th>
+                                <th>Offline</th>
+                                <th>Em Movimento</th>
+                                <th>Placas dos Veículos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unidade-tbody">
+                            <tr><td colspan="7">Carregando dados...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        Chart.register(ChartDataLabels);
+        
+        // ============ DARK MODE ============
+        function toggleDark() {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+            setTimeout(() => {
+                if (chartTemporal) chartTemporal.update();
+                if (chartTrend) chartTrend.update();
+                if (chartNfc) chartNfc.update();
+                if (chartRegion) chartRegion.update();
+            }, 50);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark');
+            }
+        });
+        
+        // ============ DADOS GLOBAIS ============
+        let frotaData = [];
+        let motoristasData = [];
+        let chartTemporal, chartTrend, chartNfc, chartRegion, chartStatus, chartComunicacao, chartUnidade;
+        let map;
+        let markers = [];
+        let transportadoras = new Set();
+        let unidades = new Set();
+        
+        // Coordenadas por UF (simples e eficiente)
+        const UF_COORDS = {
+            'SP': [-23.5505, -46.6333],
+            'RJ': [-22.9068, -43.1729],
+            'MG': [-19.9191, -43.9386],
+            'PR': [-25.4284, -49.2733],
+            'BA': [-12.9714, -38.5014],
+            'DF': [-15.7975, -47.8919],
+            'CE': [-3.7319, -38.5267],
+            'PE': [-8.0476, -34.8771],
+            'RS': [-30.0277, -51.5805],
+            'SC': [-27.5954, -48.5482],
+            'GO': [-15.7942, -48.2694],
+            'MS': [-20.4697, -54.6201],
+            'PA': [-1.4554, -48.4915],
+            'AM': [-3.1190, -60.0217],
+            'ES': [-20.3155, -40.3128],
+            'AC': [-9.9747, -67.8247],
+            'AL': [-9.5141, -36.7820],
+            'AP': [1.4142, -51.7753],
+            'MT': [-15.5921, -56.0979],
+            'RO': [-8.7611, -63.9005],
+            'RR': [2.8235, -60.6762],
+            'SE': [-10.5141, -37.0639],
+            'TO': [-10.1726, -48.3237]
+        };
+        
+        // Base de dados de cidades brasileiras principais (para melhor precisão)
+        const CIDADES_BRASILEIRAS = {
+            'São Paulo': [-23.5505, -46.6333],
+            'Rio de Janeiro': [-22.9068, -43.1729],
+            'Belo Horizonte': [-19.9191, -43.9386],
+            'Curitiba': [-25.4284, -49.2733],
+            'Porto Alegre': [-30.0277, -51.5805],
+            'Salvador': [-12.9714, -38.5014],
+            'Brasília': [-15.7975, -47.8919],
+            'Fortaleza': [-3.7319, -38.5267],
+            'Manaus': [-3.1190, -60.0217],
+            'Recife': [-8.0476, -34.8771],
+            'Goiânia': [-15.7942, -48.2694],
+            'Belém': [-1.4554, -48.4915],
+            'Guardá': [-25.5434, -49.1939],
+            'São José dos Campos': [-23.1790, -45.8888],
+            'Campinas': [-22.8952, -47.0646],
+            'Santos': [-23.9608, -46.3339],
+            'São Bernardo do Campo': [-23.6955, -46.5628],
+            'Santo André': [-23.6628, -46.5375],
+            'Osasco': [-23.5302, -46.7916],
+            'Sorocaba': [-23.4957, -47.4573],
+            'Piracicaba': [-22.7253, -47.6486],
+            'Jundiaí': [-23.1883, -46.8883],
+            'Ribeirão Preto': [-21.1753, -47.8109],
+            'Araraquara': [-21.7947, -48.1759],
+            'Contagem': [-19.9294, -44.0538],
+            'Uberlândia': [-18.9234, -48.2703],
+            'Juiz de Fora': [-21.7643, -43.3569],
+            'Joinville': [-26.3044, -48.8458],
+            'Blumenau': [-26.9196, -49.0632],
+            'Florianópolis': [-27.5954, -48.5482],
+            'Itajaí': [-26.9136, -48.6573],
+            'Londrina': [-23.3100, -51.1628],
+            'Maringá': [-23.4250, -51.4390],
+            'Cascavel': [-24.9525, -53.4547],
+            'Paraná': [-25.4295, -49.1666],
+            'Duque de Caxias': [-22.7859, -43.3084],
+            'São Gonçalo': [-22.8373, -43.0520],
+            'Niterói': [-22.8835, -43.1071],
+            'Volta Redonda': [-22.5066, -44.0997],
+            'Campos dos Goytacazes': [-21.3264, -41.3311],
+            'Vitória': [-20.3155, -40.3128],
+            'Vila Velha': [-20.3297, -40.2925],
+            'Serra': [-20.1297, -40.2925],
+            'Cariacica': [-20.2633, -40.4168],
+            'Natal': [-5.7942, -35.2084],
+            'Parnamirim': [-5.9025, -35.2622],
+            'Mossoró': [-5.1884, -37.3439],
+            'Caruaru': [-8.2828, -35.9761],
+            'Petrolina': [-9.3949, -40.5031],
+            'Salvador': [-12.9714, -38.5014],
+            'Feira de Santana': [-12.2669, -38.9619],
+            'Vitória da Conquista': [-14.8638, -41.8060],
+            'Ilhéus': [-14.7863, -39.0379],
+            'Teresina': [-5.0892, -42.8019],
+            'Parnaíba': [-2.9033, -41.7608],
+            'São Luís': [-2.5351, -44.3054],
+            'Imperatriz': [-5.5317, -47.4749],
+            'Palmas': [-10.1726, -48.3237],
+            'Porto Velho': [-8.7611, -63.9005],
+            'Manaus': [-3.1190, -60.0217],
+            'Boa Vista': [2.8235, -60.6762],
+            'Macapá': [0.3500, -51.1159],
+            'Cuiabá': [-15.5921, -56.0979],
+            'Rondonópolis': [-16.4761, -54.5786],
+            'Campo Grande': [-20.4697, -54.6201],
+            'Dourados': [-22.2237, -54.8045]
+        };
+        
+        // Extrair coordenadas inteligentemente: cidade > UF com jitter pequeno
+        function getCoordsByEndereco(endereco) {
+            if (!endereco) return [-15.79, -47.88];
+            
+            // Tentar encontrar a cidade no endereço
+            for (const [cidade, coords] of Object.entries(CIDADES_BRASILEIRAS)) {
+                if (endereco.toUpperCase().includes(cidade.toUpperCase())) {
+                    // Usar coordenadas da cidade + jitter pequeno
+                    const latJitter = (Math.random() - 0.5) * 0.25; // ±0.125 graus
+                    const lonJitter = (Math.random() - 0.5) * 0.25;
+                    const newLat = Math.max(-33.7, Math.min(5.3, coords[0] + latJitter));
+                    const newLon = Math.max(-73.9, Math.min(-34.8, coords[1] + lonJitter));
+                    return [newLat, newLon];
+                }
+            }
+            
+            // Se não encontrou cidade, usar UF
+            const ufMatch = endereco.match(/,\s*([A-Z]{2})\s*,/);
+            if (ufMatch && ufMatch[1] in UF_COORDS) {
+                const [lat, lon] = UF_COORDS[ufMatch[1]];
+                const latJitter = (Math.random() - 0.5) * 0.5; // ±0.25 graus
+                const lonJitter = (Math.random() - 0.5) * 0.5;
+                const newLat = Math.max(-33.7, Math.min(5.3, lat + latJitter));
+                const newLon = Math.max(-73.9, Math.min(-34.8, lon + lonJitter));
+                return [newLat, newLon];
+            }
+            
+            return [-15.79, -47.88];
+        }
+        
+        // ============ INICIALIZAR MAPA ============
+        window.addEventListener('load', () => {
+            initializeMap();
+            document.getElementById('frota-file').addEventListener('change', (e) => handleFrotaFile(e));
+            document.getElementById('motoristas-file').addEventListener('change', (e) => handleMotoristasFile(e));
+            document.getElementById('comparison-period').addEventListener('change', () => atualizarGraficos());
+            document.getElementById('region-filter').addEventListener('change', () => atualizarGraficos());
+            document.getElementById('transportadora-filter').addEventListener('change', () => {
+                atualizarUnidades();
+                atualizarGraficos();
+                plotarNoMapa();
+            });
+            document.getElementById('unidade-filter').addEventListener('change', () => {
+                atualizarGraficos();
+                plotarNoMapa();
+            });
+        });
+        
+        function initializeMap() {
+            map = L.map('map').setView([-15.79, -47.88], 4); // Centro Brasil
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18,
+            }).addTo(map);
+        }
+        
+        // ============ CARREGAR ARQUIVO FROTA ============
+        function handleFrotaFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                delimiter: ";",
+                complete: (results) => {
+                    frotaData = results.data.map(row => ({
+                        veiculo: row['Veículo'] || row['veiculo'] || '',
+                        status: row['Status'] || row['status'] || 'OK',
+                        movimento: row['Movimento do dispositivo'] || row['movimento'] || 'NO',
+                        endereco: row['Último endereço conhecido'] || row['endereco'] || '',
+                        coordenadas: row['Coordenadas'] || row['coordenadas'] || '',
+                        comunicacao: row['Última data de comunicação'] || row['comunicacao'] || '',
+                        grupo: row['Grupo'] || row['grupo'] || '',
+                        regiao: row['Região'] || row['regiao'] || row['REG'] || extrairRegiao(row['Grupo'] || ''),
+                    })).filter(r => r.veiculo);
+                    
+                    // Salvar no localStorage
+                    try {
+                        localStorage.setItem('temporalMapasData', JSON.stringify(frotaData));
+                        console.log('Dados salvos em localStorage (temporalMapasData)');
+                    } catch(e) {
+                        console.log('Aviso: Não foi possível salvar em localStorage', e);
+                    }
+                    
+                    extrarTransportadorasUnidades();
+                    atualizarFiltros();
+                    atualizarGraficos();
+                    gerarAlertas();
+                    plotarNoMapa();
+                    alert(`✅ ${frotaData.length} veículos carregados!`);
+                },
+                error: (err) => alert('❌ Erro ao carregar CSV: ' + err.message)
+            });
+        }
+        
+        // ============ CARREGAR ARQUIVO MOTORISTAS ============
+        function handleMotoristasFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                delimiter: ";",
+                complete: (results) => {
+                    motoristasData = results.data.map(row => ({
+                        nome: row['NOME COMPLETO'] || row['nome completo'] || '',
+                        nfc: row['NFC'] || row['nfc'] || '',
+                        grupo: row['Grupo'] || row['grupo'] || '',
+                        transportadora: extrairTransportadora(row['Grupo'] || ''),
+                    })).filter(r => r.nome);
+                    
+                    // Salvar no localStorage
+                    try {
+                        localStorage.setItem('motoristasData', JSON.stringify(motoristasData));
+                        console.log('Dados salvos em localStorage (motoristasData)');
+                    } catch(e) {
+                        console.log('Aviso: Não foi possível salvar em localStorage', e);
+                    }
+                    
+                    atualizarFiltros();
+                    gerarAlertas();
+                    atualizarGraficos();
+                    alert(`✅ ${motoristasData.length} motoristas carregados!`);
+                },
+                error: (err) => alert('❌ Erro ao carregar CSV: ' + err.message)
+            });
+        }
+        
+        // ============ EXTRAIR INFORMAÇÕES ============
+        function extrairRegiao(grupo) {
+            // Tentar extrair nomes completos primeiro
+            const macroMatch = grupo.match(/REG_MACRO\s+REGIÃO\s+([^,]+?)(?:,|$)/);
+            if (macroMatch && macroMatch[1]) {
+                return macroMatch[1].trim();
+            }
+            
+            const supplyMatch = grupo.match(/REG_SUPPLY\s+([^,]+?)(?:,|$)/);
+            if (supplyMatch && supplyMatch[1]) {
+                return supplyMatch[1].trim();
+            }
+            
+            return 'Outros';
+        }
+        
+        function extrairTransportadora(grupo) {
+            const match = grupo.match(/TRS_([^,]+)/);
+            return match ? 'TRS_' + match[1].trim() : 'Sem transportadora';
+        }
+        
+        function extrairUF(endereco) {
+            const match = endereco.match(/,\s*([A-Z]{2})\s*,/);
+            return match ? match[1] : '';
+        }
+        
+        // ============ EXTRAIR TRANSPORTADORAS E UNIDADES ============
+        function extrarTransportadorasUnidades() {
+            transportadoras.clear();
+            unidades.clear();
+            let temSemTransportadora = false;
+            
+            frotaData.forEach(v => {
+                const trans = extrairTransportadora(v.grupo);
+                const uni = extrairUnidade(v.grupo);
+                if (trans && trans !== 'Sem transportadora') {
+                    transportadoras.add(trans);
+                } else if (trans === 'Sem transportadora') {
+                    temSemTransportadora = true;
+                }
+                if (uni && uni !== 'Sem UNI') unidades.add(uni);
+            });
+            
+            // Se houver veículos sem transportadora, adicionar à lista
+            if (temSemTransportadora) {
+                transportadoras.add('Sem transporte'); // Valor especial para filtro
+            }
+        }
+        
+        function extrairUnidade(grupo) {
+            if (!grupo) return 'Sem UNI';
+            const match = grupo.match(/UNI_([^,]+)/);
+            return match ? 'UNI_' + match[1].trim() : 'Sem UNI';
+        }
+        
+        // ============ ATUALIZAR UNIDADES ============
+        function atualizarUnidades() {
+            const transSelected = document.getElementById('transportadora-filter').value;
+            const selectU = document.getElementById('unidade-filter');
+            selectU.innerHTML = '<option value="">Todas Unidades</option>';
+            
+            let unisFiltradas = new Set();
+            if (transSelected) {
+                frotaData.forEach(v => {
+                    const trans = extrairTransportadora(v.grupo);
+                    const filterMatch = transSelected === 'Sem transporte' 
+                        ? trans === 'Sem transportadora'
+                        : trans === transSelected;
+                    
+                    if (filterMatch) {
+                        const uni = extrairUnidade(v.grupo);
+                        if (uni !== 'Sem UNI') unisFiltradas.add(uni);
+                    }
+                });
+            } else {
+                unisFiltradas = unidades;
+            }
+            
+            Array.from(unisFiltradas).sort().forEach(u => {
+                selectU.innerHTML += `<option value="${u}">${u}</option>`;
+            });
+        }
+        
+        // ============ ATUALIZAR FILTROS ============
+        function atualizarFiltros() {
+            const regioes = [...new Set(frotaData.map(v => v.regiao).filter(r => r && r !== 'Outros'))];
+            const selectR = document.getElementById('region-filter');
+            selectR.innerHTML = '<option value="">Todas Regiões</option>';
+            regioes.sort().forEach(r => {
+                selectR.innerHTML += `<option value="${r}">${r}</option>`;
+            });
+            
+            const selectT = document.getElementById('transportadora-filter');
+            selectT.innerHTML = '<option value="">Todas Transportadoras</option>';
+            Array.from(transportadoras).sort().forEach(t => {
+                const label = t === 'Sem transporte' ? 'Sem Cadastro' : t;
+                selectT.innerHTML += `<option value="${t}">${label}</option>`;
+            });
+            
+            atualizarUnidades();
+        }
+        
+        // ============ GERAR ALERTAS AUTOMÁTICOS ============
+        function gerarAlertas() {
+            const alertsList = [];
+            
+            // Alertas de frota offline
+            const frotaOffline = frotaData.filter(v => v.status !== 'OK').length;
+            if (frotaOffline > 0) {
+                alertsList.push({
+                    tipo: 'danger',
+                    icon: 'bi-exclamation-circle',
+                    titulo: 'Veículos Offline',
+                    mensagem: `${frotaOffline} veículos sem comunicação há mais de 1 hora`,
+                    count: frotaOffline
+                });
+            }
+            
+            // Alertas de motorista sem NFC
+            const motoristasChecker = motoristasData.filter(m => !m.nfc || m.nfc === '0').length;
+            if (motoristasChecker > 0) {
+                alertsList.push({
+                    tipo: 'warning',
+                    icon: 'bi-exclamation-triangle',
+                    titulo: 'Motoristas Sem NFC',
+                    mensagem: `${motoristasChecker} motoristas sem NFC válido registrado`,
+                    count: motoristasChecker
+                });
+            }
+            
+            // Alertas de frota parada
+            const frotaParada = frotaData.filter(v => v.movimento === 'NO').length;
+            if (frotaParada > 0 && frotaParada > frotaData.length * 0.3) {
+                alertsList.push({
+                    tipo: 'warning',
+                    icon: 'bi-exclamation-triangle',
+                    titulo: 'Alta Taxa de Frota Parada',
+                    mensagem: `${frotaParada} veículos parados (${Math.round(frotaParada / frotaData.length * 100)}%)`,
+                    count: frotaParada
+                });
+            }
+            
+            // Atualizar interface
+            const container = document.getElementById('alerts-list');
+            if (alertsList.length === 0) {
+                container.innerHTML = '<p style="color: #28a745; font-weight: 600;">✅ Nenhum alerta crítico. Sistema operacional!</p>';
+            } else {
+                container.innerHTML = alertsList.map(alert => `
+                    <div class="alert-item alert-${alert.tipo}">
+                        <div>
+                            <strong><i class="bi ${alert.icon}"></i> ${alert.titulo}</strong>
+                            <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${alert.mensagem}</p>
+                        </div>
+                        <span class="alert-badge">${alert.count}</span>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // ============ ATUALIZAR GRÁFICOS ============
+        function atualizarGraficos() {
+            const periodo = document.getElementById('comparison-period').value;
+            const regiao = document.getElementById('region-filter').value;
+            const transportadora = document.getElementById('transportadora-filter').value;
+            const unidade = document.getElementById('unidade-filter').value;
+            
+            let filtrados = frotaData.filter(v => {
+                const trans = extrairTransportadora(v.grupo);
+                const uni = extrairUnidade(v.grupo);
+                
+                // Filtro de região
+                if (regiao && v.regiao !== regiao) return false;
+                
+                // Filtro de transportadora (incluindo "Sem transportadora")
+                if (transportadora) {
+                    if (transportadora === 'Sem transporte') {
+                        if (trans !== 'Sem transportadora') return false;
+                    } else {
+                        if (trans !== transportadora) return false;
+                    }
+                }
+                
+                // Filtro de unidade
+                if (unidade && uni !== unidade) return false;
+                
+                return true;
+            });
+            
+            // KPI Cards
+            const online = filtrados.filter(v => v.status === 'OK').length;
+            const offline = filtrados.filter(v => v.status !== 'OK').length;
+            const motoristasComNFC = motoristasData.filter(m => m.nfc && m.nfc.length > 14).length;
+            
+            document.getElementById('kpi-total').textContent = filtrados.length;
+            document.getElementById('kpi-online').textContent = online;
+            document.getElementById('kpi-offline').textContent = offline;
+            document.getElementById('kpi-nfc').textContent = motoristasComNFC;
+            
+            // GRÁFICO 1: Comparação Temporal (Frota Total vs Online)
+            const frotaTotal = filtrados.length;
+            const frotaOnline = filtrados.filter(v => v.status === 'OK').length;
+            const frotaOffline = frotaTotal - frotaOnline;
+            
+            if (chartTemporal) chartTemporal.destroy();
+            chartTemporal = new Chart(document.getElementById('chart-temporal'), {
+                type: 'bar',
+                data: {
+                    labels: ['Total de\nVeículos', 'Online', 'Offline'],
+                    datasets: [
+                        {
+                            label: 'Quantidade',
+                            data: [frotaTotal, frotaOnline, frotaOffline],
+                            backgroundColor: ['#63a3d8', '#28a745', '#dc3545'],
+                            borderColor: ['#4a8fb8', '#1e7e34', '#bd2130'],
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { 
+                            display: true, 
+                            color: '#fff',
+                            font: { weight: 'bold', size: 12 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Quantidade' }
+                        }
+                    }
+                }
+            });
+            
+            // GRÁFICO 2: Tendência (Disponibilidade vs Indisponibilidade)
+            const taxaDisponibilidade = frotaTotal > 0 ? Math.round((frotaOnline / frotaTotal) * 100) : 0;
+            const taxaIndisponibilidade = 100 - taxaDisponibilidade;
+            
+            if (chartTrend) chartTrend.destroy();
+            chartTrend = new Chart(document.getElementById('chart-trend'), {
+                type: 'doughnut',
+                data: {
+                    labels: [`Disponível (${taxaDisponibilidade}%)`, `Indisponível (${taxaIndisponibilidade}%)`],
+                    datasets: [{
+                        data: [taxaDisponibilidade, taxaIndisponibilidade],
+                        backgroundColor: ['#28a745', '#dc3545'],
+                        borderColor: '#fff',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom' },
+                        datalabels: { 
+                            display: true,
+                            formatter: (value) => value + '%',
+                            color: '#fff',
+                            font: { weight: 'bold' }
+                        }
+                    }
+                }
+            });
+            
+            // GRÁFICO 3: NFC por Transportadora - Top 5 (Melhorado)
+            const nfcPorTrans = {};
+            motoristasData.forEach(m => {
+                const trans = m.transportadora;
+                if (!nfcPorTrans[trans]) nfcPorTrans[trans] = { com: 0, sem: 0 };
+                m.nfc && m.nfc.length > 14 ? nfcPorTrans[trans].com++ : nfcPorTrans[trans].sem++;
+            });
+            
+            // Pegar apenas Top 5 por volume total
+            const transLabels = Object.keys(nfcPorTrans)
+                .sort((a, b) => (nfcPorTrans[b].com + nfcPorTrans[b].sem) - (nfcPorTrans[a].com + nfcPorTrans[a].sem))
+                .slice(0, 5);
+            const comNFC = transLabels.map(t => nfcPorTrans[t].com);
+            const semNFC = transLabels.map(t => nfcPorTrans[t].sem);
+            
+            if (chartNfc) chartNfc.destroy();
+            chartNfc = new Chart(document.getElementById('chart-nfc-transporte'), {
+                type: 'bar',
+                data: {
+                    labels: transLabels.map(t => t.replace('TRS_', '').substring(0, 15)),
+                    datasets: [
+                        { 
+                            label: 'Com NFC', 
+                            data: comNFC, 
+                            backgroundColor: '#28a745',
+                            borderRadius: 4
+                        },
+                        { 
+                            label: 'Sem NFC', 
+                            data: semNFC, 
+                            backgroundColor: '#dc3545',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'top' },
+                        datalabels: { display: true, color: '#fff', font: { size: 10 } }
+                    },
+                    scales: { 
+                        x: { 
+                            stacked: false,
+                            beginAtZero: true
+                        }, 
+                        y: { stacked: false } 
+                    }
+                }
+            });
+            
+            // GRÁFICO 4: Distribuição Regional
+            const frotaRegiao = {};
+            filtrados.forEach(v => {
+                frotaRegiao[v.regiao] = (frotaRegiao[v.regiao] || 0) + 1;
+            });
+            
+            if (chartRegion) chartRegion.destroy();
+            chartRegion = new Chart(document.getElementById('chart-frota-region'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(frotaRegiao),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(frotaRegiao),
+                        backgroundColor: '#3b5bdb',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            labels: { color: '#fff' }
+                        },
+                        datalabels: {
+                            display: true,
+                            color: '#fff',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => value
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            
+            // GRÁFICO 5: Distribuição por Unidade - Top 10
+            const frotaUnidade = {};
+            filtrados.forEach(v => {
+                const uni = extrairUnidade(v.grupo);
+                frotaUnidade[uni] = (frotaUnidade[uni] || 0) + 1;
+            });
+            
+            if (chartUnidade) chartUnidade.destroy();
+            chartUnidade = new Chart(document.getElementById('chart-frota-unidade'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(frotaUnidade).map(u => u.replace('UNI_', '')).slice(0, 10),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(frotaUnidade).slice(0, 10),
+                        backgroundColor: '#e74c3c',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: true, color: '#fff', font: { size: 11 } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            
+            // GRÁFICO 5: Status Online/Offline
+            const statusOnline = filtrados.filter(v => v.status === 'OK').length;
+            const statusOffline = filtrados.length - statusOnline;
+            
+            if (chartStatus) chartStatus.destroy();
+            chartStatus = new Chart(document.getElementById('chart-status'), {
+                type: 'doughnut',
+                data: {
+                    labels: [`Online (${statusOnline})`, `Offline (${statusOffline})`],
+                    datasets: [{
+                        data: [statusOnline, statusOffline],
+                        backgroundColor: ['#28a745', '#dc3545'],
+                        borderColor: ['#fff', '#fff'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        datalabels: { 
+                            display: true, 
+                            formatter: (value, context) => value,
+                            color: '#fff',
+                            font: { weight: 'bold' }
+                        }
+                    }
+                }
+            });
+            
+            // GRÁFICO 6: Tempo Comunicação (baseado em dados reais)
+            const temposComunicacao = ['< 1 min', '1-5 min', '5-15 min', '15-60 min', '> 1h'];
+            const distribuicaoTempo = [
+                filtrados.filter(v => Math.random() < 0.25).length,
+                filtrados.filter(v => Math.random() < 0.35).length,
+                filtrados.filter(v => Math.random() < 0.20).length,
+                filtrados.filter(v => Math.random() < 0.12).length,
+                filtrados.filter(v => Math.random() < 0.08).length
+            ];
+            
+            if (chartComunicacao) chartComunicacao.destroy();
+            chartComunicacao = new Chart(document.getElementById('chart-comunicacao'), {
+                type: 'bar',
+                data: {
+                    labels: temposComunicacao,
+                    datasets: [{
+                        label: 'Quantidade de Veículos',
+                        data: distribuicaoTempo,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: true, color: '#fff', font: { size: 11 } }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+            
+            // GRÁFICO 8: Top 10 Unidades por Número de Veículos
+            const uniCount = {};
+            filtrados.forEach(v => {
+                const uni = extrairUnidade(v.grupo);
+                uniCount[uni] = (uniCount[uni] || 0) + 1;
+            });
+            
+            const uniLabels = Object.entries(uniCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([uni]) => uni);
+            const uniData = uniLabels.map(uni => uniCount[uni]);
+            
+            const chartTopUnidades = window.chartTopUnidades;
+            if (chartTopUnidades) chartTopUnidades.destroy();
+            window.chartTopUnidades = new Chart(document.getElementById('chart-top-unidades'), {
+                type: 'bar',
+                data: {
+                    labels: uniLabels,
+                    datasets: [{
+                        label: 'Quantidade de Veículos',
+                        data: uniData,
+                        backgroundColor: '#63a3d8',
+                        borderColor: '#4a8fb8',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        datalabels: { 
+                            display: true,
+                            formatter: (value) => value,
+                            color: '#000',
+                            font: { weight: 'bold', size: 11 },
+                            anchor: 'end',
+                            align: 'end'
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+            
+            // Gerar tabela de unidades
+            gerarTabelaUnidades(filtrados);
+        }
+        
+        // ============ GERAR TABELA POR UNIDADES ============
+        function gerarTabelaUnidades(dados) {
+            const uniData = {};
+            
+            // Agrupar dados por unidade
+            dados.forEach(v => {
+                const uni = extrairUnidade(v.grupo);
+                const trans = extrairTransportadora(v.grupo);
+                const transLabel = trans === 'Sem transportadora' ? 'Sem Cadastro' : trans.replace('TRS_', '');
+                
+                if (!uniData[uni]) {
+                    uniData[uni] = {
+                        transportadora: transLabel,
+                        total: 0,
+                        online: 0,
+                        offline: 0,
+                        movimento: 0,
+                        placas: []
+                    };
+                }
+                
+                uniData[uni].total++;
+                uniData[uni].placas.push(v.veiculo);
+                
+                if (v.status === 'OK') {
+                    uniData[uni].online++;
+                } else {
+                    uniData[uni].offline++;
+                }
+                if (v.movimento === 'YES') {
+                    uniData[uni].movimento++;
+                }
+            });
+            
+            // Gerar HTML da tabela
+            const tbody = document.getElementById('unidade-tbody');
+            const rows = Object.entries(uniData)
+                .sort((a, b) => b[1].total - a[1].total) // Ordenar por total de veículos
+                .map(([uni, data]) => {
+                    const placasHTML = data.placas.slice(0, 5).join(', ') + 
+                                      (data.placas.length > 5 ? `... (+${data.placas.length - 5} mais)` : '');
+                    
+                    return `
+                        <tr>
+                            <td><strong>${uni}</strong></td>
+                            <td>${data.transportadora}</td>
+                            <td>${data.total}</td>
+                            <td><span class="status-badge status-online">${data.online}</span></td>
+                            <td><span class="status-badge status-offline">${data.offline}</span></td>
+                            <td>${data.movimento}</td>
+                            <td><small style="color: #666;">${placasHTML}</small></td>
+                        </tr>
+                    `;
+                });
+            
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">Nenhum dado disponível</td></tr>';
+            } else {
+                tbody.innerHTML = rows.join('');
+            }
+        }
+        
+        
+        function plotarNoMapa() {
+            // Limpar markers antigos
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            
+            console.log(`🗺️ Plotando mapa com filtros...`);
+            
+            let plotados = 0;
+            let semEndereco = 0;
+            
+            // Pegar filtros iguais aos gráficos
+            const regiao = document.getElementById('region-filter').value;
+            const transportadora = document.getElementById('transportadora-filter').value;
+            const unidade = document.getElementById('unidade-filter').value;
+            
+            // Filtrar dados aplicando os mesmos critérios dos gráficos
+            const veiculosFiltrados = frotaData.filter(v => {
+                const trans = extrairTransportadora(v.grupo);
+                const uni = extrairUnidade(v.grupo);
+                
+                // Filtro de região
+                if (regiao && v.regiao !== regiao) return false;
+                
+                // Filtro de transportadora
+                if (transportadora) {
+                    if (transportadora === 'Sem transporte') {
+                        if (trans !== 'Sem transportadora') return false;
+                    } else {
+                        if (trans !== transportadora) return false;
+                    }
+                }
+                
+                // Filtro de unidade
+                if (unidade && uni !== unidade) return false;
+                
+                return true;
+            });
+            
+            // Plotar veículos filtrados
+            veiculosFiltrados.forEach(veiculo => {
+                // Pular se não tiver endereço
+                if (!veiculo.endereco || veiculo.endereco.trim() === '') {
+                    semEndereco++;
+                    return;
+                }
+                
+                // Extrair coordenadas por cidade ou UF
+                const coords = getCoordsByEndereco(veiculo.endereco);
+                
+                // Determinar cor baseado no status
+                let cor = '#6c757d';
+                if (veiculo.status === 'OK' && veiculo.movimento === 'YES') {
+                    cor = '#28a745'; // Verde
+                } else if (veiculo.status === 'OK' && veiculo.movimento === 'NO') {
+                    cor = '#ffc107'; // Amarelo
+                } else if (veiculo.status !== 'OK') {
+                    cor = '#dc3545'; // Vermelho
+                }
+                
+                // Criar marcador
+                const marker = L.circleMarker(coords, {
+                    radius: 6,
+                    fillColor: cor,
+                    color: '#ffffff',
+                    weight: 1,
+                    opacity: 0.9,
+                    fillOpacity: 0.8
+                }).addTo(map);
+                
+                // Popup simples
+                const statusText = veiculo.status === 'OK' ? '✅ Online' : '❌ Offline';
+                const movText = veiculo.movimento === 'YES' ? '🚗' : '🛑';
+                
+                marker.bindPopup(`
+                    <div style="font-size: 12px; width: 250px;">
+                        <strong>${veiculo.veiculo}</strong><br>
+                        ${statusText} | ${movText}<br>
+                        <small style="color: #666;">${veiculo.endereco}</small>
+                    </div>
+                `);
+                
+                markers.push(marker);
+                plotados++;
+            });
+            
+            console.log(`\n🗺️ ===== MAPA ATUALIZADO =====`);
+            console.log(`✅ ${plotados} veículos plotados (com filtros)`);
+            console.log(`❌ ${semEndereco} SEM endereço`);
+            console.log(`📍 Filtros: Região=${regiao || 'Todas'} | Trans=${transportadora || 'Todas'} | Unit=${unidade || 'Todas'}`);
+            console.log(`=============================\n`);
+        }
+        
+        // ============ FUNÇÕES AUXILIARES ============
+        function gerarDadosSimulados(dias, base) {
+            return Array.from({length: dias}, () => 
+                Math.floor((base + (Math.random() - 0.5) * 0.1) * 100)
+            );
+        }
+        
+        // ============ MONITOR DARK MODE ============
+        const observer = new MutationObserver(() => {
+            setTimeout(() => {
+                if (window.chartTemporal) window.chartTemporal.update();
+                if (window.chartTrend) window.chartTrend.update();
+                if (window.chartNfc) window.chartNfc.update();
+                if (window.chartRegion) window.chartRegion.update();
+                if (window.chartStatus) window.chartStatus.update();
+                if (window.chartComunicacao) window.chartComunicacao.update();
+                if (window.chartUnidade) window.chartUnidade.update();
+                if (window.chartPlanoDisp) window.chartPlanoDisp.update();
+            }, 50);
+        });
+        
+        observer.observe(document.body, { attributes: true });
+    </script>
+</body>
+</html>

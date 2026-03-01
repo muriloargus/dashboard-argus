@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard TV - Sistema Argus Ambev</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --secondary-color: #e60000;
+            --accent-color: #FFD700;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+            color: var(--dark-color, #111);
+            overflow: hidden;
+            height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Tema escuro aplicado quando body.dark está presente */
+        body.dark {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+        }
+        
+        .tv-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            padding: 40px;
+            gap: 30px;
+        }
+        
+        .tv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: linear-gradient(90deg, var(--primary-color), #7bb5e0);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(99, 163, 216, 0.12);
+        }
+
+        body.dark .tv-header {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        
+        .tv-header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .tv-logo {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        body.dark .tv-logo { background: rgba(255,255,255,0.06); box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+        
+        .tv-logo img {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+        .tv-logo img.ambev { height: 36px; margin-left: 12px; }
+        
+        .tv-title {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            animation: slideInDown 0.8s ease-out;
+            color: var(--dark-color, #111);
+        }
+
+        body.dark .tv-title { color: #fff; }
+
+        .btn-toggle {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: rgba(255, 215, 0, 0.18);
+            border: 2px solid var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .tv-header-right {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            font-size: 1.3rem;
+        }
+        
+        .slide-counter {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .time-display {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .tv-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.06);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.3s, box-shadow 0.3s, color 0.3s;
+        }
+
+        body.dark .tv-content {
+            background: #0b1220;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+            color: #fff;
+        }
+        
+        .chart-slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            animation: fadeIn 1s ease-in;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body.dark .chart-slide {
+            background: #0b1220;
+            color: #fff;
+        }
+
+        .chart-slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.dark .chart-slide.active {
+            background: #0b1220;
+            color: #fff;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        body.dark .slide-title {
+            color: var(--accent-color);
+        }
+        
+        .slide-title i {
+            font-size: 2.5rem;
+        }
+
+        body.dark .slide-title i {
+            color: var(--accent-color);
+        }
+        
+        .slide-chart-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .slide-chart-wrapper canvas {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .tv-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(99, 163, 216, 0.1);
+            border-radius: 12px;
+        }
+        
+        .tv-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tv-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        
+        .tv-btn-play {
+            background: var(--success-color);
+        }
+        
+        .tv-btn-pause {
+            background: var(--warning-color);
+        }
+        
+        .tv-btn-next {
+            background: var(--info-color);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+            animation: progress linear forwards;
+        }
+        
+        @keyframes progress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--success-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-badge.paused {
+            background: var(--warning-color);
+        }
+        
+        @media (max-width: 1920px) {
+            .tv-container {
+                padding: 25px;
+                gap: 20px;
+            }
+            
+            .slide-title {
+                font-size: 1.8rem;
+            }
+            
+            .tv-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .dashboard-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+        body.dark .dashboard-description {
+            color: #aaa;
+        }
+    </style>
+</head>
+<style>
+/* Dark mode aprimorado (injetado automaticamente) */
+body.dark {
+    background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+    color: var(--light-color);
+}
+body.dark .sidebar {
+    background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+    box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+    border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .main-content { background: linear-gradient(135deg, #071124 0%, #0b1726 100%); }
+body.dark .topo, body.dark .card, body.dark .chart-card, body.dark .kpi-card { background: #081226; color: var(--light-color); border-color: rgba(255,255,255,0.03); }
+body.dark .label, body.dark .kpi-title { color: rgba(255,255,255,0.8); }
+body.dark .value, body.dark .chart-title { color: var(--accent-color); }
+body.dark table th { background: var(--primary-dark); }
+</style>
+<body>
+    <div class="tv-container">
+        <!-- Header -->
+        <div class="tv-header">
+            <div class="tv-header-left">
+                <div class="tv-logo">
+                    <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'">
+                    <img src="ambev-logo.png" alt="Ambev" class="ambev" onerror="this.style.display='none'">
+                </div>
+                <div>
+                    <div class="tv-title">🎬 Dashboard TV - Telemetria CCO</div>
+                </div>
+            </div>
+                <div class="tv-header-right">
+                <button class="btn-toggle" onclick="toggleDark()">🌙</button>
+                <div class="slide-counter" id="slideCounter">1 / 12</div>
+                <div class="time-display" id="timeDisplay">00:00:00</div>
+            </div>
+        </div>
+
+        <!-- Debug Diagnostics -->
+        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 10px 20px; margin: 10px 40px; border-radius: 8px; font-size: 0.9rem;">
+            <details style="cursor: pointer;">
+                <summary style="font-weight: bold; color: #856404;">📊 Diagnóstico (clique para expandir)</summary>
+                <div id="debugStatus" style="margin-top: 10px; color: #333; line-height: 1.6;"></div>
+                <div id="debugSlidesLocked" style="margin-top: 10px; color: #d32f2f;"></div>
+                <p style="margin-top: 10px; font-size: 0.85rem; color: #666; font-style: italic;">
+                    ✓ = Dados carregados | ✗ = Não encontrado. Se vir muitos ✗, recarregue os CSVs nos dashboards.
+                </p>
+            </details>
+        </div>
+        
+        <!-- Content -->
+        <div class="tv-content" id="tvContent">
+            <!-- Slides serão inseridos aqui via JavaScript -->
+        </div>
+        
+        <!-- Controls -->
+        <div class="tv-controls">
+            <button class="tv-btn tv-btn-play" id="playBtn" onclick="toggleAutoPlay()">
+                <i class="bi bi-play-fill"></i> Iniciar
+            </button>
+            <button class="tv-btn tv-btn-pause" id="pauseBtn" onclick="toggleAutoPlay()" style="display:none;">
+                <i class="bi bi-pause-fill"></i> Pausar
+            </button>
+            <button class="tv-btn tv-btn-next" id="prevBtn" onclick="previousSlide()">
+                <i class="bi bi-chevron-left"></i> Anterior
+            </button>
+            <button class="tv-btn tv-btn-next" id="nextBtn" onclick="nextSlide()">
+                <i class="bi bi-chevron-right"></i> Próximo
+            </button>
+            <div style="margin-left: auto;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <span>Velocidade (segundos):</span>
+                    <input type="number" id="speedControl" min="5" max="60" step="5" value="15" 
+                           style="width: 80px; padding: 8px; border-radius: 4px; border: none; font-size: 1rem;">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Info oculto -->
+    <div id="debugInfo" style="display:none;"></div>
+    
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script>
+        // Função para verificar status de persistência
+        function updateDebugInfo() {
+            const statusFrota = localStorage.getItem('statusFrotaData') ? '✓' : '✗';
+            const usuarios = localStorage.getItem('usuariosData') ? '✓' : '✗';
+            const ativos = localStorage.getItem('ativosData') ? '✓' : '✗';
+            const excecoes = localStorage.getItem('excecoesData') ? '✓' : '✗';
+            const riscoColisao = localStorage.getItem('riscoColisaoData') ? '✓' : '✗';
+            const falhas = localStorage.getItem('falhasData') ? '✓' : '✗';
+            const dispositivos = localStorage.getItem('dispositivosData') ? '✓' : '✗';
+            const timeline = localStorage.getItem('timelineData') ? '✓' : '✗';
+            const temporal = localStorage.getItem('temporalMapasData') ? '✓' : '✗';
+            const comparativo = localStorage.getItem('comparativoData') ? '✓' : '✗';
+            const motoristas = localStorage.getItem('motoristasData') ? '✓' : '✗';
+            const desempenho = localStorage.getItem('desempenhoData') ? '✓' : '✗';
+            
+            const debugEl = document.getElementById('debugStatus');
+            if (debugEl) {
+                debugEl.innerHTML = `
+                    <strong>Dados Carregados:</strong> 
+                    Frota:${statusFrota} | Usuários:${usuarios} | Ativos:${ativos} | Exceções:${excecoes} | 
+                    Risco:${riscoColisao} | Falhas:${falhas} | Dispositivos:${dispositivos} | Timeline:${timeline} | 
+                    Temporal:${temporal} | Comparativo:${comparativo} | Motoristas:${motoristas} | Desempenho:${desempenho}
+                `;
+            }
+            
+            // Mostrar slides bloqueados
+            const slidesLockedEl = document.getElementById('debugSlidesLocked');
+            if (slidesLockedEl) {
+                const slides = document.querySelectorAll('.chart-slide');
+                let lockedCount = 0;
+                let activeCount = 0;
+                const lockedSlides = [];
+                
+                slides.forEach(slide => {
+                    if (slide.dataset.locked === 'true') {
+                        lockedCount++;
+                        lockedSlides.push(slide.id.replace('Slide', ''));
+                    } else {
+                        activeCount++;
+                    }
+                });
+                
+                slidesLockedEl.innerHTML = `<strong>Slides Ativos: ${activeCount} | Bloqueados: ${lockedCount}</strong><br>Bloqueados: ${lockedSlides.join(', ')}`;
+            }
+        }
+
+        function toggleDark() {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+            updateChartsForDarkMode();
+        }
+
+        function updateChartsForDarkMode() {
+    const isDarkMode = document.body.classList.contains('dark');
+    const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const tooltipBg = isDarkMode ? '#1f2937' : '#fff';
+    const tooltipText = isDarkMode ? '#fff' : '#000';
+
+    Object.keys(allCharts).forEach(key => {
+        const chart = allCharts[key];
+        if (chart && chart.options) {
+            // Atualizar cores de escala
+            if (chart.options.scales) {
+                Object.keys(chart.options.scales).forEach(axis => {
+                    if (chart.options.scales[axis].ticks) {
+                        chart.options.scales[axis].ticks.color = textColor;
+                    }
+                    if (chart.options.scales[axis].grid) {
+                        chart.options.scales[axis].grid.color = gridColor;
+                    }
+                    if (chart.options.scales[axis].title) {
+                        chart.options.scales[axis].title.color = textColor;
+                    }
+                });
+            }
+
+            // Atualizar cores de plugins
+            if (chart.options.plugins) {
+                if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                    chart.options.plugins.legend.labels.color = textColor;
+                }
+                if (chart.options.plugins.tooltip) {
+                    chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                    chart.options.plugins.tooltip.bodyColor = tooltipText;
+                    chart.options.plugins.tooltip.titleColor = tooltipText;
+                    chart.options.plugins.tooltip.footerColor = tooltipText;
+                }
+                if (chart.options.plugins.datalabels) {
+                    chart.options.plugins.datalabels.color = textColor;
+                }
+            }
+
+            chart.update('none');
+        }
+    });
+}
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark');
+            document.documentElement.style.setProperty('--primary-color', '#63a3d8');
+        }
+        let currentSlide = 0;
+        let isAutoPlay = false;
+        let autoPlayInterval = null;
+        let autoPlayDelay = 15000; // 15 segundos
+        let allCharts = {};
+        let fleetData = [];
+        let userData = [];
+        let ativosData = [];
+        let motoristasData = [];
+        let excecoesData = [];
+        let falhasData = [];
+        let riscoColisaoData = [];
+        let dispositivosData = [];
+        let timelineData = [];
+        let temporalMapasData = [];
+        let comparativoData = null;
+        let desempenhoData = [];
+        const DEFAULT_COLORS = [
+            '#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600','#63a3d8','#28a745','#e60000','#ffc107','#17a2b8','#9B59B6','#4ECDC4'
+        ];
+        
+        const slides = [
+            { id: 'statusChart', title: 'Status da Frota', icon: 'bi-pie-chart', type: 'fleet' },
+            { id: 'regionChart', title: 'Frota por Região', icon: 'bi-bar-chart', type: 'fleet' },
+            { id: 'fabricanteChart', title: 'Frota por Fabricante', icon: 'bi-building', type: 'fleet' },
+            { id: 'transportadoraChart', title: 'Frota por Transportadora', icon: 'bi-building', type: 'fleet' },
+            { id: 'cambioChart', title: 'Frota por Câmbio', icon: 'bi-gear', type: 'fleet' },
+            { id: 'tipoVeiculoChart', title: 'Frota por Tipo de Veículo', icon: 'bi-truck', type: 'fleet' },
+            { id: 'usuariosTransportadoraChart', title: 'Usuários por Transportadora', icon: 'bi-people', type: 'usuarios' },
+            { id: 'usuariosUnidadeChart', title: 'Usuários por Unidade', icon: 'bi-map', type: 'usuarios' },
+            { id: 'designacaoChart', title: 'Usuários por Designação (Top 5)', icon: 'bi-briefcase', type: 'usuarios' },
+            { id: 'ativosRegiaoChart', title: 'Ativos por Região', icon: 'bi-map', type: 'ativos' },
+            { id: 'ativosTipoChart', title: 'Ativos por Tipo', icon: 'bi-truck', type: 'ativos' },
+            { id: 'ativosFabricanteChart', title: 'Ativos por Fabricante', icon: 'bi-building', type: 'ativos' },
+            { id: 'tiposExcecaoChart', title: 'Top 5 Tipos de Exceção', icon: 'bi-pie-chart', type: 'excecoes' },
+            { id: 'excecoesPorRegiaoChart', title: 'Exceções por Região', icon: 'bi-bar-chart', type: 'excecoes' },
+            { id: 'excecoesPorTransportadoraChart', title: 'Exceções por Transportadora', icon: 'bi-building', type: 'excecoes' },
+            { id: 'excecoesPorUnidadeChart', title: 'Exceções por Unidade', icon: 'bi-warehouse', type: 'excecoes' },
+            { id: 'severidadeExcecaoChart', title: 'Severidade das Exceções', icon: 'bi-shield-exclamation', type: 'excecoes' },
+            { id: 'motoristasIdentificadosChart', title: 'Motorista Identificado vs Não Identificado', icon: 'bi-person-slash', type: 'excecoes' },
+            { id: 'motoristasExcecaoChart', title: 'Top 10 Motoristas com Exceções', icon: 'bi-bar-chart', type: 'excecoes' },
+            { id: 'veiculosExcecaoChart', title: 'Veículos com Mais Exceções', icon: 'bi-pie-chart', type: 'excecoes' },
+            { id: 'ativosTransportadoraChart', title: 'Ativos por Transportadora', icon: 'bi-building', type: 'ativos' },
+            { id: 'ativosUnidadeChart', title: 'Ativos por Unidade', icon: 'bi-map', type: 'ativos' },
+            { id: 'motoristasTransportadoraChart', title: 'Motoristas por Transportadora', icon: 'bi-people', type: 'usuarios' },
+            { id: 'frotalocalizacaoChart', title: 'Frota por Localização', icon: 'bi-geo-alt', type: 'fleet' },
+            { id: 'riscoPorClassificacao', title: 'Risco por Classificação', icon: 'bi-shield-check', type: 'risco' },
+            { id: 'topVeiculos', title: 'Top 5 Veículos com Risco', icon: 'bi-truck', type: 'risco' },
+            { id: 'riscoPorTransportadora', title: 'Risco por Transportadora', icon: 'bi-building', type: 'risco' },
+            { id: 'comportamentoComparativo', title: 'Comportamento Comparativo', icon: 'bi-bar-chart', type: 'risco' },
+            { id: 'riscoVsBenchmark', title: 'Risco vs Benchmark', icon: 'bi-graph-up', type: 'risco' },
+            { id: 'distribuicaoSeguranca', title: 'Distribuição de Segurança', icon: 'bi-pie-chart', type: 'risco' },
+            { id: 'tiposFalhasChart', title: 'Tipos de Falhas Registradas', icon: 'bi-exclamation-circle', type: 'falhas' },
+            { id: 'onlineOfflineChart', title: 'Status Online/Offline - Distribuição', icon: 'bi-wifi', type: 'fleet' },
+            { id: 'desempenhoAnalistaChart', title: 'Desempenho por Analista (Top 10)', icon: 'bi-clipboard-check', type: 'usuarios' },
+            { id: 'comparativoDesempenhoChart', title: 'Comparativo: Frota vs Benchmark', icon: 'bi-graph-up-arrow', type: 'risco' },
+            { id: 'timelineMotoristaChart', title: 'Timeline: Motorista Não Identificado', icon: 'bi-calendar-event', type: 'usuarios' },
+        ];
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'true') {
+                document.body.classList.add('dark');
+            }
+
+            // Carregar dados persistidos
+            const savedFleetData = localStorage.getItem('statusFrotaData');
+            if (savedFleetData) {
+              try {
+                fleetData = JSON.parse(savedFleetData);
+                console.log('Dados de frota carregados do localStorage');
+              } catch(e) {
+                console.log('Erro ao carregar frota');
+              }
+            }
+
+            const savedUserData = localStorage.getItem('usuariosData');
+            if (savedUserData) {
+              try {
+                userData = JSON.parse(savedUserData);
+                console.log('Dados de usuários carregados do localStorage');
+              } catch(e) {
+                console.log('Erro ao carregar usuários');
+              }
+            }
+
+            const savedAtivosData = localStorage.getItem('ativosData');
+            if (savedAtivosData) {
+              try {
+                ativosData = JSON.parse(savedAtivosData);
+                console.log('Dados de ativos carregados do localStorage');
+              } catch(e) {
+                console.log('Erro ao carregar ativos');
+              }
+            }
+
+            const savedExcecoesData = localStorage.getItem('excecoesData');
+            if (savedExcecoesData) {
+              try {
+                excecoesData = JSON.parse(savedExcecoesData);
+                console.log('Dados de exceções carregados do localStorage');
+              } catch(e) {
+                console.log('Erro ao carregar exceções');
+              }
+            }
+
+            createSlides();
+            initCharts();
+            await loadAllData();
+            updateDebugInfo();
+            updateTime();
+            setInterval(updateTime, 1000);
+            setInterval(async () => { await loadAllData(); updateDebugInfo(); }, 5000);
+            
+            // Atualizar velocidade em tempo real
+            document.getElementById('speedControl').addEventListener('change', function() {
+                autoPlayDelay = parseInt(this.value) * 1000;
+                if (isAutoPlay) {
+                    clearInterval(autoPlayInterval);
+                    startAutoPlay();
+                }
+            });
+        });
+        
+        function createSlides() {
+            const tvContent = document.getElementById('tvContent');
+            slides.forEach(slide => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'chart-slide';
+                slideDiv.id = slide.id + 'Slide';
+                slideDiv.innerHTML = `
+                    <div class="slide-title">
+                        <i class="bi ${slide.icon}"></i>
+                        ${slide.title}
+                    </div>
+                    <div class="slide-chart-wrapper">
+                        <canvas id="${slide.id}"></canvas>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="animation-duration: ${autoPlayDelay}ms;"></div>
+                    </div>
+                `;
+                tvContent.appendChild(slideDiv);
+            });
+        }
+        
+        function chartTypeFor(id) {
+            const barCharts = ['regionChart','fabricanteChart','ativosRegiaoChart','ativosTipoChart','ativosFabricanteChart','excecoesPorRegiaoChart','excecoesPorTransportadoraChart','excecoesPorUnidadeChart','motoristasExcecaoChart','veiculosExcecaoChart','usuariosUnidadeChart','ativosTransportadoraChart','ativosUnidadeChart','motoristasTransportadoraChart','frotalocalizacaoChart','riscoPorTransportadora','comportamentoComparativo','tiposFalhasChart','desempenhoAnalistaChart','comparativoDesempenhoChart'];
+            if (id === 'riscoVsBenchmark') return 'scatter';
+            if (id === 'distribuicaoSeguranca') return 'line';
+            if (id === 'timelineMotoristaChart') return 'line';
+            if (id === 'onlineOfflineChart') return 'doughnut';
+            return barCharts.includes(id) ? 'bar' : 'doughnut';
+        }
+
+        function initCharts() {
+            slides.forEach(slide => {
+                const ctx = document.getElementById(slide.id).getContext('2d');
+                const type = chartTypeFor(slide.id);
+                
+                let chartConfig = {
+                    type: type,
+                    data: { labels: [], datasets: [{ data: [], backgroundColor: [] }] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: 20 },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { size: 14 } } },
+                            tooltip: { callbacks: { label: function(context){ return context.label + ': ' + context.formattedValue; } } }
+                        }
+                    }
+                };
+                
+                // Configurações específicas por tipo
+                if (type === 'bar') {
+                    chartConfig.options.scales = { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true, ticks: { precision:0 } } };
+                } else if (type === 'scatter') {
+                    chartConfig.data = { datasets: [{ label: 'Dados', data: [], backgroundColor: 'rgba(25,118,210,0.6)', pointRadius: 4 }] };
+                    chartConfig.options.scales = { 
+                        x: { title: { display: true, text: 'Benchmark (%)' }, beginAtZero: true },
+                        y: { title: { display: true, text: 'Risco (%)' }, beginAtZero: true }
+                    };
+                } else if (type === 'line') {
+                    chartConfig.data = { labels: [], datasets: [{ label: 'Dados', data: [], borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', tension: 0.4, fill: true, pointRadius: 4 }] };
+                    chartConfig.options.scales = { y: { beginAtZero: true } };
+                }
+                
+                allCharts[slide.id] = new Chart(ctx, chartConfig);
+                // marcar slide inicialmente como travado até receber dados
+                const slideElement = document.getElementById(slide.id + 'Slide');
+                if (slideElement) slideElement.dataset.locked = 'true';
+            });
+        }
+        
+        async function loadAllData() {
+            console.log('=== INICIANDO CARREGAMENTO DE DADOS ===');
+            
+            const storedFleetData = await window.loadStorageData('statusFrotaData');
+            if (storedFleetData) {
+                try {
+                    fleetData = storedFleetData;
+                    console.log('✓ Frota carregada:', fleetData.length, 'registros');
+                    updateFleetCharts();
+                } catch (error) {
+                    console.error('✗ Erro ao carregar statusFrotaData:', error);
+                }
+            } else {
+                console.warn('✗ statusFrotaData não encontrado');
+            }
+            
+            const storedUserData = await window.loadStorageData('usuariosData');
+            if (storedUserData) {
+                try {
+                    userData = storedUserData;
+                    console.log('✓ Usuários carregados:', userData.length, 'registros');
+                    updateUserCharts();
+                } catch (error) {
+                    console.error('✗ Erro ao carregar usuariosData:', error);
+                }
+            } else {
+                console.warn('✗ usuariosData não encontrado');
+            }
+            
+            const storedAtivosData = await window.loadStorageData('ativosData');
+            if (storedAtivosData) {
+                try {
+                    ativosData = storedAtivosData;
+                    console.log('✓ Ativos carregados:', ativosData.length, 'registros');
+                    updateAtivosCharts();
+                } catch (error) {
+                    console.error('✗ Erro ao carregar ativosData:', error);
+                }
+            } else {
+                console.warn('✗ ativosData não encontrado');
+            }
+
+            const storedExcecoesData = await window.loadStorageData('excecoesData');
+            if (storedExcecoesData) {
+                try {
+                    excecoesData = storedExcecoesData;
+                    console.log('✓ Exceções carregadas:', excecoesData.length, 'registros');
+                    updateExcecoesCharts();
+                } catch (error) {
+                    console.error('✗ Erro ao carregar excecoesData:', error);
+                }
+            } else {
+                console.warn('✗ excecoesData não encontrado');
+            }
+
+            const storedFalhasData = await window.loadStorageData('falhasData');
+            if (storedFalhasData) {
+                try {
+                    falhasData = storedFalhasData;
+                    console.log('✓ Falhas carregadas:', falhasData.length, 'registros');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar falhasData:', error);
+                }
+            } else {
+                console.warn('✗ falhasData não encontrado');
+            }
+
+            const storedRiscoData = await window.loadStorageData('riscoColisaoData');
+            if (storedRiscoData) {
+                try {
+                    riscoColisaoData = storedRiscoData;
+                    console.log('✓ Risco de Colisão carregado:', riscoColisaoData.length, 'registros');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar riscoColisaoData:', error);
+                }
+            } else {
+                console.warn('✗ riscoColisaoData não encontrado');
+            }
+
+            const storedDispositivosData = await window.loadStorageData('dispositivosData');
+            if (storedDispositivosData) {
+                try {
+                    dispositivosData = storedDispositivosData;
+                    console.log('✓ Dispositivos carregados:', dispositivosData.length, 'registros');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar dispositivosData:', error);
+                }
+            } else {
+                console.warn('✗ dispositivosData não encontrado');
+            }
+
+            const storedTimelineData = await window.loadStorageData('timelineData');
+            if (storedTimelineData) {
+                try {
+                    timelineData = storedTimelineData;
+                    console.log('✓ Timeline carregada:', timelineData.length, 'registros');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar timelineData:', error);
+                }
+            } else {
+                console.warn('✗ timelineData não encontrado');
+            }
+
+            const storedTemporalMapasData = await window.loadStorageData('temporalMapasData');
+            if (storedTemporalMapasData) {
+                try {
+                    temporalMapasData = storedTemporalMapasData;
+                    console.log('✓ Temporal Mapas carregado:', temporalMapasData.length, 'registros');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar temporalMapasData:', error);
+                }
+            } else {
+                console.warn('✗ temporalMapasData não encontrado');
+            }
+
+            const storedComparativoData = await window.loadStorageData('comparativoData');
+            if (storedComparativoData) {
+                try {
+                    comparativoData = storedComparativoData;
+                    console.log('✓ Comparativo carregado');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar comparativoData:', error);
+                }
+            } else {
+                console.warn('✗ comparativoData não encontrado');
+            }
+
+            const storedMotoristasData = await window.loadStorageData('motoristasData');
+            if (storedMotoristasData) {
+                try {
+                    motoristasData = storedMotoristasData;
+                    console.log('✓ Motoristas carregados:', motoristasData.length, 'registros');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar motoristasData:', error);
+                }
+            } else {
+                console.warn('✗ motoristasData não encontrado');
+            }
+
+            const storedDesempenhoData = await window.loadStorageData('desempenhoData');
+            if (storedDesempenhoData) {
+                try {
+                    desempenhoData = storedDesempenhoData;
+                    console.log('✓ Desempenho carregado:', desempenhoData.length, 'registros');
+                } catch (error) {
+                    console.error('✗ Erro ao carregar desempenhoData:', error);
+                }
+            } else {
+                console.warn('✗ desempenhoData não encontrado');
+            }
+            
+            console.log('=== ATUALIZANDO GRÁFICOS ADICIONAIS ===');
+            // Atualizar gráficos adicionais
+            updateAdditionalCharts();
+            console.log('=== CARREGAMENTO CONCLUÍDO ===');;
+        }
+        
+        function updateFleetCharts() {
+            if (!fleetData || fleetData.length === 0) return;
+            
+            // Status
+            const online = fleetData.filter(v => v.status === 'Online' || v.status === 'OK').length;
+            const parado = fleetData.filter(v => v.status === 'Parado' || v.status === 'OK (Parado)').length;
+            const offline = fleetData.filter(v => v.status === 'Offline' || v.status === 'Off-line para...').length;
+            updateChartData(allCharts.statusChart, ['Online', 'Parado', 'Offline'], [online, parado, offline], 
+                ['#28a745', '#ffc107', '#dc3545']);
+            
+            // Por região
+            const regiao = {};
+            fleetData.forEach(v => {
+                const r = v.regiao || v.região || 'N/A';
+                regiao[r] = (regiao[r] || 0) + 1;
+            });
+            updateChartData(allCharts.regionChart, Object.keys(regiao), Object.values(regiao), '#63a3d8');
+            
+            // Por fabricante
+            const fabricante = {};
+            fleetData.forEach(v => {
+                const f = v.fabricante || 'N/A';
+                fabricante[f] = (fabricante[f] || 0) + 1;
+            });
+            updateChartData(allCharts.fabricanteChart, Object.keys(fabricante), Object.values(fabricante), '#28a745');
+            
+            // Por transportadora
+            const transportadora = {};
+            fleetData.forEach(v => {
+                const t = v.transportadora || v.Transportadora || 'N/A';
+                transportadora[t] = (transportadora[t] || 0) + 1;
+            });
+            updateChartData(allCharts.transportadoraChart, Object.keys(transportadora), Object.values(transportadora), '#63a3d8');
+            
+            // Por câmbio
+            const cambio = {};
+            fleetData.forEach(v => {
+                const cb = v['tipo de cambio'] || v.cambio || 'N/A';
+                cambio[cb] = (cambio[cb] || 0) + 1;
+            });
+            updateChartData(allCharts.cambioChart, Object.keys(cambio), Object.values(cambio), 
+                ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']);
+            
+            // Por tipo de veículo
+            const tipoVeiculo = {};
+            fleetData.forEach(v => {
+                const tv = v['tipo de veículo'] || v['tipo de veiculo'] || 'N/A';
+                tipoVeiculo[tv] = (tipoVeiculo[tv] || 0) + 1;
+            });
+            updateChartData(allCharts.tipoVeiculoChart, Object.keys(tipoVeiculo), Object.values(tipoVeiculo), '#9B59B6');
+        }
+        
+        function updateUserCharts() {
+            if (!userData || userData.length === 0) return;
+            
+            // Por transportadora
+            const transportadora = {};
+            userData.forEach(u => {
+                const t = u.transportadora || u.Transportadora || 'N/A';
+                transportadora[t] = (transportadora[t] || 0) + 1;
+            });
+            updateChartData(allCharts.usuariosTransportadoraChart, Object.keys(transportadora), 
+                Object.values(transportadora), '#63a3d8');
+            
+            // Por unidade
+            const unidade = {};
+            userData.forEach(u => {
+                const un = u.unidade || u.Unidade || 'N/A';
+                unidade[un] = (unidade[un] || 0) + 1;
+            });
+            updateChartData(allCharts.usuariosUnidadeChart, Object.keys(unidade), Object.values(unidade), '#63a3d8');
+            
+            // Por designação (Top 5)
+            const designacao = {};
+            userData.forEach(u => {
+                const d = u.designacao || u.Designação || 'N/A';
+                designacao[d] = (designacao[d] || 0) + 1;
+            });
+            const top5Designacao = Object.entries(designacao).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            updateChartData(allCharts.designacaoChart, top5Designacao.map(e => e[0]), 
+                top5Designacao.map(e => e[1]), ['#63a3d8', '#28a745', '#ffc107', '#dc3545', '#17a2b8']);
+        }
+        
+        function updateAtivosCharts() {
+            if (!ativosData || ativosData.length === 0) return;
+            
+            // Por região
+            const regiao = {};
+            ativosData.forEach(a => {
+                const r = a.REGIAO || 'N/A';
+                regiao[r] = (regiao[r] || 0) + 1;
+            });
+            updateChartData(allCharts.ativosRegiaoChart, Object.keys(regiao), Object.values(regiao), '#0033A0');
+            
+            // Por tipo de veículo
+            const tipo = {};
+            ativosData.forEach(a => {
+                const t = a['TIPO DE VEICULO'] || a['TIPO DE VEÍCULO'] || 'N/A';
+                tipo[t] = (tipo[t] || 0) + 1;
+            });
+            updateChartData(allCharts.ativosTipoChart, Object.keys(tipo), Object.values(tipo), '#1E90FF');
+            
+            // Por fabricante
+            const fabricante = {};
+            ativosData.forEach(a => {
+                const f = a.FABRICANTE || 'N/A';
+                fabricante[f] = (fabricante[f] || 0) + 1;
+            });
+            updateChartData(allCharts.ativosFabricanteChart, Object.keys(fabricante), Object.values(fabricante), 
+                ['#0033A0', '#1E90FF', '#4169E1', '#0056B3', '#0073E6']);
+        }
+
+        function updateExcecoesCharts() {
+            if (!excecoesData || excecoesData.length === 0) return;
+
+            // Top 5 Tipos de Exceção
+            const tipos = {};
+            excecoesData.forEach(e => {
+                const tipo = e['Tipo de Exceção'] || e['TIPO DE EXCEÇÃO'] || 'N/A';
+                tipos[tipo] = (tipos[tipo] || 0) + 1;
+            });
+            const topTipos = Object.entries(tipos).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            updateChartData(allCharts.tiposExcecaoChart, topTipos.map(t => t[0]), topTipos.map(t => t[1]), 
+                ['#dc3545', '#ffc107', '#17a2b8', '#28a745', '#6f42c1']);
+
+            // Exceções por Região
+            const regioes = {};
+            excecoesData.forEach(e => {
+                const grupoDispositivo = e['Grupo de dispositivo'] || '';
+                const match = grupoDispositivo.match(/REG_[A-Z\s]+/);
+                const regiao = match ? match[0] : 'SEM CADASTRO';
+                regioes[regiao] = (regioes[regiao] || 0) + 1;
+            });
+            updateChartData(allCharts.excecoesPorRegiaoChart, Object.keys(regioes), Object.values(regioes), '#63a3d8');
+
+            // Exceções por Transportadora
+            const transportadoras = {};
+            excecoesData.forEach(e => {
+                const grupoDispositivo = e['Grupo de dispositivo'] || '';
+                const match = grupoDispositivo.match(/TRS_[A-Z0-9]+/);
+                const transportadora = match ? match[0] : 'SEM CADASTRO';
+                transportadoras[transportadora] = (transportadoras[transportadora] || 0) + 1;
+            });
+            const topTransp = Object.entries(transportadoras).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            updateChartData(allCharts.excecoesPorTransportadoraChart, topTransp.map(t => t[0]), topTransp.map(t => t[1]), '#e60000');
+
+            // Exceções por Unidade
+            const unidades = {};
+            excecoesData.forEach(e => {
+                const grupoDispositivo = e['Grupo de dispositivo'] || '';
+                const match = grupoDispositivo.match(/UNI_[A-Z\s0-9]+/);
+                const unidade = match ? match[0] : 'SEM CADASTRO';
+                unidades[unidade] = (unidades[unidade] || 0) + 1;
+            });
+            const topUnidades = Object.entries(unidades).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            updateChartData(allCharts.excecoesPorUnidadeChart, topUnidades.map(u => u[0]), topUnidades.map(u => u[1]), '#28a745');
+
+            // Severidade
+            const severidade = {};
+            excecoesData.forEach(e => {
+                const sev = e['Severidade'] || e['SEVERIDADE'] || 'Normal';
+                severidade[sev] = (severidade[sev] || 0) + 1;
+            });
+            updateChartData(allCharts.severidadeExcecaoChart, Object.keys(severidade), Object.values(severidade), 
+                ['#dc3545', '#ffc107', '#17a2b8']);
+
+            // Motorista Identificado vs Não Identificado
+            const identificado = excecoesData.filter(e => e['Motorista Identificado'] === 'Sim' || e['MOTORISTA IDENTIFICADO'] === 'SIM').length;
+            const naoIdentificado = excecoesData.length - identificado;
+            updateChartData(allCharts.motoristasIdentificadosChart, ['Identificado', 'Não Identificado'], [identificado, naoIdentificado], 
+                ['#28a745', '#dc3545']);
+
+            // Top 10 Motoristas com Exceções
+            const motoristas = {};
+            excecoesData.forEach(e => {
+                let motorista = (e['Nome'] || e['Motorista'] || '0');
+                // Substituir "0" por "MOTORISTA NÃO IDENTIFICADO"
+                if (motorista === '0' || motorista === '' || motorista === 'N/A') {
+                    motorista = 'MOTORISTA NÃO IDENTIFICADO';
+                }
+                motoristas[motorista] = (motoristas[motorista] || 0) + 1;
+            });
+            const topMotoristasExcecoes = Object.entries(motoristas).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            updateChartData(allCharts.motoristasExcecaoChart, topMotoristasExcecoes.map(m => m[0]), topMotoristasExcecoes.map(m => m[1]), '#e60000');
+
+            // Veículos com Mais Exceções
+            const veiculos = {};
+            excecoesData.forEach(e => {
+                const veiculo = e['Identificador do Veículo'] || e['IDENTIFICADOR DO VEÍCULO'] || e['Dispositivo'] || 'N/A';
+                veiculos[veiculo] = (veiculos[veiculo] || 0) + 1;
+            });
+            const topVeiculos = Object.entries(veiculos).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            updateChartData(allCharts.veiculosExcecaoChart, topVeiculos.map(v => v[0]), topVeiculos.map(v => v[1]), 
+                ['#63a3d8', '#e60000', '#FFD700', '#28a745', '#9B59B6']);
+
+            // Exceções por Status
+            const status = {};
+            excecoesData.forEach(e => {
+                const s = e['Status'] || e['STATUS'] || 'Aberto';
+                status[s] = (status[s] || 0) + 1;
+            });
+            updateChartData(allCharts.excecoesStatusChart, Object.keys(status), Object.values(status), 
+                ['#28a745', '#dc3545', '#ffc107']);
+
+            // Exceções por Período do Dia
+            const tempo = {};
+            excecoesData.forEach(e => {
+                const hora = e['Hora'] || e['Data/Hora'] || '00:00';
+                const h = parseInt(hora.split(':')[0]);
+                let periodo;
+                if (h >= 6 && h < 12) periodo = 'Manhã (6-12)';
+                else if (h >= 12 && h < 18) periodo = 'Tarde (12-18)';
+                else if (h >= 18 && h < 24) periodo = 'Noite (18-24)';
+                else periodo = 'Madrugada (0-6)';
+                tempo[periodo] = (tempo[periodo] || 0) + 1;
+            });
+            updateChartData(allCharts.excecoesTempoChart, Object.keys(tempo), Object.values(tempo), 
+                ['#ffc107', '#ff6b6b', '#4ecdc4', '#45b7d1']);
+        }
+
+        function updateAdditionalCharts() {
+            // Ativos por Transportadora
+            if (ativosData && ativosData.length > 0) {
+                const transpAtivos = {};
+                ativosData.forEach(a => {
+                    const t = a.TRANSPORTADORA || 'N/A';
+                    transpAtivos[t] = (transpAtivos[t] || 0) + 1;
+                });
+                const topTranspAtivos = Object.entries(transpAtivos).sort((a, b) => b[1] - a[1]).slice(0, 10);
+                updateChartData(allCharts.ativosTransportadoraChart, topTranspAtivos.map(t => t[0]), topTranspAtivos.map(t => t[1]), '#e60000');
+
+                // Ativos por Unidade
+                const unidadeAtivos = {};
+                ativosData.forEach(a => {
+                    const u = a.UNIDADE || a['Unidade'] || 'N/A';
+                    unidadeAtivos[u] = (unidadeAtivos[u] || 0) + 1;
+                });
+                const topUnidadeAtivos = Object.entries(unidadeAtivos).sort((a, b) => b[1] - a[1]).slice(0, 10);
+                updateChartData(allCharts.ativosUnidadeChart, topUnidadeAtivos.map(u => u[0]), topUnidadeAtivos.map(u => u[1]), '#1E90FF');
+
+                // Frota por Localização (usar como Região/Local)
+                const localizacao = {};
+                ativosData.forEach(a => {
+                    const loc = a['REGIÃO'] || a['LOCALIZAÇÃO'] || 'N/A';
+                    localizacao[loc] = (localizacao[loc] || 0) + 1;
+                });
+                updateChartData(allCharts.frotalocalizacaoChart, Object.keys(localizacao), Object.values(localizacao), '#63a3d8');
+            }
+
+            // Motoristas por Transportadora
+            if (userData && userData.length > 0) {
+                const transpMotoristas = {};
+                userData.forEach(u => {
+                    const t = u.transportadora || u.Transportadora || 'N/A';
+                    transpMotoristas[t] = (transpMotoristas[t] || 0) + 1;
+                });
+                const topTranspMotoristas = Object.entries(transpMotoristas).sort((a, b) => b[1] - a[1]).slice(0, 10);
+                updateChartData(allCharts.motoristasTransportadoraChart, topTranspMotoristas.map(t => t[0]), topTranspMotoristas.map(t => t[1]), '#4ECDC4');
+            }
+
+            // Risco de Colisão - Múltiplos Gráficos (usar nomes reais do CSV)
+            const riscoColisaoData = localStorage.getItem('riscoColisaoData') ? JSON.parse(localStorage.getItem('riscoColisaoData')) : [];
+            if (riscoColisaoData && riscoColisaoData.length > 0) {
+                const dados = riscoColisaoData;
+
+                // 1. Risco por Classificação (usa 'Classificação de risco de colisão')
+                const classificacao = { 'Alto': 0, 'Moderado': 0, 'Baixo': 0 };
+                dados.forEach(d => {
+                    const c = (d['Classificação de risco de colisão'] || '').toString().trim();
+                    if (c && classificacao.hasOwnProperty(c)) classificacao[c]++;
+                });
+                if (allCharts.riscoPorClassificacao) {
+                    updateChartData(allCharts.riscoPorClassificacao, Object.keys(classificacao), Object.values(classificacao), ['#d32f2f', '#FDD835', '#43a047']);
+                }
+
+                // 2. Top Veículos (usa 'Placa' e 'Risco de colisão')
+                const veiculos = dados
+                    .filter(d => d['Risco de colisão'])
+                    .sort((a, b) => parseFloat(b['Risco de colisão'] || 0) - parseFloat(a['Risco de colisão'] || 0))
+                    .slice(0, 10);
+                if (allCharts.topVeiculos) {
+                    updateChartData(allCharts.topVeiculos, veiculos.map(v => v['Placa'] || 'N/A'), veiculos.map(v => parseFloat(v['Risco de colisão']) || 0), '#d32f2f');
+                }
+
+                // 3. Risco por Transportadora (extrair de 'Grupo' com regex TRS_...)
+                const transportadoras = {};
+                dados.forEach(d => {
+                    const grupo = d['Grupo'] || '';
+                    const match = grupo.match(/TRS_([A-Z0-9_]+)/);
+                    const trs = match ? match[1] : 'Outro';
+                    const risco = parseFloat(d['Risco de colisão']) || 0;
+                    if (!transportadoras[trs]) transportadoras[trs] = { sum: 0, count: 0 };
+                    transportadoras[trs].sum += risco;
+                    transportadoras[trs].count += 1;
+                });
+                const trsLabels = Object.keys(transportadoras).sort();
+                const trsMedias = trsLabels.map(t => +(transportadoras[t].sum / transportadoras[t].count).toFixed(2));
+                if (allCharts.riscoPorTransportadora) {
+                    updateChartData(allCharts.riscoPorTransportadora, trsLabels, trsMedias, '#1976d2');
+                }
+
+                // 4. Comportamento Comparativo (Velocidade / Frenagem / Curvas)
+                const comportamentos = {
+                    'Velocidade': { 'Melhor': 0, 'Ótimo': 0, 'Médio': 0, 'Em risco': 0, 'Baixo': 0 },
+                    'Frenagem': { 'Melhor': 0, 'Ótimo': 0, 'Médio': 0, 'Em risco': 0, 'Baixo': 0 },
+                    'Curvas': { 'Melhor': 0, 'Ótimo': 0, 'Médio': 0, 'Em risco': 0, 'Baixo': 0 }
+                };
+                dados.forEach(d => {
+                    const vel = d['Excesso de velocidade'] || d['Velocidade'] || '';
+                    const fren = d['Frenagem'] || '';
+                    const curv = d['Curvas'] || '';
+                    if (vel && comportamentos['Velocidade'].hasOwnProperty(vel)) comportamentos['Velocidade'][vel]++;
+                    if (fren && comportamentos['Frenagem'].hasOwnProperty(fren)) comportamentos['Frenagem'][fren]++;
+                    if (curv && comportamentos['Curvas'].hasOwnProperty(curv)) comportamentos['Curvas'][curv]++;
+                });
+                if (allCharts.comportamentoComparativo) {
+                    const labels = Object.keys(comportamentos['Velocidade']);
+                    allCharts.comportamentoComparativo.data.labels = labels;
+                    allCharts.comportamentoComparativo.data.datasets = [
+                        { label: 'Velocidade', data: Object.values(comportamentos['Velocidade']), backgroundColor: '#d32f2f' },
+                        { label: 'Frenagem', data: Object.values(comportamentos['Frenagem']), backgroundColor: '#f57c00' },
+                        { label: 'Curvas', data: Object.values(comportamentos['Curvas']), backgroundColor: '#1976d2' }
+                    ];
+                    allCharts.comportamentoComparativo.update();
+                }
+
+                // 5. Risco vs Benchmark (scatter) - sem sanitização, dados brutos
+                const scatter = dados.filter(d => d['Risco de colisão'] && d['Benchmark']).slice(0, 50).map(d => ({ x: parseFloat(d['Benchmark']) || 0, y: parseFloat(d['Risco de colisão']) || 0 }));
+                if (allCharts.riscoVsBenchmark && scatter.length > 0) {
+                    allCharts.riscoVsBenchmark.data.datasets[0].data = scatter;
+                    allCharts.riscoVsBenchmark.update();
+                }
+
+                // 6. Distribuição de Segurança (line chart)
+                const seguranca = {};
+                dados.forEach(d => {
+                    const s = d['Classificação de segurança (quanto maior, mais seguro)'] || '';
+                    if (s && s.toString().trim() !== '') seguranca[s] = (seguranca[s] || 0) + 1;
+                });
+                const segLabels = Object.keys(seguranca).sort((a,b) => parseInt(a) - parseInt(b));
+                const segData = segLabels.map(l => seguranca[l]);
+                if (allCharts.distribuicaoSeguranca && segLabels.length > 0) {
+                    allCharts.distribuicaoSeguranca.data.labels = segLabels;
+                    allCharts.distribuicaoSeguranca.data.datasets[0].data = segData;
+                    allCharts.distribuicaoSeguranca.update();
+                }
+            }
+        }
+        
+        function sanitizeLabelsData(labels, data) {
+            const outLabels = [];
+            const outData = [];
+            for (let i = 0; i < labels.length; i++) {
+                const lbl = (labels[i] || '').toString().trim();
+                const val = Number(data[i]) || 0;
+                if (!lbl) continue;
+                if (lbl === 'N/A' || lbl === '0' || lbl === 'SEM CADASTRO') continue;
+                if (val <= 0) continue;
+                outLabels.push(lbl);
+                outData.push(val);
+            }
+            return { labels: outLabels, data: outData };
+        }
+
+        function updateChartData(chart, labels, data, colors) {
+            if (!chart) return;
+            const slideId = chart.canvas.id;
+            const slideEl = document.getElementById(slideId + 'Slide');
+
+            const sanitized = sanitizeLabelsData(labels, data);
+            // se não houver dados válidos, travar/esconder o slide
+            if (!sanitized.labels.length) {
+                if (slideEl) {
+                    slideEl.dataset.locked = 'true';
+                    slideEl.style.display = 'none';
+                }
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.update();
+                return;
+            }
+
+            // mostrar slide e destravar
+            if (slideEl) {
+                slideEl.dataset.locked = 'false';
+                slideEl.style.display = '';
+            }
+
+            const total = sanitized.data.reduce((s, v) => s + v, 0);
+            const labelsWithCounts = sanitized.labels.map((l, i) => {
+                const cnt = sanitized.data[i];
+                const pct = total ? Math.round((cnt / total) * 100) : 0;
+                return `${l} — ${cnt} (${pct}%)`;
+            });
+
+            chart.data.labels = labelsWithCounts;
+            chart.data.datasets[0].data = sanitized.data;
+            if (Array.isArray(colors)) {
+                chart.data.datasets[0].backgroundColor = colors;
+            } else {
+                // gerar paleta variada quando passada apenas uma cor
+                const needed = sanitized.data.length;
+                const palette = [];
+                for (let i = 0; i < needed; i++) {
+                    palette.push(DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+                }
+                chart.data.datasets[0].backgroundColor = palette;
+            }
+            chart.update();
+        }
+        
+        function showSlide(index) {
+            // Remover classe active de todos os slides
+            document.querySelectorAll('.chart-slide').forEach(slide => {
+                slide.classList.remove('active');
+            });
+
+            // Encontrar próximo slide disponível (não travado)
+            let attempts = 0;
+            let idx = index;
+            let slideElement = null;
+            while (attempts < slides.length) {
+                slideElement = document.getElementById(slides[idx].id + 'Slide');
+                if (slideElement && slideElement.dataset.locked !== 'true') break;
+                idx = (idx + 1) % slides.length;
+                attempts++;
+            }
+
+            if (!slideElement || slideElement.dataset.locked === 'true') {
+                // nenhum slide disponível
+                document.getElementById('slideCounter').textContent = `0 / 0`;
+                return;
+            }
+
+            // Exibir slide encontrado
+            slideElement.classList.add('active');
+            currentSlide = idx;
+
+            // Atualizar counter
+            document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${slides.length}`;
+
+            // Reiniciar animação da barra de progresso
+            const progressFill = slideElement.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.animation = 'none';
+                setTimeout(() => {
+                    progressFill.style.animation = `progress linear ${autoPlayDelay}ms forwards`;
+                }, 10);
+            }
+        }
+        
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }
+        
+        function previousSlide() {
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(currentSlide);
+        }
+        
+        function startAutoPlay() {
+            autoPlayInterval = setInterval(() => {
+                nextSlide();
+            }, autoPlayDelay);
+        }
+        
+        function toggleAutoPlay() {
+            isAutoPlay = !isAutoPlay;
+            
+            const playBtn = document.getElementById('playBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const statusBadge = document.getElementById('statusBadge');
+            
+            if (isAutoPlay) {
+                startAutoPlay();
+                playBtn.style.display = 'none';
+                pauseBtn.style.display = 'flex';
+                if (statusBadge) {
+                    statusBadge.classList.remove('paused');
+                    statusBadge.innerHTML = '<i class="bi bi-play-fill"></i> AO VIVO';
+                }
+            } else {
+                clearInterval(autoPlayInterval);
+                playBtn.style.display = 'flex';
+                pauseBtn.style.display = 'none';
+                if (statusBadge) {
+                    statusBadge.classList.add('paused');
+                    statusBadge.innerHTML = '<i class="bi bi-pause-fill"></i> PAUSADO';
+                }
+            }
+        }
+        
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('timeDisplay').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        
+        // Iniciar o primeiro slide após breve espera para permitir carregamento de dados
+        setTimeout(() => showSlide(0), 600);
+    </script>
+</body>
+</html>

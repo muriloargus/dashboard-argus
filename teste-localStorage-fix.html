@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste localStorage + IndexedDB</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #63a3d8;
+        }
+        button {
+            background: #63a3d8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4a8fb8;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .ok {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-line {
+            padding: 2px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Recuperação: localStorage + IndexedDB</h1>
+    
+    <div class="test-box">
+        <h2>✅ Teste 1: localStorage.setItem (teste de travamento)</h2>
+        <p>Este teste verifica se localStorage.setItem não trava a UI</p>
+        <button onclick="testeLocalStorage()">Testar localStorage</button>
+        <div id="status1" class="status info" style="display:none;"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>✅ Teste 2: Dark Mode (usa localStorage)</h2>
+        <p>Verifica se dark mode funciona com localStorage</p>
+        <button onclick="testeScriptTag()">Carrega idb-manager.js + storage-adapter.js</button>
+        <button onclick="testeDarkMode()">Ativa Dark Mode</button>
+        <div id="status2" class="status info" style="display:none;"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>📊 Teste 3: Simula localStorage sobrecarregado</h2>
+        <p>Tenta salvar dados grandes em localStorage</p>
+        <button onclick="testeDataGrande()">Salvar 1MB de dados</button>
+        <div id="status3" class="status info" style="display:none;"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>📋 Console do Teste</h2>
+        <div id="log" class="log"></div>
+    </div>
+
+    <!-- Carrega os scripts -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+
+    <script>
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.textContent = '> ' + msg;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function showStatus(id, msg, type = 'info') {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = `status ${type}`;
+            el.style.display = 'block';
+        }
+
+        async function testeLocalStorage() {
+            log('Iniciando teste 1: localStorage.setItem...');
+            const start = performance.now();
+            
+            try {
+                localStorage.setItem('teste_fix', 'valor_teste_' + Date.now());
+                const elapsed = performance.now() - start;
+                const valor = localStorage.getItem('teste_fix');
+                
+                log(`✅ localStorage.setItem funcionou em ${elapsed.toFixed(2)}ms`);
+                log(`📝 Valor salvo: ${valor}`);
+                
+                showStatus('status1', `✅ localStorage funcionando! Tempo: ${elapsed.toFixed(2)}ms`, 'ok');
+            } catch (err) {
+                log(`❌ Erro: ${err.message}`);
+                showStatus('status1', `❌ Erro ao salvar: ${err.message}`, 'error');
+            }
+        }
+
+        async function testeScriptTag() {
+            log('Verificando se idb-manager.js e storage-adapter.js carregaram...');
+            
+            if (typeof IDBManager !== 'undefined') {
+                log('✅ IDBManager carregado');
+            } else {
+                log('❌ IDBManager NÃO encontrado');
+            }
+            
+            if (typeof StorageAdapter !== 'undefined') {
+                log('✅ StorageAdapter carregado');
+            } else {
+                log('❌ StorageAdapter NÃO encontrado');
+            }
+            
+            if (typeof idb !== 'undefined') {
+                log('✅ Instância global "idb" disponível');
+                log(`   IndexedDB pronto: ${idb.isReady}`);
+            } else {
+                log('❌ Instância global "idb" NÃO encontrada');
+            }
+            
+            if (typeof storageAdapter !== 'undefined') {
+                log('✅ Instância global "storageAdapter" disponível');
+                showStatus('status2', '✅ Scripts carregados corretamente', 'ok');
+            } else {
+                log('❌ Instância global "storageAdapter" NÃO encontrada');
+                showStatus('status2', '❌ Erro ao carregar scripts', 'error');
+            }
+        }
+
+        async function testeDarkMode() {
+            log('Testando dark mode (localStorage)...');
+            const start = performance.now();
+            
+            try {
+                // Simula o que o dashboard faz
+                const isDark = !document.body.classList.contains('dark');
+                document.body.classList.toggle('dark');
+                
+                // Tenta salvar em localStorage
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+                
+                const elapsed = performance.now() - start;
+                const saved = localStorage.getItem('darkMode');
+                
+                log(`✅ Dark mode toggle funcionou em ${elapsed.toFixed(2)}ms`);
+                log(`📝 darkMode salvo em localStorage como: ${saved}`);
+                
+                showStatus('status2', `✅ Dark mode funcionando! Tempo: ${elapsed.toFixed(2)}ms`, 'ok');
+            } catch (err) {
+                log(`❌ Erro ao salvar darkMode: ${err.message}`);
+                showStatus('status2', `❌ Erro: ${err.message}`, 'error');
+            }
+        }
+
+        async function testeDataGrande() {
+            log('Testando salvamento de dados grandes (1MB)...');
+            
+            try {
+                // Cria string de 1MB
+                const data = 'A'.repeat(1024 * 1024);
+                const start = performance.now();
+                
+                // Tenta salvar em localStorage
+                try {
+                    localStorage.setItem('teste_1mb', data);
+                    const elapsed = performance.now() - start;
+                    log(`⚠️ 1MB salvo em localStorage em ${elapsed.toFixed(2)}ms (quota pode estar quase cheia)`);
+                    showStatus('status3', '⚠️ localStorage aceita dados grandes mas está quase no limite', 'info');
+                } catch (err) {
+                    const elapsed = performance.now() - start;
+                    log(`⚠️ localStorage quota excedida após ${elapsed.toFixed(2)}ms`);
+                    log(`   Tentando com storageAdapter (IndexedDB)...`);
+                    
+                    // Tenta com IndexedDB
+                    if (typeof storageAdapter !== 'undefined') {
+                        await storageAdapter.setItemAsync('teste_1mb_idb', data);
+                        log('✅ Dados salvos em IndexedDB com sucesso!');
+                        showStatus('status3', '✅ IndexedDB funciona como fallback para dados grandes', 'ok');
+                    }
+                }
+            } catch (err) {
+                log(`❌ Erro: ${err.message}`);
+                showStatus('status3', `❌ Erro: ${err.message}`, 'error');
+            }
+        }
+
+        // Auto-load scripts info on startup
+        window.addEventListener('load', () => {
+            log('🚀 Página carregada!');
+            setTimeout(testeScriptTag, 1000);
+        });
+    </script>
+    
+    <style>
+        body.dark {
+            background: #1a1a1a;
+            color: #fff;
+        }
+        body.dark .test-box {
+            background: #2a2a2a;
+            border-left-color: #63a3d8;
+        }
+        body.dark .log {
+            background: #1a1a1a;
+            border-color: #444;
+        }
+    </style>
+</body>
+</html>

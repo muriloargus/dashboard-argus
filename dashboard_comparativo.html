@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telemetria CCO - Comparativo Motoristas x Ativos</title>
+
+  <!-- LIBS -->
+  <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+  <script src="idb-manager.js"></script>
+  <script src="storage-adapter.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+  <style>
+    :root {
+      --primary-color: #63a3d8;
+      --primary-dark: #4a8fb8;
+      --secondary-color: #e60000;
+      --accent-color: #FFD700;
+      --success-color: #28a745;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --light-color: #f8fafc;
+      --dark-color: #1a1a1a;
+      --sidebar-width: 280px;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-700: #374151;
+      --card-dark: #081226;
+      --border-dark: rgba(255, 255, 255, 0.1);
+      --border-light: #e5e7eb;
+      --muted: #6b7280;
+    }
+    
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: var(--light-color);
+      color: var(--dark-color);
+      line-height: 1.6;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px;
+      height: 100vh;
+      position: fixed;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+      border-right: 1px solid rgba(255, 215, 0, 0.1);
+    }
+
+    .sidebar-header {
+      padding: 20px 0;
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .sidebar-header i {
+      font-size: 1.8rem;
+      color: var(--accent-color);
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar-menu li {
+      margin-bottom: 5px;
+    }
+
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      gap: 12px;
+      position: relative;
+    }
+
+    .sidebar-menu a::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent-color);
+      border-radius: 0 3px 3px 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background: rgba(255, 215, 0, 0.15);
+      color: #FFF44F;
+      padding-left: 12px;
+    }
+
+    .sidebar-menu a.active::before {
+      opacity: 1;
+    }
+
+    .sidebar-menu a i {
+      width: 24px;
+      font-size: 1.1rem;
+    }
+
+    .sidebar-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.85rem;
+      text-align: center;
+      position: absolute;
+      bottom: 20px;
+      width: calc(var(--sidebar-width) - 40px);
+    }
+
+    .main-wrapper {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      overflow: auto;
+    }
+
+    body.dark {
+      background: var(--dark-color);
+      color: var(--light-color);
+    }
+
+    .topo {
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-color));
+      color: #fff;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 51, 160, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 2000;
+    }
+
+    .topo .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      background: white;
+      padding: 8px 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo.argus {
+      height: 48px;
+    }
+
+    .logo.ambev {
+      height: 36px;
+    }
+
+    .topo .titulo {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+
+    .topo .titulo small {
+      display: block;
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.95;
+      margin-top: 4px;
+    }
+
+    .topo .btn-toggle {
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: rgba(255, 215, 0, 0.3);
+      border: 2px solid var(--accent-color);
+      color: #fff;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .topo .btn-toggle:hover {
+      background: rgba(255, 215, 0, 0.5);
+      transform: scale(1.05);
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    input[type="file"],
+    select,
+    input[type="text"] {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 2px solid var(--primary-color);
+      font-size: 14px;
+      background: var(--white);
+      color: var(--dark-color);
+      font-weight: 600;
+    }
+
+    body.dark input[type="file"],
+    body.dark select,
+    body.dark input[type="text"] {
+      background: var(--card-dark);
+      color: var(--light-color);
+      border-color: var(--border-dark);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 6px 18px rgba(0, 51, 160, 0.12);
+      border: 2px solid var(--accent-color);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    body.dark .card {
+      background: var(--card-dark);
+      border-color: var(--border-dark);
+    }
+
+    .card span {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .card h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    body.dark .card h2 {
+      color: var(--accent-color);
+    }
+
+    .card.ratio h2 {
+      color: var(--accent-color);
+      font-size: 28px;
+    }
+
+    .box {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 6px 18px rgba(0, 51, 160, 0.12);
+      border: 2px solid var(--primary-color);
+      min-height: 450px;
+    }
+
+    body.dark .box {
+      background: var(--card-dark);
+      border-color: var(--border-dark);
+    }
+
+    .box h3 {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-color);
+    }
+
+    canvas {
+      max-height: 400px;
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    .apexcharts-canvas {
+      margin: 0 auto;
+    }
+
+    .apexcharts-legend {
+      justify-content: center !important;
+    }
+
+    #g1, #g4 {
+      width: 100%;
+      min-height: 350px;
+    }
+
+
+    .dashboard-description {
+      color: #666;
+      font-size: 0.95rem;
+      margin: 8px 0 0 0;
+      line-height: 1.4;
+      max-width: 600px;
+    }
+    .dark .dashboard-description {
+      color: #aaa;
+    }
+    
+    /* INSIGHTS CONTAINER - PADRÃO */
+    .insights-container {
+        background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border-left: 5px solid var(--primary-color);
+        box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+    }
+
+    body.dark .insights-container {
+        background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+        box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+    }
+
+    .insights-card h2 {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+    }
+
+    body.dark .insights-card h2 {
+        color: #63a3d8;
+    }
+
+    .insight-section {
+        margin-bottom: 20px;
+    }
+
+    .insight-section h3 {
+        color: #333;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+        font-weight: 600;
+        display: flex;
+        gap: 8px;
+    }
+
+    body.dark .insight-section h3 {
+        color: rgba(255,255,255,0.9);
+    }
+
+    .insight-section p {
+        color: #555;
+        line-height: 1.6;
+        font-size: 14px;
+        padding: 10px;
+        background: white;
+        border-radius: 6px;
+        border-left: 3px solid var(--accent-color);
+    }
+
+    body.dark .insight-section p {
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.85);
+    }
+
+    .insight-section ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .insight-section li {
+        color: #555;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        background: white;
+        border-radius: 6px;
+        font-size: 14px;
+        border-left: 3px solid var(--primary-color);
+        line-height: 1.5;
+    }
+
+    body.dark .insight-section li {
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.85);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .table-container {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 6px 18px rgba(0, 51, 160, 0.12);
+      border: 2px solid var(--accent-color);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    body.dark .table-container {
+      background: var(--card-dark);
+      border-color: var(--border-dark);
+    }
+
+    .table-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: var(--primary-color);
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    body.dark th,
+    body.dark td {
+      border-color: var(--border-dark);
+    }
+
+    th {
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    tbody tr:hover {
+      background: rgba(0, 51, 160, 0.04);
+    }
+
+    body.dark tbody tr:hover {
+      background: rgba(0, 51, 160, 0.2);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(0, 51, 160, 0.02);
+    }
+
+    body.dark tbody tr:nth-child(even) {
+      background: rgba(0, 51, 160, 0.1);
+    }
+
+    .ok {
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .warning {
+      color: var(--warning);
+      font-weight: 700;
+    }
+
+    .alert {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 20px;
+      border-top: 2px solid var(--accent-color);
+    }
+
+    body.dark .footer {
+      border-color: var(--accent-color);
+    }
+
+    button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 2px solid var(--primary-color);
+      background: var(--primary-color);
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: var(--primary-color);
+      box-shadow: 0 4px 12px rgba(0, 51, 160, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .filters {
+        grid-template-columns: 1fr;
+      }
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      table {
+        font-size: 12px;
+      }
+      th, td {
+        padding: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<style>
+/* Dark mode aprimorado (injetado automaticamente) */
+body.dark {
+  background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+  color: var(--light-color);
+}
+body.dark .sidebar {
+  background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+  box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+  border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .main-content { background: linear-gradient(135deg, #071124 0%, #0b1726 100%); }
+body.dark .topo {
+  background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+  color: #fff !important;
+}
+body.dark .card, body.dark .chart-card, body.dark .kpi-card { background: #081226; color: var(--light-color); border-color: rgba(255,255,255,0.03); }
+body.dark .label, body.dark .kpi-title { color: rgba(255,255,255,0.8); }
+body.dark .value, body.dark .chart-title { color: var(--accent-color); }
+body.dark table th { background: var(--primary-dark); color: white; }
+body.dark table td { color: var(--light-color); border-color: rgba(255,255,255,0.06); }
+body.dark .sidebar-menu a:hover,
+body.dark .sidebar-menu a.active {
+  background: rgba(255, 215, 0, 0.15);
+  color: #FFF44F;
+}
+</style>
+
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+      <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+      <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
+      <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+      <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
+      <li><a href="dashboard_comparativo.html" class="active"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+      <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
+            <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+            <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
+      <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
+      <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+      <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <p></p>
+    </div>
+  </nav>
+
+  <div class="main-wrapper">
+  <header class="topo">
+    <div class="logo-container">
+      <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
+      <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
+    </div>
+    <div class="titulo">
+      Telemetria CCO
+      <small>Comparativo Motoristas × Ativos</small>
+    </div>
+    <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+  </header>
+
+  <div class="container">
+    <div class="filters">
+      <input type="file" id="file-motoristas" accept=".csv" placeholder="Motoristas CSV">
+      <input type="file" id="file-ativos" accept=".csv" placeholder="Ativos CSV">
+      <select id="transportadora">
+        <option value="">Todas Transportadoras</option>
+      </select>
+      <select id="unidade">
+        <option value="">Todas Unidades</option>
+      </select>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <span>👤 Total Motoristas</span>
+        <h2 id="card1">0</h2>
+      </div>
+      <div class="card">
+        <span>🚚 Total Ativos</span>
+        <h2 id="card2">0</h2>
+      </div>
+      <div class="card">
+        <span>✅ Motoristas com NFC</span>
+        <h2 id="card4">0%</h2>
+      </div>
+    </div>
+
+    <h2 style="color: var(--primary-color); margin: 24px 0 16px; font-size: 20px;">📊 Análise Comparativa</h2>
+    
+    <!-- Insights Section -->
+    <!-- Storytelling de Dados -->
+    <div id="insightsContainer" class="insights-container" style="display: none;">
+        <div class="insights-card">
+            <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+            
+            <div class="insight-section">
+                <h3>🎯 Situação Principal</h3>
+                <p id="insightPrincipal">Carregando análise...</p>
+            </div>
+
+            <div class="insight-section">
+                <h3>📈 Padrões Detectados</h3>
+                <ul id="insightPadroes">
+                    <li>Carregando padrões...</li>
+                </ul>
+            </div>
+
+            <div class="insight-section">
+                <h3>💡 Recomendações</h3>
+                <ul id="insightRecomendacoes">
+                    <li>Carregando recomendações...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; color: var(--primary-color);">
+        <input type="checkbox" id="filtrarSemCadastro" style="width: 18px; height: 18px; cursor: pointer;">
+        <span>Remover "Sem cadastro" e "Sem uni" dos gráficos</span>
+      </label>
+    </div>
+
+    <div class="grid">
+      <div class="box">
+        <h3>Distribuição por Transportadora (Top 5)</h3>
+        <div id="g1"></div>
+      </div>
+      <div class="box">
+        <h3>Distribuição por Unidade (Top 5)</h3>
+        <div id="g4"></div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <h3 class="table-title">📋 Detalhamento por Transportadora</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Transportadora</th>
+            <th>Unidade</th>
+            <th>Motoristas</th>
+            <th>Com NFC</th>
+            <th>% NFC</th>
+            <th>Ativos</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">
+              Carregue os arquivos CSV para iniciar a análise
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <p>Dashboard Comparativo CCO - Atualizado em <span id="dataAtual"></span></p>
+      <p style="margin-top: 10px; font-size: 12px; opacity: 0.8;">
+        ℹ️ Carregue o CSV de motoristas e ativos para visualizar a análise cruzada
+      </p>
+    </div>
+  </div>
+
+  <script>
+    function toggleDark() {
+      const isDark = document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+      console.log('Dark mode:', isDark);
+      
+      // Regenerar gráficos quando dark mode é toggled
+      setTimeout(function() {
+        const ft = document.getElementById('transportadora').value;
+        const fu = document.getElementById('unidade').value;
+
+        const motFiltrados = motoristas.filter(x =>
+          (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+        );
+        const ativosFiltrados = ativos.filter(x =>
+          (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+        );
+
+        if (motFiltrados.length > 0 || ativosFiltrados.length > 0) {
+          atualizarGraficos(motFiltrados, ativosFiltrados);
+        }
+      }, 100);
+    }
+
+    // Carregar preferência dark mode ao iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      const darkMode = localStorage.getItem('darkMode');
+      console.log('Carregando dark mode:', darkMode);
+      if (darkMode === 'true') {
+        document.body.classList.add('dark');
+        console.log('Dark mode aplicado ao carregar');
+      }
+
+      // Carregar dados persistidos
+      const savedData = localStorage.getItem('comparativoData');
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData);
+          motoristas = data.motoristas || [];
+          ativos = data.ativos || [];
+          carregarFiltros();
+          processar();
+          console.log('Dados carregados do localStorage');
+        } catch(e) {
+          console.log('Erro ao carregar dados persistidos');
+        }
+      }
+    });
+
+    const hoje = new Date();
+    document.getElementById('dataAtual').textContent = hoje.toLocaleDateString('pt-BR');
+
+    let motoristas = [], ativos = [];
+    let chart1, chart3, chart4;
+
+    const nfcOk = n => {
+      if (!n) return false;
+      const trimmed = n.trim();
+      if (!trimmed || trimmed === "0") return false;
+      // Aceita NFC com 14+ dígitos (formato novo: numérico) ou hexadecimal com 12+ caracteres (formato antigo)
+      return (trimmed.length > 14 && /^[0-9]+$/.test(trimmed)) || (trimmed.length >= 12 && /^[0-9a-fA-F]+$/.test(trimmed));
+    };
+
+    document.getElementById('file-motoristas').onchange = e => carregarCSV('motoristas', e.target.files[0]);
+    document.getElementById('file-ativos').onchange = e => carregarCSV('ativos', e.target.files[0]);
+    document.getElementById('transportadora').onchange = () => { atualizarUnidades(); processar(); };
+    document.getElementById('unidade').onchange = () => processar();
+    document.getElementById('filtrarSemCadastro').onchange = () => processar();
+
+    function extrairTransportadora(grupo) {
+      if (!grupo) return 'Sem cadastro';
+      const match = grupo.match(/TRS_([^,]+)/);
+      if (!match) return 'Sem cadastro';
+      let transp = 'TRS_' + match[1].trim();
+      // Normalizar variações de LOG 20
+      transp = transp.replace(/LOG\s+20/i, 'LOG20').replace(/LOG20\s+/i, 'LOG20');
+      return transp;
+    }
+
+    function extrairUnidade(grupo) {
+      if (!grupo) return 'Sem UNI';
+      const match = grupo.match(/UNI_([^,]+)/);
+      return match ? 'UNI_' + match[1].trim() : 'Sem UNI';
+    }
+
+    function extrairGrupoAtivos(grupo) {
+      const result = {
+        transportadora: 'Sem cadastro',
+        unidade: 'Sem UNI',
+        tipo: 'Sem cadastro',
+        fabricante: 'Sem cadastro'
+      };
+      
+      if (!grupo) return result;
+      
+      // Extrair TRS_
+      const trsMatch = grupo.match(/TRS_([^,]+)/);
+      if (trsMatch) {
+        let transp = 'TRS_' + trsMatch[1].trim();
+        // Normalizar variações de LOG 20
+        transp = transp.replace(/LOG\s+20/i, 'LOG20').replace(/LOG20\s+/i, 'LOG20');
+        result.transportadora = transp;
+      }
+      
+      // Extrair UNI_
+      const uniMatch = grupo.match(/UNI_([^,]+)/);
+      if (uniMatch) result.unidade = 'UNI_' + uniMatch[1].trim();
+      
+      // Extrair fabricante (MERCEDES BENZ, VOLVO, SCANIA, etc.)
+      const fabMatch = grupo.match(/(MERCEDES BENZ|VOLVO|SCANIA|IVECO|FORD|VOLKSWAGEN|JAC|MAM)/i);
+      if (fabMatch) result.fabricante = fabMatch[0].trim();
+      
+      // Extrair tipo de veículo
+      const veiculoMatch = grupo.match(/(CAMINHÃO TOCO|CAVALO MECÂNICO|TRUCK|CAVALO|VEICULO|CARRO)/i);
+      if (veiculoMatch) result.tipo = veiculoMatch[0].trim();
+      
+      return result;
+    }
+
+    function carregarCSV(tipo, file) {
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const primeiraLinha = (text || '').split(/\r\n|\n/)[0] || '';
+        
+        // Detectar delimitador automaticamente
+        let delim = ';';
+        if (primeiraLinha.split(',').length > primeiraLinha.split(';').length) delim = ',';
+        if (primeiraLinha.split('\t').length > primeiraLinha.split(delim).length) delim = '\t';
+        
+        console.log('Delimitador detectado:', delim);
+
+        Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          delimiter: delim,
+          dynamicTyping: false,
+          complete: r => {
+            console.log('CSV parseado. Total de linhas:', r.data.length);
+            if (r.data[0]) console.log('Colunas encontradas:', Object.keys(r.data[0]));
+            
+            if (tipo === 'motoristas') {
+              motoristas = r.data.map(x => {
+                // Buscar colunas case-insensitively
+                const nomeCol = Object.keys(x).find(k => k.toLowerCase().includes('nome')) || '';
+                const cpfCol = Object.keys(x).find(k => k.toLowerCase().includes('cpf')) || '';
+                const nfcCol = Object.keys(x).find(k => k.toLowerCase().includes('nfc')) || '';
+                const grupoCol = Object.keys(x).find(k => k.toLowerCase().includes('grupo')) || '';
+                
+                const grupo = (x[grupoCol] || "").trim();
+                const transportadora = (x.TRANSPORTADORA || x.transportadora || extrairTransportadora(grupo) || "").trim();
+                const unidade = (x.UNIDADE || x.unidade || extrairUnidade(grupo) || "").trim();
+                return {
+                  nome: (x[nomeCol] || "").trim(),
+                  cpf: (x[cpfCol] || "").trim(),
+                  transportadora: transportadora,
+                  unidade: unidade,
+                  nfc: String(x[nfcCol] || "").trim()
+                };
+              }).filter(x => x.nome);
+              console.log('Motoristas carregados:', motoristas.length);
+            } else {
+              ativos = r.data.map(x => {
+                // Buscar colunas case-insensitively
+                const dispositivoCol = Object.keys(x).find(k => k.toLowerCase().includes('dispositivo') && !k.toLowerCase().includes('grupo')) || '';
+                const grupoCol = Object.keys(x).find(k => k.toLowerCase().includes('grupo de dispositivo') || (k.toLowerCase().includes('grupo') && !k.toLowerCase().includes('nome'))) || '';
+                const placaCol = Object.keys(x).find(k => k.toLowerCase().includes('placa')) || '';
+                const fabricanteCol = Object.keys(x).find(k => k.toLowerCase().includes('fabricante')) || '';
+                const tipoCol = Object.keys(x).find(k => k.toLowerCase().includes('tipo de veiculo') || k.toLowerCase().includes('tipo veiculo')) || '';
+                
+                const grupo = (x[grupoCol] || "").trim();
+                const grupoData = extrairGrupoAtivos(grupo);
+                const placa = (x[dispositivoCol] || x[placaCol] || "").trim();
+                const transportadora = (x.TRANSPORTADORA || x.transportadora || grupoData.transportadora || "").trim();
+                const unidade = (x.UNIDADE || x.unidade || grupoData.unidade || "").trim();
+                const tipo = (x[tipoCol] || grupoData.tipo || "").trim();
+                const fabricante = (x[fabricanteCol] || grupoData.fabricante || "").trim();
+                
+                return {
+                  placa: placa,
+                  transportadora: transportadora,
+                  unidade: unidade,
+                  tipo: tipo,
+                  fabricante: fabricante
+                };
+              }).filter(x => x.placa);
+              console.log('Ativos carregados:', ativos.length);
+            }
+
+            carregarFiltros();
+            processar();
+            window.saveDataSafely('comparativoData', { motoristas, ativos });
+            alert(`✅ ${tipo.toUpperCase()} carregado: ${(tipo === 'motoristas' ? motoristas : ativos).length} registros`);
+          },
+          error: (error) => {
+            console.error('Erro ao parsear CSV:', error);
+            alert(`❌ Erro ao carregar ${tipo}: ${error.message}`);
+          }
+        });
+      };
+      reader.onerror = function() {
+        alert('❌ Erro ao ler o arquivo');
+      };
+      reader.readAsText(file);
+    }
+
+    function carregarFiltros() {
+      const todos = [...motoristas, ...ativos];
+      const transportadoras = [...new Set(todos.map(x => x.transportadora).filter(Boolean))].sort();
+
+      const selectT = document.getElementById('transportadora');
+      selectT.innerHTML = '<option value="">Todas Transportadoras</option>';
+      transportadoras.forEach(t => selectT.innerHTML += `<option>${t}</option>`);
+
+      atualizarUnidades();
+    }
+
+    function atualizarUnidades() {
+      const ft = document.getElementById('transportadora').value;
+      const unidades = [...new Set([...motoristas, ...ativos]
+        .filter(x => !ft || x.transportadora === ft)
+        .map(x => x.unidade)
+        .filter(Boolean))
+      ].sort();
+
+      const selectU = document.getElementById('unidade');
+      selectU.innerHTML = '<option value="">Todas Unidades</option>';
+      unidades.forEach(u => selectU.innerHTML += `<option>${u}</option>`);
+    }
+
+    function generateInsights(motoristasData, ativosData) {
+      const totalMotoristas = motoristasData.length;
+      const totalAtivos = ativosData.length;
+      const nfcValidos = motoristasData.filter(x => nfcOk(x.nfc)).length;
+      const nfcInvalidos = totalMotoristas - nfcValidos;
+      const percentualNFC = totalMotoristas > 0 ? Math.round((nfcValidos / totalMotoristas) * 100) : 0;
+      
+      // Encontrar transportadora lider em motoristas
+      const porTransp = {};
+      motoristasData.forEach(x => {
+        porTransp[x.transportadora] = (porTransp[x.transportadora] || 0) + 1;
+      });
+      const transpLider = Object.entries(porTransp).sort((a, b) => b[1] - a[1])[0];
+      
+      // Encontrar transportadora com PIOR cobertura NFC
+      const nfcPorTransp = {};
+      motoristasData.forEach(x => {
+        const t = x.transportadora || 'Sem cadastro';
+        if (!nfcPorTransp[t]) nfcPorTransp[t] = { com: 0, total: 0 };
+        nfcPorTransp[t].total++;
+        if (nfcOk(x.nfc)) nfcPorTransp[t].com++;
+      });
+      
+      let transportadoraPior = null;
+      let coberturaPior = 101;
+      Object.entries(nfcPorTransp).forEach(([t, data]) => {
+        const cobertura = data.total > 0 ? Math.round((data.com / data.total) * 100) : 0;
+        if (cobertura < coberturaPior && data.total >= 5) {
+          coberturaPior = cobertura;
+          transportadoraPior = { nome: t, cobertura: cobertura, com: data.com, total: data.total };
+        }
+      });
+      
+      const transportadoras = new Set(motoristasData.map(x => x.transportadora)).size;
+      const unidades = new Set(motoristasData.map(x => x.unidade).filter(Boolean)).size;
+      
+      const insightPrincipal = `Operação em <strong>${transportadoras} transportadora(s)</strong> com <strong>${totalMotoristas} motoristas</strong> e <strong>${totalAtivos} ativos</strong>. Cobertura NFC em <strong>${percentualNFC}%</strong> da frota de motoristas (${nfcValidos} com NFC válido, ${nfcInvalidos} sem).`;
+      
+      const padroes = [
+        `👥 <strong>${totalMotoristas} motoristas</strong> cadastrados`,
+        `🚛 <strong>${totalAtivos} ativos</strong> no sistema`,
+        `📡 Taxa NFC: <strong>${percentualNFC}%</strong> (${nfcValidos} de ${totalMotoristas})`,
+        transpLider ? `🏢 Líder: <strong>${transpLider[0].replace('TRS_', '')}</strong> com ${transpLider[1]} motoristas` : '🏢 Sem transportadores',
+        `📍 Presença em <strong>${unidades}</strong> unidades`
+      ];
+      
+      const recomendacoes = [
+        percentualNFC >= 90 ? '✅ Cobertura NFC excelente' : percentualNFC >= 70 ? '⚠️ Melhorar cobertura NFC em motoristas' : '🔴 Cobrir motoristas sem NFC urgentemente',
+        `📊 Revisar balanceamento entre motoristas e ativos (razão ${totalMotoristas > 0 ? (totalAtivos / totalMotoristas).toFixed(1) : 0}:1)`,
+        transportadoraPior ? `⚠️ Priorizar NFC em ${transportadoraPior.nome.replace('TRS_', '')}: apenas ${transportadoraPior.cobertura}%` : '✅ Distribuição NFC equilibrada',
+        `🎯 Manter sincronização entre motoristas e frota para rastreamento eficaz`,
+        `📈 Implementar monitoramento contínuo de cobertura por transportadora`
+      ];
+      
+      document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+      document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+      document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+    }
+
+    function processar() {
+      const ft = document.getElementById('transportadora').value;
+      const fu = document.getElementById('unidade').value;
+
+      const motFiltrados = motoristas.filter(x =>
+        (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+      );
+      const ativosFiltrados = ativos.filter(x =>
+        (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+      );
+
+      const totalMotoristas = motFiltrados.length;
+      const totalAtivos = ativosFiltrados.length;
+      const nfcValidos = motFiltrados.filter(x => nfcOk(x.nfc)).length;
+      const percentualNFC = totalMotoristas > 0 ? Math.round((nfcValidos / totalMotoristas) * 100) : 0;
+      document.getElementById('card1').textContent = totalMotoristas.toLocaleString('pt-BR');
+      document.getElementById('card2').textContent = totalAtivos.toLocaleString('pt-BR');
+      document.getElementById('card4').textContent = percentualNFC + '%';
+
+      generateInsights(motFiltrados, ativosFiltrados);
+      document.getElementById('insightsContainer').style.display = motFiltrados.length > 0 && ativosFiltrados.length > 0 ? 'block' : 'none';
+      atualizarGraficos(motFiltrados, ativosFiltrados);
+      atualizarTabela(motFiltrados, ativosFiltrados);
+    }
+
+    function atualizarGraficos(motoristas, ativos) {
+      const filtrarIrrelevantes = document.getElementById('filtrarSemCadastro')?.checked || false;
+      const isDark = document.body.classList.contains('dark');
+      
+      // Dados por transportadora
+      const porTransp = {};
+      motoristas.forEach(x => {
+        if (!porTransp[x.transportadora]) porTransp[x.transportadora] = { motoristas: 0, nfc: 0 };
+        porTransp[x.transportadora].motoristas++;
+        if (nfcOk(x.nfc)) porTransp[x.transportadora].nfc++;
+      });
+
+      const ativosPorTransp = {};
+      ativos.forEach(x => {
+        ativosPorTransp[x.transportadora] = (ativosPorTransp[x.transportadora] || 0) + 1;
+      });
+
+      // Gráfico 1 - Stacked Bar Horizontal (Top 5)
+      if (window.chart1) window.chart1.destroy();
+      let transpLabels = Object.keys(porTransp)
+        .sort((a, b) => porTransp[b].motoristas - porTransp[a].motoristas)
+        .slice(0, 5);
+      
+      if (filtrarIrrelevantes) {
+        transpLabels = transpLabels.filter(t => t !== 'Sem cadastro' && t !== '');
+      }
+
+      const options1 = {
+        chart: {
+          type: 'bar',
+          stacked: true,
+          sparkline: { enabled: false },
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light'
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true,
+            dataLabels: {
+              total: {
+                enabled: true,
+                style: {
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: isDark ? '#fff' : '#000'
+                }
+              }
+            }
+          }
+        },
+        series: [
+          {
+            name: 'Motoristas',
+            data: transpLabels.map(t => porTransp[t].motoristas)
+          },
+          {
+            name: 'Ativos',
+            data: transpLabels.map(t => ativosPorTransp[t] || 0)
+          },
+          {
+            name: 'Com NFC',
+            data: transpLabels.map(t => porTransp[t].nfc)
+          }
+        ],
+        xaxis: {
+          categories: transpLabels,
+          labels: {
+            style: {
+              fontSize: '12px',
+              fontWeight: 600,
+              colors: isDark ? '#ccc' : '#333'
+            }
+          }
+        },
+        yaxis: {
+          labels: {
+            style: {
+              fontSize: '12px',
+              colors: isDark ? '#ccc' : '#333'
+            }
+          }
+        },
+        colors: ['#0033A0', '#1E90FF', '#10b981'],
+        legend: {
+          position: 'bottom',
+          horizontalAlign: 'center',
+          offsetY: 10,
+          labels: {
+            colors: isDark ? '#fff' : '#333'
+          }
+        },
+        dataLabels: {
+          enabled: true,
+          enabledOnSeries: [0, 1, 2],
+          formatter: function(val) {
+            return val > 0 ? val : '';
+          },
+          style: {
+            fontSize: '11px',
+            fontWeight: 'bold',
+            colors: ['#fff']
+          }
+        },
+        tooltip: {
+          enabled: true,
+          theme: isDark ? 'dark' : 'light',
+          style: {
+            fontSize: '12px'
+          }
+        }
+      };
+
+      window.chart1 = new ApexCharts(document.querySelector('#g1'), options1);
+      window.chart1.render();
+
+      // Gráfico 4 - Stacked Bar Horizontal (Top 5 Unidades) com Ativos
+      if (window.chart4) window.chart4.destroy();
+      const porUnidade = {};
+      const ativosPorUnidade = {};
+      
+      motoristas.forEach(x => {
+        if (!porUnidade[x.unidade]) porUnidade[x.unidade] = { motoristas: 0, nfc: 0 };
+        porUnidade[x.unidade].motoristas++;
+        if (nfcOk(x.nfc)) porUnidade[x.unidade].nfc++;
+      });
+
+      ativos.forEach(x => {
+        ativosPorUnidade[x.unidade] = (ativosPorUnidade[x.unidade] || 0) + 1;
+      });
+
+      let unidadeLabels = Object.keys(porUnidade)
+        .sort((a, b) => porUnidade[b].motoristas - porUnidade[a].motoristas)
+        .slice(0, 5);
+      
+      if (filtrarIrrelevantes) {
+        unidadeLabels = unidadeLabels.filter(u => u !== 'Sem UNI' && u !== '');
+      }
+
+      const options4 = {
+        chart: {
+          type: 'bar',
+          stacked: true,
+          sparkline: { enabled: false },
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light'
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true,
+            dataLabels: {
+              total: {
+                enabled: true,
+                style: {
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: isDark ? '#fff' : '#000'
+                }
+              }
+            }
+          }
+        },
+        series: [
+          {
+            name: 'Motoristas',
+            data: unidadeLabels.map(u => porUnidade[u].motoristas)
+          },
+          {
+            name: 'Ativos',
+            data: unidadeLabels.map(u => ativosPorUnidade[u] || 0)
+          },
+          {
+            name: 'Com NFC',
+            data: unidadeLabels.map(u => porUnidade[u].nfc)
+          }
+        ],
+        xaxis: {
+          categories: unidadeLabels,
+          labels: {
+            style: {
+              fontSize: '12px',
+              fontWeight: 600,
+              colors: isDark ? '#ccc' : '#333'
+            }
+          }
+        },
+        yaxis: {
+          labels: {
+            style: {
+              fontSize: '12px',
+              colors: isDark ? '#ccc' : '#333'
+            }
+          }
+        },
+        colors: ['#0033A0', '#1E90FF', '#10b981'],
+        legend: {
+          position: 'bottom',
+          horizontalAlign: 'center',
+          offsetY: 10,
+          labels: {
+            colors: isDark ? '#fff' : '#333'
+          }
+        },
+        dataLabels: {
+          enabled: true,
+          enabledOnSeries: [0, 1, 2],
+          formatter: function(val) {
+            return val > 0 ? val : '';
+          },
+          style: {
+            fontSize: '11px',
+            fontWeight: 'bold',
+            colors: ['#fff']
+          }
+        },
+        tooltip: {
+          enabled: true,
+          theme: isDark ? 'dark' : 'light',
+          style: {
+            fontSize: '12px'
+          }
+        }
+      };
+
+      window.chart4 = new ApexCharts(document.querySelector('#g4'), options4);
+      window.chart4.render();
+    }
+
+
+    function atualizarTabela(motoristas, ativos) {
+      const porTranspUnit = {};
+
+      motoristas.forEach(x => {
+        const key = `${x.transportadora}|${x.unidade}`;
+        if (!porTranspUnit[key]) {
+          porTranspUnit[key] = {
+            transportadora: x.transportadora,
+            unidade: x.unidade,
+            motoristas: 0,
+            nfc: 0,
+            ativos: 0
+          };
+        }
+        porTranspUnit[key].motoristas++;
+        if (nfcOk(x.nfc)) porTranspUnit[key].nfc++;
+      });
+
+      ativos.forEach(x => {
+        const key = `${x.transportadora}|${x.unidade}`;
+        if (!porTranspUnit[key]) {
+          porTranspUnit[key] = {
+            transportadora: x.transportadora,
+            unidade: x.unidade,
+            motoristas: 0,
+            nfc: 0,
+            ativos: 0
+          };
+        }
+        porTranspUnit[key].ativos++;
+      });
+
+      const tbody = document.getElementById('tabela-corpo');
+      if (Object.keys(porTranspUnit).length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">Nenhum dado encontrado</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = Object.values(porTranspUnit).map(row => {
+        const pctNFC = row.motoristas > 0 ? Math.round((row.nfc / row.motoristas) * 100) : 0;
+        // Definir status sem exibir diretamente a razão
+        let status = '<span class="ok">✅ OK</span>';
+        if (row.ativos === 0 && row.motoristas > 0) status = '<span class="alert">❌ Sem ativos</span>';
+        else if (row.ativos > 0) {
+          const ratio = row.motoristas / row.ativos;
+          if (ratio > 1.5) status = '<span class="warning">⚠️ Excesso</span>';
+          else if (ratio < 0.8) status = '<span class="alert">❌ Falta</span>';
+        }
+
+        return `
+          <tr>
+            <td>${row.transportadora}</td>
+            <td>${row.unidade}</td>
+            <td>${row.motoristas}</td>
+            <td><span class="${pctNFC >= 80 ? 'ok' : 'alert'}">${row.nfc}</span></td>
+            <td>${pctNFC}%</td>
+            <td>${row.ativos}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+  </script>
+  </div>
+</body>
+</html>

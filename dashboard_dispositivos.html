@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispositivos - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --secondary-color: #e60000;
+            --accent-color: #FFD700;
+            --success-color: #28a745;
+            --light-color: #f8fafc;
+            --dark-color: #1a1a1a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root { --sidebar-width: 280px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+            color: var(--dark-color);
+            padding: 0;
+            margin: 0;
+        }
+
+        body.dark {
+            background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+            color: var(--light-color);
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+            padding-bottom: 140px;
+        }
+
+        .sidebar-header {
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .sidebar-header i { font-size: 1.8rem; color: var(--accent-color); }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-menu li { margin-bottom: 5px; }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            gap: 12px;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 15px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.75rem;
+        }
+
+        body.dark .sidebar {
+            background: linear-gradient(180deg, #0b2440 0%, #071830 100%) !important;
+            color: white;
+            box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+        }
+
+        body.dark .sidebar-header {
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        body.dark .sidebar-header h1 {
+            color: white;
+        }
+
+        body.dark .sidebar-header i {
+            color: var(--accent-color);
+        }
+
+        body.dark .sidebar-menu a {
+            color: rgba(255,255,255,0.85);
+            transition: all 0.3s ease;
+        }
+
+        body.dark .sidebar-menu a:hover {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFF44F;
+        }
+
+        body.dark .sidebar-menu a.active {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        body.dark .sidebar-footer {
+            color: rgba(255,255,255,0.6);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logos-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .container-custom {
+            max-width: 100%;
+            margin: 0;
+            padding: 0 20px;
+        }
+
+        .header {
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 20px 30px;
+            border-radius: 0;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(99, 163, 216, 0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark .header {
+            background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+            color: #fff !important;
+        }
+
+        body.dark .header h1 {
+            color: #fff !important;
+        }
+
+        .btn-toggle {
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 20px;
+            background: rgba(255, 215, 0, 0.18);
+            border: 2px solid var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-toggle:hover {
+            background: rgba(255, 215, 0, 0.35);
+        }
+
+        .upload-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        body.dark .upload-section {
+            background: #081226;
+            color: var(--light-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        .upload-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .btn-upload {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-upload:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        #csvFileInput {
+            display: none;
+        }
+
+        .filters-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        body.dark .filters-container {
+            background: #081226;
+            color: var(--light-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        .filters-container label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        body.dark .filters-container label {
+            color: #aaa;
+        }
+
+        .filters-container input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: white;
+            color: #333;
+        }
+
+        body.dark .filters-container input {
+            background: #0a1728;
+            color: var(--light-color);
+            border-color: #333;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card.chart-full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-card.chart-compact .chart-wrapper {
+            min-height: 200px;
+        }
+
+        .chart-card.chart-compact {
+            min-height: 280px !important;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        body.dark .chart-card {
+            background: #081226;
+            color: var(--light-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        .chart-card h2 {
+            color: var(--primary-color);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 6px;
+            font-weight: 600;
+        }
+
+        body.dark .chart-card h2 {
+            color: #63a3d8;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 550px;
+            margin-bottom: 15px;
+            padding-top: 30px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border-top: 4px solid var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        body.dark .stat-card {
+            background: #081226;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(99, 163, 216, 0.2);
+        }
+
+        .stat-card h3 {
+            font-size: 13px;
+            color: #666;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        body.dark .stat-card h3 {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .stat-card .value {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .insights-container {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+        }
+
+        body.dark .insights-container {
+            background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+        }
+
+        .insights-card h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        body.dark .insights-card h2 {
+            color: #63a3d8;
+        }
+
+        .insight-section {
+            margin-bottom: 20px;
+        }
+
+        .insight-section h3 {
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            gap: 8px;
+        }
+
+        body.dark .insight-section h3 {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .insight-section p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        body.dark .insight-section p {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+
+        .insight-section ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .insight-section li {
+            color: #555;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            border-left: 3px solid var(--primary-color);
+            line-height: 1.5;
+        }
+
+        body.dark .insight-section li {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+        
+        .table-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        body.dark .table-container {
+            background: #081226;
+            color: var(--light-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-container th {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .table-container td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+        }
+
+        body.dark .table-container td {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+
+        .table-container tr:hover {
+            background: #f5f7ff;
+        }
+
+        body.dark .table-container tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        body.dark .chart-container { background: rgba(255,255,255,0.02); }
+        body.dark .filter-btn { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #ccc; }
+        body.dark .filter-btn:hover { background: rgba(255,255,255,0.1); }
+        body.dark .btn-reload { color: #aaa; }
+        body.dark .btn-reload:hover { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="bi bi-truck"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-person-walking"></i> Motoristas</a></li>
+                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+                <li><a href="dashboard_usuarios.html"><i class="bi bi-people"></i> Usuários</a></li>
+                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
+                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
+                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
+                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
+                <li><a href="dashboard_dispositivos.html" class="active"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
+                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+            </ul>
+            <div class="sidebar-footer"></div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container-custom">
+                <!-- Header -->
+                <div class="header">
+                    <div>
+                        <h1><i class="bi bi-inbox"></i> Dispositivos sem Vínculo - Rodando</h1>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9;">Análise de placas em operação</p>
+                        <div class="logos-container" style="margin-top: 10px;">
+                            <img src="argus-logo.png" alt="Argus Logo" title="Argus" style="height: 40px; opacity: 0.8; filter: brightness(0) invert(1);">
+                            <img src="ambev-logo.png" alt="Ambev Logo" title="Ambev" style="height: 40px; opacity: 0.8;">
+                        </div>
+                    </div>
+                    <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+                </div>
+
+                <!-- Upload -->
+                <div class="upload-section">
+                    <h3><i class="bi bi-cloud-upload"></i> Importar Dados de Viagens</h3>
+                    <p>Carregue o arquivo CSV com informações de dispositivos sem vínculo rodando</p>
+                    <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVUpload(event)">
+                    <button class="btn-upload" onclick="document.getElementById('csvFileInput').click();">
+                        <i class="bi bi-folder-check"></i> Selecionar Arquivo CSV
+                    </button>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filters-container">
+                    <div>
+                        <label for="filterPlaca"><i class="bi bi-search"></i> Buscar Dispositivo</label>
+                        <input type="text" id="filterPlaca" placeholder="Ex: 1630" oninput="aplicarFiltro()">
+                    </div>
+                    <div>
+                        <label for="filterData"><i class="bi bi-calendar"></i> Filtrar por Data</label>
+                        <input type="date" id="filterData" oninput="aplicarFiltro()">
+                    </div>
+                </div>
+
+                <!-- Subtitle -->
+                <h2 style="text-align: center; margin-top: 30px; margin-bottom: 20px; font-size: 1.4rem; color: #63a3d8;">Dispositivos sem Vínculo - Rodando</h2>
+
+                <!-- Stats Cards -->
+                <div class="stats-container" id="statsContainer" style="display: none;">
+                    <div class="stat-card">
+                        <h3>Total de Dispositivos (Placas)</h3>
+                        <div class="value" id="totalPlacas">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total de Viagens</h3>
+                        <div class="value" id="totalViagens">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Período Analisado</h3>
+                        <div class="value" id="periodoAnalisado">-</div>
+                    </div>
+                </div>
+
+                <!-- Storytelling de Dados -->
+                <div id="insightsContainer" class="insights-container" style="display: none;">
+                    <div class="insights-card">
+                        <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+                        
+                        <div class="insight-section">
+                            <h3>🎯 Situação Principal</h3>
+                            <p id="insightPrincipal">Carregando análise...</p>
+                        </div>
+
+                        <div class="insight-section">
+                            <h3>📈 Padrões Detectados</h3>
+                            <ul id="insightPadroes">
+                                <li>Carregando padrões...</li>
+                            </ul>
+                        </div>
+
+                        <div class="insight-section">
+                            <h3>💡 Recomendações</h3>
+                            <ul id="insightRecomendacoes">
+                                <li>Carregando recomendações...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-container" id="chartsContainer" style="display: none;">
+                    <div class="chart-card">
+                        <h2><i class="bi bi-geo"></i> 01 - Quantidade de Dispositivos por Estado</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="chartDispositivosPorEstado"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h2><i class="bi bi-truck"></i> 02 - Top 10 Dispositivos por Viagens</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="chartDispositivos"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h2><i class="bi bi-speedometer"></i> 03 - Velocidade Média (Top 10)</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="chartVelocidadeMedia"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h2><i class="bi bi-hourglass"></i> 04 - Tempo Parado com Motor Ligado</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="chartTempoParado"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card chart-full-width chart-compact">
+                        <h2><i class="bi bi-geo-alt"></i> 05 - Top 20 Origens Mais Frequentes</h2>
+                        <div class="chart-wrapper">
+                            <canvas id="chartOrigens"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-container" id="tableContainer" style="display: none;">
+                    <h3 style="margin-bottom: 20px;"><i class="bi bi-table"></i> Detalhes de Viagens</h3>
+                    <div id="countInfo" style="margin-bottom:12px;font-weight:600;"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Dispositivo</th>
+                                <th>Grupo</th>
+                                <th>Data/Hora Início</th>
+                                <th>Duração</th>
+                                <th>Origem</th>
+                                <th>Destino</th>
+                                <th>Vel. Máx</th>
+                                <th>Tempo Parado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                    <div id="paginacao" style="margin-top: 20px; text-align: center;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let allCharts = {};
+        let rawData = [];
+        let filteredData = [];
+
+        function toggleDark() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            // Atualizar gráficos com cores apropriadas
+            setTimeout(function() {
+                renderizarGraficos();
+            }, 100);
+        }
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark');
+        }
+
+        function processarDados() {
+            // Dados já estão processados no handleCSVUpload
+        }
+
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    Papa.parse(e.target.result, {
+                        header: true,
+                        skipEmptyLines: true,
+                        delimiter: ';',
+                        dynamicTyping: false,
+                        complete: function(results) {
+                            console.log('CSV Carregado, linhas:', results.data.length);
+                            rawData = results.data.map(r => {
+                                const dispositivo = (r['Dispositivo'] || '').toString().trim();
+                                const grupoDispositivo = (r['Grupo de dispositivo'] || '').toString().trim();
+                                const dataInicio = (r['Data de início'] || '').toString().trim();
+                                const duracao = (r['Duração da condução'] || '00:00:00').toString().trim();
+                                const dataParda = (r['Data de parada'] || '').toString().trim();
+                                const origem = (r['Origem'] || '').toString().trim();
+                                const destino = (r['Destino'] || '').toString().trim();
+                                const tempoParado = (r['Tempo parado com motor ligado'] || '00:00:00').toString().trim();
+                                const velMaxima = parseInt(r['Velocidade máxima'] || '0') || 0;
+
+                                // Converter duração em minutos
+                                const durParts = duracao.split(':');
+                                const durMinutos = parseInt(durParts[0]) * 60 + parseInt(durParts[1]) + parseInt(durParts[2]) / 60;
+
+                                // Extrair hora do início
+                                const horaMatch = dataInicio.match(/(\d{2}):(\d{2})/);
+                                const horaInicio = horaMatch ? parseInt(horaMatch[1]) : 0;
+
+                                return {
+                                    dispositivo,
+                                    grupoDispositivo,
+                                    dataInicio,
+                                    duracao,
+                                    durMinutos,
+                                    horaInicio,
+                                    origem,
+                                    destino,
+                                    tempoParado,
+                                    velMaxima
+                                };
+                            }).filter(r => r.dispositivo && r.dataInicio);
+
+                            console.log('Dados filtrados:', rawData.length);
+                            if (rawData.length === 0) {
+                                alert('❌ Nenhum dado válido encontrado no arquivo!');
+                                return;
+                            }
+
+                            filteredData = [...rawData];
+                            console.log('Processando dados...');
+                            // Salvar com fallback para IndexedDB
+                            window.saveDataSafely('dispositivosData', rawData);
+                            processarDados();
+                            console.log('Atualizando cartões...');
+                            atualizarCartoes();
+                            console.log('Gerando storytelling...');
+                            gerarInsights();
+                            console.log('Renderizando gráficos...');
+                            renderizarGraficos();
+                            console.log('Mostrando tabela...');
+                            mostrarTabela();
+                            document.getElementById('insightsContainer').style.display = 'block';
+                            document.getElementById('chartsContainer').style.display = 'grid';
+                            document.getElementById('tableContainer').style.display = 'block';
+                            console.log('✅ Tudo carregado com sucesso!');
+                            alert('✅ Arquivo carregado com sucesso! (' + rawData.length + ' viagens registradas)');
+                        },
+                        error: function(error) {
+                            alert('❌ Erro ao carregar CSV: ' + error.message);
+                        }
+                    });
+                } catch(error) {
+                    alert('❌ Erro: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function aplicarFiltro() {
+            const q = document.getElementById('filterPlaca').value.trim().toLowerCase();
+            const dataFiltro = document.getElementById('filterData').value;
+
+            filteredData = rawData.filter(r => {
+                const dispositivoMatch = q === '' || String(r.dispositivo).toLowerCase().includes(q);
+                
+                let dataMatch = true;
+                if (dataFiltro !== '') {
+                    // Converter data do input (YYYY-MM-DD) para formato DD/MM/YYYY
+                    const [ano, mes, dia] = dataFiltro.split('-');
+                    const dataFormatada = dia + '/' + mes + '/' + ano;
+                    dataMatch = r.dataInicio.startsWith(dataFormatada);
+                }
+                
+                return dispositivoMatch && dataMatch;
+            });
+
+            atualizarCartoes();
+            renderizarGraficos();
+            mostrarTabela();
+        }
+
+        function atualizarCartoes() {
+            // Total de dispositivos únicos (placas)
+            const placasUnicas = new Set(filteredData.map(r => r.dispositivo)).size;
+            document.getElementById('totalPlacas').textContent = placasUnicas;
+
+            // Total de viagens
+            document.getElementById('totalViagens').textContent = filteredData.length;
+
+            // Período analisado
+            if (filteredData.length > 0) {
+                const datas = filteredData.map(r => r.dataInicio.substring(0, 10)).sort();
+                const dataInicio = datas[0];
+                const dataFim = datas[datas.length - 1];
+                document.getElementById('periodoAnalisado').textContent = dataInicio + ' até ' + dataFim;
+            } else {
+                document.getElementById('periodoAnalisado').textContent = '-';
+            }
+
+            // Mostrar container dos stats
+            document.getElementById('statsContainer').style.display = 'grid';
+        }
+
+        function gerarInsights() {
+            // Análise de estados
+            const estadoCount = {};
+            const dispositivosPrimeira = {};
+            filteredData.forEach(r => {
+                let estado = extrairEstado(r.origem);
+                if (estado === 'Desconhecido') estado = extrairEstado(r.destino);
+                estado = estado.trim();
+                if (!dispositivosPrimeira[r.dispositivo]) {
+                    dispositivosPrimeira[r.dispositivo] = estado;
+                    estadoCount[estado] = (estadoCount[estado] || 0) + 1;
+                }
+            });
+
+            const estadoTopo = Object.entries(estadoCount).sort((a,b) => b[1]-a[1])[0];
+            const percentualEstado = estadoTopo ? Math.round((estadoTopo[1] / Object.values(estadoCount).reduce((a,b)=>a+b, 0)) * 100) : 0;
+
+            // Análise de origens
+            const origens = {};
+            filteredData.forEach(r => {
+                const orig = r.origem.substring(0, 40);
+                origens[orig] = (origens[orig] || 0) + 1;
+            });
+            const origemTop = Object.entries(origens).sort((a,b) => b[1]-a[1])[0];
+
+            // Análise de velocidade
+            const velMedias = filteredData.map(r => r.velMaxima).filter(v => v > 0);
+            const velMedia = velMedias.length > 0 ? Math.round(velMedias.reduce((a,b) => a+b, 0) / velMedias.length) : 0;
+            const velMax = Math.max(...velMedias, 0);
+
+            // Análise de tempo parado
+            let tempoParadoTotal = 0;
+            filteredData.forEach(r => {
+                const parts = r.tempoParado.split(':');
+                tempoParadoTotal += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            });
+            const tempoParadoMedio = filteredData.length > 0 ? Math.round(tempoParadoTotal / filteredData.length) : 0;
+
+            // Gerar textos de insight
+            // Contexto negativo: dispositivos sem vínculo e rodando
+            const totalOperacao = 1765; // valor fixo informado
+            const totalSemVinculo = 20; // valor fixo informado
+            const insightPrincipal = `A operação possui <strong>${totalOperacao} dispositivos</strong> no total, dos quais <strong>${totalSemVinculo}</strong> estão <span style='color:#e60000;font-weight:600;'>sem vínculo e rodando</span>. Foram registradas <strong>${filteredData.length} viagens</strong> por esses dispositivos, indicando um cenário de risco operacional e necessidade de ação imediata.`;
+
+            const padroes = [
+                `❗ Proporção de dispositivos sem vínculo: <strong>${((totalSemVinculo/totalOperacao)*100).toFixed(2)}%</strong> (${totalSemVinculo} de ${totalOperacao})`,
+                `📍 Concentração Regional: ${estadoTopo? estadoTopo[0] : 'desconhecido'} lidera com ${estadoTopo? estadoTopo[1] : 0} dispositivos (${percentualEstado}% dos sem vínculo)`,
+                `🚀 Origem Mais Frequente: "${origemTop? origemTop[0] : '-'}" com ${origemTop? origemTop[1] : 0} viagens - rota recorrente de dispositivos sem vínculo`,
+                `⚡ Velocidade Média: ${velMedia} km/h | Pico: ${velMax} km/h - monitorar possíveis excessos`,
+                `⏸️ Tempo Parado Médio: ${tempoParadoMedio} minutos por viagem - avaliar se há uso indevido`
+            ];
+
+            const recomendacoes = [
+                `🚨 Priorizar regularização dos ${totalSemVinculo} dispositivos sem vínculo para mitigar riscos`,
+                `🔎 Investigar motivos da concentração em ${estadoTopo? estadoTopo[0] : 'desconhecido'} - pode indicar falha de controle regional`,
+                `🛣️ Analisar a rota "${origemTop? origemTop[0] : '-'}" para identificar padrões de uso indevido`,
+                `⏸️ Revisar tempo parado (${tempoParadoMedio}min/viagem) - identificar possíveis fraudes ou improdutividade`,
+                `⚡ Monitorar velocidades anômalas (>100 km/h) para evitar acidentes e uso irregular`
+            ];
+
+            document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+            document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+        }
+
+        function renderizarGraficos() {
+            renderizarGraficoDispositivosPorEstado();
+            renderizarGraficoDispositivos();
+            renderizarGraficoVelocidadeMedia();
+            renderizarGraficoTempoParado();
+            renderizarOrigensRanking();
+        }
+
+        function renderizarGraficoDispositivos() {
+            const dispositivos = {};
+            filteredData.forEach(r => {
+                dispositivos[r.dispositivo] = (dispositivos[r.dispositivo] || 0) + 1;
+            });
+
+            const top10Disp = Object.entries(dispositivos)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([d, c]) => ({ dispositivo: d, count: c }));
+
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tooltipBg = isDarkMode ? '#1f2937' : '#ffffff';
+            const tooltipColor = isDarkMode ? '#fff' : '#000';
+
+            const ctx = document.getElementById('chartDispositivos').getContext('2d');
+            if (allCharts.dispositivos) allCharts.dispositivos.destroy();
+
+            allCharts.dispositivos = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top10Disp.map(d => d.dispositivo),
+                    datasets: [{
+                        label: 'Viagens',
+                        data: top10Disp.map(d => d.count),
+                        backgroundColor: isDarkMode ? '#4a8fb8' : '#63a3d8',
+                        borderRadius: 4,
+                        datalabels: { anchor: 'end', align: 'top', font: { size: 10, weight: 'bold' }, color: textColor }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false, labels: { color: textColor } }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0, color: textColor }, grid: { color: gridColor }, max: Math.max(...top10Disp.map(d => d.count)) * 1.3 }, x: { ticks: { color: textColor }, grid: { color: gridColor } } }
+                }
+            });
+        }
+
+        function renderizarGraficoVelocidadeMedia() {
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tooltipBg = isDarkMode ? '#1f2937' : '#ffffff';
+            const tooltipColor = isDarkMode ? '#fff' : '#000';
+            
+            const velPorDisp = {};
+            filteredData.forEach(r => {
+                if (!velPorDisp[r.dispositivo]) velPorDisp[r.dispositivo] = [];
+                velPorDisp[r.dispositivo].push(r.velMaxima);
+            });
+
+            const mediaVel = Object.entries(velPorDisp)
+                .map(([d, vels]) => ({
+                    dispositivo: d,
+                    media: Math.round(vels.reduce((a, b) => a + b, 0) / vels.length)
+                }))
+                .sort((a, b) => b.media - a.media)
+                .slice(0, 10);
+
+            const ctx = document.getElementById('chartVelocidadeMedia').getContext('2d');
+            if (allCharts.velocidade) allCharts.velocidade.destroy();
+
+            allCharts.velocidade = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: mediaVel.map(d => d.dispositivo),
+                    datasets: [{
+                        label: 'Velocidade Média (km/h)',
+                        data: mediaVel.map(d => d.media),
+                        backgroundColor: isDarkMode ? '#4db84d' : '#28a745',
+                        borderRadius: 4,
+                        datalabels: { anchor: 'end', align: 'top', font: { size: 10, weight: 'bold' }, color: textColor }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false, labels: { color: textColor } }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0, color: textColor }, grid: { color: gridColor } }, x: { ticks: { color: textColor }, grid: { color: gridColor } } }
+                }
+            });
+        }
+
+        function renderizarGraficoTempoParado() {
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : '#333';
+            const tooltipBg = isDarkMode ? '#1f2937' : '#ffffff';
+            const tooltipColor = isDarkMode ? '#fff' : '#000';
+            
+            const tempoParadoCount = { '0-5min': 0, '5-15min': 0, '15-30min': 0, '30-60min': 0, '+60min': 0 };
+            
+            filteredData.forEach(r => {
+                const parts = r.tempoParado.split(':');
+                const minutos = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+                
+                if (minutos <= 5) tempoParadoCount['0-5min']++;
+                else if (minutos <= 15) tempoParadoCount['5-15min']++;
+                else if (minutos <= 30) tempoParadoCount['15-30min']++;
+                else if (minutos <= 60) tempoParadoCount['30-60min']++;
+                else tempoParadoCount['+60min']++;
+            });
+
+            const ctx = document.getElementById('chartTempoParado').getContext('2d');
+            if (allCharts.tempoParado) allCharts.tempoParado.destroy();
+
+            allCharts.tempoParado = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(tempoParadoCount),
+                    datasets: [{
+                        label: 'Distribuição',
+                        data: Object.values(tempoParadoCount),
+                        backgroundColor: ['#90EE90', '#FFD700', '#FFA500', '#FF6347', '#8B0000']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: true, position: 'bottom', labels: { color: textColor } },
+                        tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
+                    }
+                }
+            });
+        }
+
+        function extrairEstado(endereco) {
+            // Extrai o estado (UF) do endereço - múltiplos padrões
+            if (!endereco) return 'Desconhecido';
+            
+            endereco = endereco.trim();
+            
+            // Padrão 1: "... - UU, CEP" (ex: "Rua X - BA, 48030")
+            let match = endereco.match(/\s-\s([A-Z]{2}),/);
+            if (match) return match[1].trim();
+            
+            // Padrão 2: "UU, CEP" sem hífen (ex: "Umbaúba - SE, 49260")
+            match = endereco.match(/,\s*([A-Z]{2}),\s*\d+/);
+            if (match) return match[1].trim();
+            
+            // Padrão 3: "cidade - UU, CEP"
+            match = endereco.match(/\s-\s([A-Z]{2})\s*,/);
+            if (match) return match[1].trim();
+            
+            // Padrão 4: "cidade, UU, (País ou CEP)" (ex: "Jacareí, SP, Brasil")
+            match = endereco.match(/,\s*([A-Z]{2}),/);
+            if (match) return match[1].trim();
+            
+            return 'Desconhecido';
+        }
+
+        function renderizarGraficoDispositivosPorEstado() {
+            const estadoCount = {};
+            const dispositivosPrimeira = {}; // Rastreia primeira ocorrência de cada dispositivo
+            
+            filteredData.forEach(r => {
+                // Tenta extrair estado da origem primeiro, depois do destino
+                let estado = extrairEstado(r.origem);
+                if (estado === 'Desconhecido') {
+                    estado = extrairEstado(r.destino);
+                }
+                
+                // Normaliza para evitar duplicatas
+                estado = estado.trim();
+                
+                // Conta apenas UMA VEZ por dispositivo (primeira vez que aparece)
+                const chave = r.dispositivo + '_' + estado;
+                if (!dispositivosPrimeira[r.dispositivo]) {
+                    dispositivosPrimeira[r.dispositivo] = estado;
+                    estadoCount[estado] = (estadoCount[estado] || 0) + 1;
+                }
+            });
+
+            const dados = Object.entries(estadoCount)
+                .map(([estado, count]) => ({
+                    estado: estado,
+                    count: count
+                }))
+                .sort((a, b) => b.count - a.count);
+
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tooltipBg = isDarkMode ? '#1f2937' : '#ffffff';
+            const tooltipColor = isDarkMode ? '#fff' : '#000';
+
+            const ctx = document.getElementById('chartDispositivosPorEstado').getContext('2d');
+            if (allCharts.estadoPorEstado) allCharts.estadoPorEstado.destroy();
+
+            allCharts.estadoPorEstado = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dados.map(d => d.estado),
+                    datasets: [{
+                        label: 'Dispositivos por Estado',
+                        data: dados.map(d => d.count),
+                        backgroundColor: isDarkMode ? '#4db8ad' : '#4ecdc4',
+                        borderRadius: 4,
+                        datalabels: { anchor: 'end', align: 'top', font: { size: 10, weight: 'bold' }, color: textColor }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false, labels: { color: textColor } }, tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor } },
+                    scales: { 
+                        x: { ticks: { maxRotation: 0, color: textColor }, grid: { color: gridColor } },
+                        y: { beginAtZero: true, ticks: { precision: 0, color: textColor }, grid: { color: gridColor }, suggestedMax: 20 } 
+                    }
+                }
+            });
+        }
+
+        function renderizarGraficoOrigens() {
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tooltipBg = isDarkMode ? '#1f2937' : '#ffffff';
+            const tooltipColor = isDarkMode ? '#fff' : '#000';
+            
+            const origens = {};
+            filteredData.forEach(r => {
+                const origem = r.origem.substring(0, 40) + (r.origem.length > 40 ? '...' : '');
+                origens[origem] = (origens[origem] || 0) + 1;
+            });
+
+            const top20Origens = Object.entries(origens)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 20);
+
+            const labels = top20Origens.map(o => o[0]);
+            const data = top20Origens.map(o => o[1]);
+
+            const ctx = document.getElementById('chartOrigens').getContext('2d');
+            if (allCharts.origens) allCharts.origens.destroy();
+
+            allCharts.origens = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Viagens',
+                        data: data,
+                        backgroundColor: isDarkMode ? '#FFB84D' : '#FFD700',
+                        borderRadius: 4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            font: { size: 9, weight: 'bold' },
+                            color: textColor
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false, labels: { color: textColor } },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            font: { size: 9, weight: 'bold' },
+                            color: textColor
+                        },
+                        tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0, color: textColor }, grid: { color: gridColor } },
+                        x: { ticks: { color: textColor }, grid: { color: gridColor } }
+                    }
+                }
+            });
+        }
+
+        function renderizarOrigensRanking() {
+            renderizarGraficoOrigens();
+        }
+
+        // registrar plugin ChartDataLabels se disponível
+        if (window.Chart && window.ChartDataLabels) {
+            try { Chart.register(ChartDataLabels); } catch(e) { console.warn('Não foi possível registrar ChartDataLabels:', e); }
+        }
+
+        function mostrarTabela() {
+            const tbody = document.getElementById('tableBody');
+            let paginaAtual = 1;
+            const itensPorPagina = 10;
+
+            function renderizarPagina(pagina) {
+                tbody.innerHTML = '';
+                const inicio = (pagina - 1) * itensPorPagina;
+                const fim = inicio + itensPorPagina;
+                const registrosPagina = filteredData.slice(inicio, fim);
+
+                if (filteredData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;">Nenhum registro encontrado</td></tr>';
+                    return;
+                }
+
+                registrosPagina.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${r.dispositivo}</strong></td>
+                        <td>${r.grupoDispositivo}</td>
+                        <td>${r.dataInicio}</td>
+                        <td>${r.duracao}</td>
+                        <td>${r.origem.substring(0, 30)}</td>
+                        <td>${r.destino.substring(0, 30)}</td>
+                        <td>${r.velMaxima} km/h</td>
+                        <td>${r.tempoParado}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            function renderizarPaginacao() {
+                const pag = document.getElementById('paginacao');
+                const totalPaginas = Math.ceil(filteredData.length / itensPorPagina);
+                pag.innerHTML = '';
+
+                if (totalPaginas <= 1) return;
+
+                if (paginaAtual > 1) {
+                    const btnAnterior = document.createElement('button');
+                    btnAnterior.textContent = '← Anterior';
+                    btnAnterior.style.cssText = 'margin: 0 5px; padding: 8px 12px; background: #63a3d8; color: white; border: none; border-radius: 4px; cursor: pointer;';
+                    btnAnterior.onclick = () => { paginaAtual--; renderizarPagina(paginaAtual); renderizarPaginacao(); };
+                    pag.appendChild(btnAnterior);
+                }
+
+                const span = document.createElement('span');
+                span.style.cssText = 'margin: 0 10px; font-weight: bold;';
+                span.textContent = `Página ${paginaAtual} de ${totalPaginas}`;
+                pag.appendChild(span);
+
+                if (paginaAtual < totalPaginas) {
+                    const btnProximo = document.createElement('button');
+                    btnProximo.textContent = 'Próximo →';
+                    btnProximo.style.cssText = 'margin: 0 5px; padding: 8px 12px; background: #63a3d8; color: white; border: none; border-radius: 4px; cursor: pointer;';
+                    btnProximo.onclick = () => { paginaAtual++; renderizarPagina(paginaAtual); renderizarPaginacao(); };
+                    pag.appendChild(btnProximo);
+                }
+            }
+
+            document.getElementById('countInfo').textContent = `Total: ${filteredData.length} / ${rawData.length} registros`;
+            renderizarPagina(paginaAtual);
+            renderizarPaginacao();
+        }
+    </script>
+</body>
+</html>

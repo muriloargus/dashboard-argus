@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telemetria CCO - Motoristas</title>
+
+  <!-- LIBS -->
+  <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+  <script src="idb-manager.js"></script>
+  <script src="storage-adapter.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+  <style>
+    :root {
+      --primary-color: #63a3d8;
+      --primary-dark: #4a8fb8;
+      --secondary-color: #e60000;
+      --accent-color: #FFD700;
+      --success-color: #28a745;
+      --light-color: #f8fafc;
+      --dark-color: #1a1a1a;
+      --sidebar-width: 280px;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-700: #374151;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+      color: var(--dark-color);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px;
+      height: 100vh;
+      position: fixed;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+      border-right: 1px solid rgba(255, 215, 0, 0.1);
+    }
+
+    .sidebar-header {
+      padding: 20px 0;
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .sidebar-header i {
+      font-size: 1.8rem;
+      color: var(--accent-color);
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar-menu li {
+      margin-bottom: 5px;
+    }
+
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      gap: 12px;
+      position: relative;
+    }
+
+    .sidebar-menu a::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent-color);
+      border-radius: 0 3px 3px 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background: rgba(255, 215, 0, 0.15);
+      color: #FFF44F;
+      padding-left: 12px;
+    }
+
+    .sidebar-menu a.active::before {
+      opacity: 1;
+    }
+
+    .sidebar-menu a i {
+      width: 24px;
+      font-size: 1.1rem;
+    }
+
+    .sidebar-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.85rem;
+      text-align: center;
+      position: absolute;
+      bottom: 20px;
+      width: calc(var(--sidebar-width) - 40px);
+    }
+
+    .main-wrapper {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      overflow: auto;
+    }
+
+    body.dark {
+      background: var(--dark-color);
+      color: var(--light-color);
+    }
+
+    body.dark .card {
+      background: var(--dark-color);
+      color: var(--light-color);
+      border-color: var(--gray-700);
+    }
+
+    body.dark .box {
+      background: var(--dark-color);
+      border-color: var(--gray-700);
+    }
+
+    body.dark .table-container {
+      background: var(--dark-color);
+    }
+
+    body.dark table {
+      background: var(--dark-color);
+      color: var(--light-color);
+    }
+
+    body.dark th, body.dark td {
+      border-color: var(--gray-700);
+      color: var(--light-color);
+    }
+
+    body.dark .divisor {
+      background: var(--gray-700);
+    }
+
+    body.dark .footer {
+      border-top-color: var(--accent-color);
+      color: var(--gray-700);
+    }
+
+    /* TOPO */
+    .topo {
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+      color: #fff;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 51, 160, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topo .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .topo .btn-toggle {
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: rgba(255, 215, 0, 0.3);
+      border: 2px solid var(--accent-color);
+      color: #fff;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .topo .btn-toggle:hover {
+      background: rgba(255, 215, 0, 0.5);
+      transform: scale(1.05);
+    }
+
+    .logo {
+      background: white;
+      padding: 8px 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo.argus {
+      height: 48px;
+    }
+
+    .logo.ambev {
+      height: 36px;
+    }
+
+    .topo .titulo {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+
+    .topo .titulo small {
+      display: block;
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.95;
+      margin-top: 4px;
+    }
+
+    /* CONTAINER */
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* FILTROS */
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+      background: var(--white);
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      border: 2px solid var(--accent-color);
+    }
+
+    select,
+    input[type="file"],
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 2px solid var(--primary-color);
+      font-size: 14px;
+      background: white;
+      color: var(--primary-color);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    select:focus,
+    input[type="file"]:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+    }
+
+    input[type="file"]::-webkit-file-upload-button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    input[type="file"]::-webkit-file-upload-button:hover {
+      background: var(--primary-dark);
+    }
+
+    /* CARDS */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--white);
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      border-top: 5px solid var(--primary-color);
+      box-shadow: 0 6px 18px rgba(0, 51, 160, 0.12);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 28px rgba(0, 51, 160, 0.2);
+    }
+
+    .card.total {
+      border-top-color: var(--primary-color);
+    }
+
+    .card.nfc-ok {
+      border-top-color: var(--success-color);
+    }
+
+    .card.nfc-no {
+      border-top-color: var(--secondary-color);
+    }
+
+    .card.percent {
+      border-top-color: var(--accent-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card.percent::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    }
+
+    .card span {
+      font-size: 13px;
+      color: var(--gray-700);
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .card.nfc-ok h2 {
+      color: var(--success-color);
+    }
+
+    .card.nfc-no h2 {
+      color: var(--secondary-color);
+    }
+
+    .card.percent h2 {
+      color: var(--accent-color);
+      font-size: 36px;
+    }
+
+    /* GRÁFICOS */
+    .charts-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 20px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 3px solid var(--accent-color);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    .box {
+      background: var(--white);
+      padding: 16px;
+      border-radius: 16px;
+      height: 550px;
+      box-shadow: 0 6px 18px rgba(0, 51, 160, 0.12);
+      border: 2px solid var(--primary-color);
+      transition: all 0.3s ease;
+    }
+
+    .box:hover {
+      transform: scale(1.02);
+      border-color: var(--accent-color);
+      box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
+    }
+
+    .box h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-color);
+    }
+
+    canvas {
+      max-height: 480px;
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    /* DIVISÓRIA */
+    .divisor {
+      margin: 32px 0 20px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--primary-color));
+      border-radius: 2px;
+      box-shadow: 0 2px 8px rgba(0, 51, 160, 0.15);
+    }
+
+    /* TABELA */
+    .table-container {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 6px 18px rgba(0, 51, 160, 0.12);
+      border: 2px solid var(--accent-color);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .table-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .table-title::before {
+      content: '📋';
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 800px;
+      display: table;
+      table-layout: auto;
+      background: transparent;
+    }
+
+    thead {
+      display: table-header-group;
+      vertical-align: middle;
+    }
+
+    tbody {
+      display: table-row-group;
+      vertical-align: middle;
+    }
+
+    tr {
+      display: table-row;
+      vertical-align: middle;
+    }
+
+    th, td {
+      display: table-cell;
+      vertical-align: middle;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    th {
+      background: var(--primary-color);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--accent-color);
+    }
+
+    th:hover {
+      background: var(--primary-dark);
+    }
+
+    th::after {
+      content: ' ⇅';
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    th.asc::after {
+      content: ' ↑';
+      color: var(--accent-color);
+    }
+
+    th.desc::after {
+      content: ' ↓';
+      color: var(--accent-color);
+    }
+
+    tbody tr {
+      transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+      background: rgba(0, 51, 160, 0.04);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(0, 51, 160, 0.02);
+    }
+
+    .ok {
+      color: var(--success-color);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ok::before {
+      content: '✓';
+      font-size: 16px;
+    }
+
+    .no {
+      color: var(--secondary-color);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .no::before {
+      content: '✗';
+      font-size: 16px;
+    }
+
+    /* MENSAGENS */
+    .empty-message {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-700);
+      font-size: 16px;
+    }
+
+    .empty-message::before {
+      content: '📭';
+      font-size: 48px;
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .loading-message {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--primary-color);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .loading-message::before {
+      content: '🔄';
+      font-size: 40px;
+      display: block;
+      margin-bottom: 12px;
+      animation: spin 1.5s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* PAGINAÇÃO */
+    .pager {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0, 51, 160, 0.08);
+      border: 2px solid var(--primary-color);
+    }
+
+    .pager-info {
+      font-weight: 600;
+      color: var(--primary-color);
+      font-size: 14px;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    /* SIMPLE DATATABLES OVERRIDES */
+    .dataTables-container {
+      overflow-x: auto;
+    }
+
+    .dataTable-top, .dataTable-bottom {
+      padding: 12px 16px;
+      background: var(--white);
+    }
+
+    body.dark .dataTable-top, body.dark .dataTable-bottom {
+      background: var(--dark-color);
+    }
+
+    .dataTable-input, .dataTable-selector {
+      padding: 6px 10px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+    }
+
+    body.dark .dataTable-input, body.dark .dataTable-selector {
+      background: var(--dark-color);
+      color: var(--light-color);
+      border-color: var(--gray-700);
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 51, 160, 0.3);
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, var(--primary-dark), #004799);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 51, 160, 0.4);
+    }
+
+    button:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    }
+
+    button.primary:hover {
+      background: linear-gradient(135deg, var(--accent-color-dark), #b89e2b);
+      box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+    }
+
+    /* FOOTER */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--gray-700);
+      font-size: 13px;
+      margin-top: 20px;
+      border-top: 2px solid var(--accent-color);
+    }
+
+    /* FILTROS NOS GRÁFICOS */
+    .box select {
+      padding: 6px 10px !important;
+      border-radius: 6px !important;
+      border: 1px solid #63a3d8 !important;
+      font-size: 12px !important;
+      width: auto !important;
+      background: white !important;
+      color: var(--primary-color) !important;
+      font-weight: 600 !important;
+    }
+
+
+
+    /* RESPONSIVIDADE */
+    @media (max-width: 768px) {
+      .topo {
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .topo .logo-container {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .topo .titulo {
+        order: -1;
+        width: 100%;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pager {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .pager-info {
+        min-width: auto;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .card h2 {
+        font-size: 28px;
+      }
+
+      .card.percent h2 {
+        font-size: 32px;
+      }
+    }
+    
+    .dashboard-description {
+        color: #666;
+        font-size: 0.95rem;
+        margin: 8px 0 0 0;
+        line-height: 1.4;
+        max-width: 600px;
+    }
+    .dark .dashboard-description {
+        color: #aaa;
+    }
+    
+    /* INSIGHTS CONTAINER - PADRÃO */
+    .insights-container {
+        background: #ffffff;
+        padding: 0;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 16px rgba(99, 163, 216, 0.12);
+        overflow: hidden;
+    }
+
+    body.dark .insights-container {
+        background: #1a2332;
+        box-shadow: 0 4px 16px rgba(99, 163, 216, 0.2);
+    }
+
+    .insights-card {
+        padding: 25px;
+    }
+
+    body.dark .insights-card {
+        background: inherit;
+    }
+
+    .insights-card h2 {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+    }
+
+    body.dark .insights-card h2 {
+        color: #63a3d8;
+    }
+
+    .insight-section {
+        margin-bottom: 20px;
+    }
+
+    .insight-section h3 {
+        color: #333;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+        font-weight: 600;
+        display: flex;
+        gap: 8px;
+    }
+
+    body.dark .insight-section h3 {
+        color: rgba(255,255,255,0.9);
+    }
+
+    .insight-section p {
+        color: #555;
+        line-height: 1.6;
+        font-size: 14px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 6px;
+        border-left: 3px solid var(--accent-color);
+        margin-bottom: 8px;
+    }
+
+    body.dark .insight-section p {
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.85);
+    }
+
+    .insight-section ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .insight-section li {
+        color: #555;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        background: #f9fafb;
+        border-radius: 6px;
+        font-size: 14px;
+        border-left: 3px solid var(--accent-color);
+    }
+
+    body.dark .insight-section li {
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.85);
+    }
+
+    /* Suporte Dark Mode para cards coloridos do storytelling */
+    body.dark p[style*="background: #e8f5e9"],
+    body.dark p[style*="background: #fff3e0"],
+    body.dark p[style*="background: #e3f2fd"],
+    body.dark p[style*="background: #fce4ec"],
+    body.dark p[style*="background: #f3e5f5"],
+    body.dark p[style*="background: #ffebee"] {
+        color: rgba(255,255,255,0.85) !important;
+        border-left-color: inherit !important;
+    }
+
+    /* Cores específicas para dark mode */
+    body.dark p[style*="background: #e8f5e9"] {
+        background: rgba(76, 175, 80, 0.2) !important;
+        border-left-color: #4caf50 !important;
+    }
+
+    body.dark p[style*="background: #fff3e0"] {
+        background: rgba(255, 152, 0, 0.2) !important;
+        border-left-color: #ff9800 !important;
+    }
+
+    body.dark p[style*="background: #e3f2fd"] {
+        background: rgba(33, 150, 243, 0.2) !important;
+        border-left-color: #2196f3 !important;
+    }
+
+    body.dark p[style*="background: #fce4ec"] {
+        background: rgba(233, 30, 99, 0.2) !important;
+        border-left-color: #e91e63 !important;
+    }
+
+    body.dark p[style*="background: #f3e5f5"] {
+        background: rgba(156, 39, 176, 0.2) !important;
+        border-left-color: #9c27b0 !important;
+    }
+
+    body.dark p[style*="background: #ffebee"] {
+        background: rgba(244, 67, 54, 0.2) !important;
+        border-left-color: #f44336 !important;
+    }
+
+    /* Dark mode para filtros e inputs */
+    body.dark .filters {
+        background: #1a2332;
+        border-color: rgba(255, 215, 0, 0.2);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    body.dark select,
+    body.dark input[type="file"],
+    body.dark input[type="text"] {
+        background: #081226;
+        color: #fff;
+        border-color: #63a3d8;
+    }
+
+    body.dark select:focus,
+    body.dark input[type="file"]:focus,
+    body.dark input[type="text"]:focus {
+        border-color: #FFD700;
+        box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.15);
+    }
+
+    body.dark select option {
+        background: #081226;
+        color: #fff;
+    }
+
+    body.dark input[type="file"]::-webkit-file-upload-button {
+        background: #63a3d8;
+        color: white;
+    }
+
+    body.dark input[type="file"]::-webkit-file-upload-button:hover {
+        background: #4a8fb8;
+    }
+
+    /* Dark mode para storytelling */
+    body.dark #storytellingUnificado p {
+        color: rgba(255,255,255,0.85);
+    }
+
+    body.dark #storytellingUnificado > div {
+        background: rgba(99, 163, 216, 0.15) !important;
+        border-left-color: #FFD700 !important;
+    }
+
+    body.dark #storytellingUnificado > div p {
+        color: rgba(255,255,255,0.9) !important;
+    }
+
+    body.dark #storytellingUnificado > div p[style*="color: #666"] {
+        color: rgba(255,255,255,0.75) !important;
+    }
+
+    body.dark #storytellingUnificado p[style*="color: #999"] {
+        color: rgba(255,255,255,0.6) !important;
+    }
+  </style>
+</head>
+<style>
+/* Dark mode aprimorado (injetado automaticamente) */
+body.dark {
+  background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+  color: var(--light-color);
+}
+body.dark .sidebar {
+  background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+  box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+  border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .main-content { background: linear-gradient(135deg, #071124 0%, #0b1726 100%); }
+body.dark .topo {
+  background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+  color: #fff !important;
+}
+body.dark .card, body.dark .chart-card, body.dark .kpi-card { background: #081226; color: var(--light-color); border-color: rgba(255,255,255,0.03); }
+body.dark .label, body.dark .kpi-title { color: rgba(255,255,255,0.8); }
+body.dark .value, body.dark .chart-title { color: var(--accent-color); }
+body.dark table th { background: var(--primary-dark); color: white; }
+body.dark table td { color: var(--light-color); border-color: rgba(255,255,255,0.06); }
+body.dark .sidebar-menu a:hover,
+body.dark .sidebar-menu a.active {
+  background: rgba(255, 215, 0, 0.15);
+  color: #FFF44F;
+}
+</style>
+
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+    </div>
+    <ul class="sidebar-menu">
+      <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+      <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+      <li><a href="dashboard_motoristas%20v2.html" class="active"><i class="bi bi-people"></i> Motoristas</a></li>
+      <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+      <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
+      <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+      <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
+            <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+            <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
+      <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
+      <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+      <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
+      <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <p></p>
+    </div>
+  </nav>
+
+  <div class="main-wrapper">
+  <header class="topo">
+    <div class="logo-container">
+      <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
+      <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
+    </div>
+    <div class="titulo">
+      Telemetria CCO
+      <small>Motoristas Cadastrados</small>
+    </div>
+    <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+  </header>
+  <div class="container">
+    <div class="filters">
+      <input type="file" id="file" accept=".csv">
+      <select id="transportadora">
+        <option value="">Carregando...</option>
+      </select>
+      <select id="unidade">
+        <option value="">Carregando...</option>
+      </select>
+      <input type="text" id="busca" placeholder="🔍 Buscar motorista, NFC, válido ou inválido...">
+    </div>
+
+    <div class="cards">
+      <div class="card total">
+        <span>👤 Total de Motoristas</span>
+        <h2 id="t1">0</h2>
+      </div>
+      <div class="card nfc-ok">
+        <span>📱 Com NFC Válido</span>
+        <h2 id="t2">0</h2>
+      </div>
+      <div class="card nfc-no">
+        <span>🚫 Sem NFC Válido</span>
+        <h2 id="t3">0</h2>
+      </div>
+      <div class="card percent">
+        <span>📊 % com NFC Válido</span>
+        <h2 id="t4">0%</h2>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; color: var(--primary-color);">
+        <input type="checkbox" id="filtrarSemCadastro" style="width: 18px; height: 18px; cursor: pointer;">
+        <span>Remover "Sem cadastro" e "Sem uni" dos gráficos</span>
+      </label>
+    </div>
+    
+    <!-- RESUMO UNIFICADO E DINÂMICO -->
+    <div class="insights-container">
+        <div class="insights-card">
+            <h2 style="font-size: 1.1rem; margin-bottom: 20px;"><i class="bi bi-graph-up"></i> 📊 Análise da Frota</h2>
+            
+            <div style="font-size: 0.9rem;" id="storytellingUnificado">
+                <p style="color: #999; font-style: italic;">Carregando dados...</p>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; margin-top: 20px;">
+      <button onclick="exportarCSV()" style="background: #10b981; border-color: #10b981;">📥 Exportar CSV</button>
+      <button onclick="exportarJSON()" style="background: #3b82f6; border-color: #3b82f6;">📥 Exportar JSON</button>
+      <button onclick="imprimirRelatorio()" style="background: #f59e0b; border-color: #f59e0b;">🖨️ Imprimir</button>
+    </div>
+
+    <h2 class="charts-title">📊 Análise Visual</h2>
+
+    <div class="grid">
+      <div class="box">
+        <h3>Motoristas por Transportadora</h3>
+        <canvas id="g1"></canvas>
+      </div>
+      <div class="box">
+        <h3>Distribuição NFC</h3>
+        <canvas id="g2"></canvas>
+        <div style="display: flex; justify-content: center; gap: 30px; margin-top: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 16px; height: 16px; background: #0033A0; border-radius: 2px;"></div>
+            <span style="font-size: 12px; font-weight: 600; color: #0033A0;">Com NFC</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 16px; height: 16px; background: #FFD700; border-radius: 2px;"></div>
+            <span style="font-size: 12px; font-weight: 600; color: #FFD700;">Sem NFC</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr;">
+      <div class="box">
+        <h3>Motoristas por Unidade (Top 15)</h3>
+        <canvas id="g3"></canvas>
+      </div>
+    </div>
+
+    <div class="divisor"></div>
+
+    <div class="table-container">
+      <h3 class="table-title">Detalhamento dos Motoristas</h3>
+      <div class="dataTables-container">
+        <table id="tabela-motoristas">
+          <thead>
+            <tr>
+              <th>Motorista</th>
+              <th>CPF</th>
+              <th>Transportadora</th>
+              <th>Unidade</th>
+              <th>NFC</th>
+              <th>Status NFC</th>
+            </tr>
+          </thead>
+          <tbody id="lista">
+            <tr>
+              <td colspan="6" class="loading-message">Carregue um arquivo CSV para iniciar</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="paginacao" style="margin-top: 20px; text-align: center;"></div>
+    </div>
+
+    <div class="footer">
+      <p>Dashboard Telemetria CCO - Atualizado em <span id="dataAtual"></span></p>
+    </div>
+  </div>
+
+  <script>
+    function toggleDark() {
+      const isDark = document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+      console.log('Dark mode:', isDark);
+      
+      // Atualizar gráficos quando dark mode é toggled
+      setTimeout(function() {
+        if (window.chart1) try { window.chart1.update(); } catch(e) { console.log('Erro ao atualizar chart1'); }
+        if (window.chart2) try { window.chart2.update(); } catch(e) { console.log('Erro ao atualizar chart2'); }
+        if (window.chart3) try { window.chart3.update(); } catch(e) { console.log('Erro ao atualizar chart3'); }
+      }, 50);
+    }
+
+    // Carregar preferência dark mode ao iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      const darkMode = localStorage.getItem('darkMode');
+      console.log('Carregando dark mode:', darkMode);
+      if (darkMode === 'true') {
+        document.body.classList.add('dark');
+        console.log('Dark mode aplicado ao carregar');
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Registrar plugin datalabels
+      Chart.register(ChartDataLabels);
+
+      // Variáveis globais
+      let data = [], chart1, chart2, chart3;
+      const nfcOk = n => n && n.trim() !== "0" && n.trim().length > 14 && /^[0-9]+$/.test(n.trim());
+
+      // Carregar dados persistidos
+      const savedData = localStorage.getItem('motoristasData');
+      if (savedData) {
+        try {
+          data = JSON.parse(savedData);
+          carregarTransportadoras();
+          atualizar();
+          console.log('Dados carregados do localStorage');
+        } catch(e) {
+          console.log('Erro ao carregar dados persistidos');
+        }
+      }
+
+      // Atualizar data no footer
+      const hoje = new Date();
+      document.getElementById('dataAtual').textContent = hoje.toLocaleDateString('pt-BR');
+
+      // Carregar arquivo CSV
+      document.getElementById('file').onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+          alert('⚠️ Por favor, selecione um arquivo CSV válido.');
+          e.target.value = '';
+          return;
+        }
+
+        document.getElementById('lista').innerHTML = `
+          <tr>
+            <td colspan="6" class="loading-message">Processando arquivo...</td>
+          </tr>
+        `;
+
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          delimiter: ";",
+          dynamicTyping: false,
+          complete: r => {
+            if (r.errors.length > 0 || r.data.length === 0) {
+              alert('⚠️ Erro ao processar o arquivo CSV.');
+              document.getElementById('lista').innerHTML = `
+                <tr>
+                  <td colspan="6" class="empty-message">Nenhum dado carregado</td>
+                </tr>
+              `;
+              return;
+            }
+
+            // Mapear dados com fallback para colunas
+            data = r.data.map(x => {
+              const grupo = (x.Grupo || x.GRUPO || x.grupo || "").trim();
+              const transportadora = (x.TRANSPORTADORA || x.transportadora || extrairTransportadora(grupo) || "").trim();
+              const unidade = (x.UNIDADE || x.unidade || extrairUnidade(grupo) || "").trim();
+              
+              return {
+                nome: (x["NOME COMPLETO"] || x["nome completo"] || x["NOME"] || "").trim(),
+                cpf: (x.CPF || x.cpf || "").trim(),
+                transportadora: transportadora,
+                unidade: unidade,
+                nfc: String(x.NFC || x.nfc || "").trim(),
+                regiao: extrairRegiao(unidade)
+              };
+            }).filter(x => x.nome);
+
+            if (data.length === 0) {
+              alert('⚠️ Nenhum motorista encontrado no arquivo.');
+              document.getElementById('lista').innerHTML = `
+                <tr>
+                  <td colspan="6" class="empty-message">Nenhum motorista encontrado</td>
+                </tr>
+              `;
+              return;
+            }
+
+            // DEBUG: Contar transportadora e unidade
+            let comTransp = 0, semTransp = 0;
+            let comUnid = 0, semUnid = 0;
+            let comAmbas = 0, semAmbas = 0;
+            
+            data.forEach(motorista => {
+              if (motorista.transportadora && motorista.transportadora.trim() !== '') {
+                comTransp++;
+              } else {
+                semTransp++;
+              }
+              
+              if (motorista.unidade && motorista.unidade.trim() !== '') {
+                comUnid++;
+              } else {
+                semUnid++;
+              }
+              
+              if ((motorista.transportadora && motorista.transportadora.trim() !== '') && 
+                  (motorista.unidade && motorista.unidade.trim() !== '')) {
+                comAmbas++;
+              } else if ((!motorista.transportadora || motorista.transportadora.trim() === '') && 
+                         (!motorista.unidade || motorista.unidade.trim() === '')) {
+                semAmbas++;
+              }
+            });
+            
+            console.log('Debug Motoristas:', { 
+              total: data.length, 
+              comTransp, 
+              semTransp, 
+              comUnid, 
+              semUnid, 
+              comAmbas, 
+              semAmbas 
+            });
+
+            carregarTransportadoras();
+            atualizar();
+            window.saveDataSafely('motoristasData', data);
+            alert(`✅ Arquivo carregado com sucesso!\n${data.length} motoristas encontrados.`);
+          },
+          error: err => {
+            console.error('Erro ao parsear CSV:', err);
+            alert('❌ Erro ao ler o arquivo: ' + err.message);
+            document.getElementById('lista').innerHTML = `
+              <tr>
+                <td colspan="6" class="empty-message">Erro ao carregar dados</td>
+              </tr>
+            `;
+          }
+        });
+      };
+
+      // Extrair transportadora do grupo
+      function extrairTransportadora(grupo) {
+        if (!grupo) return 'Sem cadastro';
+        const match = grupo.match(/TRS_([^,]+)/);
+        if (!match) return 'Sem cadastro';
+        let transp = 'TRS_' + match[1].trim();
+        // Normalizar variações de LOG 20
+        transp = transp.replace(/LOG\s+20/i, 'LOG20').replace(/LOG20\s+/i, 'LOG20');
+        return transp;
+      }
+
+      // Extrair unidade do grupo
+      function extrairUnidade(grupo) {
+        if (!grupo) return 'Sem UNI';
+        const match = grupo.match(/UNI_([^,]+)/);
+        return match ? 'UNI_' + match[1].trim() : 'Sem UNI';
+      }
+
+      // Extrair região do nome da unidade
+      function extrairRegiao(unidade) {
+        const regexes = [
+          /REG_MACRO REGIÃO (\w+)/i,
+          /REGIÃO (\w+)/i,
+          /(\w+)_/
+        ];
+        for (let r of regexes) {
+          const match = unidade.match(r);
+          if (match) return match[1];
+        }
+        return "Outras";
+      }
+
+      // Carregar transportadoras
+      function carregarTransportadoras() {
+        const selectT = document.getElementById('transportadora');
+        selectT.innerHTML = '<option value="">Todas Transportadoras</option>';
+        [...new Set(data.map(x => x.transportadora).filter(Boolean))]
+          .sort()
+          .forEach(v => selectT.innerHTML += `<option>${v}</option>`);
+        atualizarUnidade();
+      }
+
+      // Atualizar unidades
+      function atualizarUnidade() {
+        const ft = document.getElementById('transportadora').value;
+        const selectU = document.getElementById('unidade');
+        selectU.innerHTML = '<option value="">Todas Unidades</option>';
+        [...new Set(data.filter(x => !ft || x.transportadora === ft).map(x => x.unidade).filter(Boolean))]
+          .sort()
+          .forEach(v => selectU.innerHTML += `<option>${v}</option>`);
+        atualizar();
+      }
+
+      // Event listeners dos filtros
+      document.getElementById('transportadora').onchange = atualizarUnidade;
+      document.getElementById('unidade').onchange = () => atualizar();
+      document.getElementById('filtrarSemCadastro').onchange = () => atualizar();
+
+
+
+      let searchTimeout;
+      document.getElementById('busca').oninput = () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(atualizar, 300);
+      };
+
+      // Função principal de atualização
+      function atualizar() {
+        const ft = document.getElementById('transportadora').value;
+        const fu = document.getElementById('unidade').value;
+        const b = document.getElementById('busca').value.toLowerCase();
+
+        let filtrados = data.filter(x =>
+          (!ft || x.transportadora === ft) &&
+          (!fu || x.unidade === fu) &&
+          (!b || x.nome.toLowerCase().includes(b) || (x.nfc && x.nfc.toLowerCase().includes(b)) || (b === 'válido' && nfcOk(x.nfc)) || (b === 'inválido' && !nfcOk(x.nfc)))
+        );
+
+        const total = filtrados.length;
+        const ok = filtrados.filter(x => nfcOk(x.nfc)).length;
+
+        console.log(`Debug Filtro: ft=${ft}, fu=${fu}, total=${total}, ok=${ok}, nfcCoverage=${total ? Math.round((ok / total) * 100) : 0}%`);
+
+        // Atualizar KPIs
+        document.getElementById('t1').innerText = total.toLocaleString('pt-BR');
+        document.getElementById('t2').innerText = ok.toLocaleString('pt-BR');
+        document.getElementById('t3').innerText = (total - ok).toLocaleString('pt-BR');
+        
+        // Calcular percentual com melhor apresentação
+        let nfcPercent;
+        if (total === 0) {
+          nfcPercent = '0%';
+        } else {
+          const calcPercent = (ok / total) * 100;
+          if (calcPercent === 0 && ok > 0) {
+            nfcPercent = '< 1%';
+          } else {
+            nfcPercent = Math.round(calcPercent) + '%';
+          }
+        }
+        document.getElementById('t4').innerText = nfcPercent;
+
+        // Atualizar storytelling dinâmico
+        atualizarStorytelling(filtrados, ft, fu, b);
+
+        // Atualizar gráficos
+        atualizarGraficos(filtrados);
+        atualizarTabela(filtrados);
+      }
+
+      function atualizarStorytelling(filtrados, transportadora, unidade, busca) {
+        const total = filtrados.length;
+        const nfcOkCount = filtrados.filter(x => nfcOk(x.nfc)).length;
+        const nfcInvalCount = total - nfcOkCount;
+        
+        // Calcular nfcCoverage com melhor apresentação
+        let nfcCoverage;
+        let nfcInvalidPercent;
+        if (total > 0) {
+          const calcPercent = (nfcOkCount / total) * 100;
+          const calcPercentInvalid = (nfcInvalCount / total) * 100;
+          nfcCoverage = calcPercent === 0 && nfcOkCount > 0 ? '< 1' : Math.round(calcPercent);
+          nfcInvalidPercent = calcPercentInvalid === 100 && nfcInvalCount < total ? '> 99' : Math.round(calcPercentInvalid);
+        } else {
+          nfcCoverage = 0;
+          nfcInvalidPercent = 0;
+        }
+
+        // Contar com vínculo completo
+        const comVinculo = filtrados.filter(x => 
+          x.transportadora && x.transportadora.trim() !== '' && 
+          x.unidade && x.unidade.trim() !== ''
+        ).length;
+        const semVinculo = total - comVinculo;
+
+        // Encontrar transportadora e unidade mais frequentes
+        const porT = {};
+        const porU = {};
+        filtrados.forEach(x => {
+          porT[x.transportadora] = (porT[x.transportadora] || 0) + 1;
+          porU[x.unidade] = (porU[x.unidade] || 0) + 1;
+        });
+        const transLider = Object.entries(porT).sort((a, b) => b[1] - a[1])[0];
+        const uniLider = Object.entries(porU).sort((a, b) => b[1] - a[1])[0];
+
+        // Gerar HTML unificado
+        let html = '';
+        
+        // Cabeçalho com resumo geral
+        html += `<div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #63a3d8;">`;
+        html += `<p style="margin: 0; font-weight: 600;">📊 Base Geral: 39.630 motoristas cadastrados</p>`;
+        html += `<p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666;">✅ 16.130 (40,70%) com vínculo (Transportadora + Unidade) | ⚠️ 23.500 (59,30%) sem vínculo</p>`;
+        html += `</div>`;
+
+        if (total === 0) {
+          html += '<p style="color: #999; font-style: italic;">Nenhum motorista encontrado com os filtros aplicados</p>';
+        } else {
+          // Estatísticas do filtro atual
+          html += `<p style="margin-bottom: 12px;"><strong>🔍 Motoristas Filtrados:</strong> <strong style="font-size: 1.1em;">${total.toLocaleString('pt-BR')}</strong></p>`;
+
+          // NFC Status
+          html += `<p style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 8px 10px; border-radius: 4px; margin-bottom: 6px;">📱 Com NFC Válido: <strong>${nfcOkCount}</strong> (${nfcCoverage}%)</p>`;
+          html += `<p style="background: #fce4ec; border-left: 4px solid #e91e63; padding: 8px 10px; border-radius: 4px; margin-bottom: 12px;">❌ Sem NFC: <strong>${nfcInvalCount}</strong> (${nfcInvalidPercent}%)</p>`;
+
+          // Informações principais
+          if (transLider) {
+            html += `<p style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 8px 10px; border-radius: 4px; margin-bottom: 6px;">🏢 Transportadora líder: <strong>${transLider[0]}</strong> (${transLider[1]})</p>`;
+          }
+          if (uniLider) {
+            html += `<p style="background: #f3e5f5; border-left: 4px solid #9c27b0; padding: 8px 10px; border-radius: 4px;">📍 Unidade principal: <strong>${uniLider[0]}</strong> (${uniLider[1]})</p>`;
+          }
+        }
+
+        document.getElementById('storytellingUnificado').innerHTML = html;
+      }
+
+      function atualizarGraficos(filtrados) {
+        const filtrarIrrelevantes = document.getElementById('filtrarSemCadastro')?.checked || false;
+
+        // Gráfico 1 - Transportadoras (barras horizontais) - ordenadas por quantidade decrescente
+        const porT = {};
+        filtrados.forEach(x => porT[x.transportadora] = (porT[x.transportadora] || 0) + 1);
+        
+        // Remover "Sem cadastro" e "Sem Transportadora"
+        if (filtrarIrrelevantes) {
+          delete porT['Sem cadastro'];
+          delete porT['Sem Transportadora'];
+          delete porT[''];
+        }
+        
+        // Ordenar por quantidade decrescente (maior para menor)
+        const transportadorasOrdenadas = Object.entries(porT)
+          .sort((a, b) => b[1] - a[1])
+          .reduce((acc, [key, val]) => { acc[key] = val; return acc; }, {});
+        
+        if (chart1) chart1.destroy();
+        chart1 = criarGraficoBarrasHorizontal('g1', transportadorasOrdenadas, 'Motoristas por Transportadora');
+
+        // Gráfico 2 - Distribuição NFC
+        if (chart2) chart2.destroy();
+        const ok = filtrados.filter(x => nfcOk(x.nfc)).length;
+        chart2 = criarGraficoDoughnut('g2', ['Com NFC Válido', 'Sem NFC Válido'], [ok, filtrados.length - ok]);
+
+        // Gráfico 3 - Motoristas por Unidade (TOP 15)
+        const porU = {};
+        filtrados.forEach(x => porU[x.unidade] = (porU[x.unidade] || 0) + 1);
+        
+        let unidadesLabels = Object.keys(porU);
+        if (filtrarIrrelevantes) {
+          // Remover "Sem UNI", "Sem cadastro" e vazios
+          unidadesLabels = unidadesLabels.filter(u => u !== 'Sem UNI' && u !== 'Sem cadastro' && u !== '');
+        }
+        
+        const topUnidades = unidadesLabels
+          .map(u => [u, porU[u]])
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 15);
+        
+        const labelsTop = topUnidades.map(e => e[0]);
+        const dataTop = topUnidades.map(e => e[1]);
+        if (chart3) chart3.destroy();
+        chart3 = criarGraficoPizza('g3', labelsTop, dataTop);
+      }
+
+      function criarGraficoBarras(id, dados, titulo) {
+        const labels = Object.keys(dados);
+        const values = Object.values(dados);
+        const canvas = document.getElementById(id);
+        
+        return new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: titulo,
+              data: values,
+              backgroundColor: labels.map((_, i) => [
+                '#0033A0', '#1E90FF', '#4169E1', '#0056B3', '#0073E6',
+                '#008CFF', '#00A3CC', '#00BFFF', '#1E3A8A', '#2C5282'
+              ][i % 10]),
+              borderColor: '#FFD700',
+              borderWidth: 2,
+              borderRadius: 6,
+              hoverBackgroundColor: '#1E90FF'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(0, 51, 160, 0.9)',
+                titleColor: '#FFD700',
+                bodyColor: '#fff',
+                borderColor: '#FFD700',
+                borderWidth: 1
+              }
+            },
+            scales: {
+              x: {
+                ticks: { font: { size: 10 } },
+                grid: { display: false }
+              },
+              y: {
+                ticks: { font: { size: 10 }, precision: 0 },
+                beginAtZero: true,
+                grid: { color: 'rgba(0, 51, 160, 0.1)' }
+              }
+            }
+          }
+        });
+      }
+
+      function criarGraficoBarrasHorizontal(id, dados, titulo) {
+        const labels = Object.keys(dados);
+        const values = Object.values(dados);
+        const canvas = document.getElementById(id);
+        
+        return new Chart(canvas, {
+          type: 'bar',
+          indexAxis: 'y',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: titulo,
+              data: values,
+              backgroundColor: '#3b5bdb',
+              borderRadius: 4,
+              hoverBackgroundColor: '#1E90FF'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            layout: {
+              padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(0, 51, 160, 0.9)',
+                titleColor: '#FFD700',
+                bodyColor: '#fff',
+                borderColor: '#FFD700',
+                borderWidth: 1
+              },
+              datalabels: {
+                display: true,
+                anchor: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? 'center' : 'end';
+                },
+                align: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? 'center' : 'end';
+                },
+                offset: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? 0 : 8;
+                },
+                font: { size: 11, weight: 'bold' },
+                color: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? '#fff' : '#0033A0';
+                },
+                padding: 5
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { font: { size: 10 }, precision: 0 },
+                grid: { color: 'rgba(0, 51, 160, 0.1)' }
+              },
+              y: {
+                ticks: { font: { size: 9 } },
+                grid: { display: false }
+              }
+            }
+          }
+        });
+      }
+
+      function criarGraficoDoughnut(id, labels, data) {
+        const canvas = document.getElementById(id);
+        
+        return new Chart(canvas, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: [data[0] > 0 ? '#0033A0' : '#cbd5e1', data[1] > 0 ? '#FFD700' : '#cbd5e1'],
+              borderColor: '#fff',
+              borderWidth: 3,
+              hoverOffset: 15
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(0, 51, 160, 0.9)',
+                titleColor: '#FFD700',
+                bodyColor: '#fff',
+                borderColor: '#FFD700',
+                borderWidth: 1
+              },
+              datalabels: {
+                display: true,
+                anchor: 'center',
+                align: 'center',
+                font: { size: 12, weight: 'bold' },
+                color: '#fff',
+                formatter: function(value) {
+                  return value;
+                }
+              }
+            },
+            cutout: '65%'
+          }
+        });
+      }
+
+      function criarGraficoPizza(id, labels, data) {
+        const canvas = document.getElementById(id);
+        
+        const sortedIndices = Array.from({length: labels.length}, (_, i) => i)
+          .sort((a, b) => data[b] - data[a]);
+        const sortedLabels = sortedIndices.map(i => labels[i]);
+        const sortedData = sortedIndices.map(i => data[i]);
+        
+        return new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels: sortedLabels,
+            datasets: [{
+              label: 'Motoristas',
+              data: sortedData,
+              backgroundColor: '#3b5bdb',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(0, 51, 160, 0.9)',
+                titleColor: '#FFD700',
+                bodyColor: '#fff',
+                borderColor: '#FFD700',
+                borderWidth: 1
+              },
+              datalabels: {
+                display: true,
+                anchor: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? 'center' : 'end';
+                },
+                align: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? 'center' : 'top';
+                },
+                offset: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? 0 : 8;
+                },
+                font: { size: 11, weight: 'bold' },
+                color: function(context) {
+                  const data = context.dataset.data;
+                  const maxValue = Math.max(...data);
+                  const currentValue = data[context.dataIndex];
+                  const percentage = (currentValue / maxValue) * 100;
+                  return percentage > 15 ? '#fff' : '#0033A0';
+                },
+                padding: 5
+              }
+            },
+            scales: {
+              y: { 
+                beginAtZero: true, 
+                ticks: { precision: 0, font: { size: 10 } }, 
+                grid: { color: 'rgba(0, 51, 160, 0.1)' } 
+              },
+              x: { 
+                ticks: { font: { size: 10 } }, 
+                grid: { color: 'rgba(0, 51, 160, 0.1)' } 
+              }
+            }
+          }
+        });
+      }
+
+      let paginaAtual = 1;
+      const itensPorPagina = 10;
+
+      function atualizarTabela(filtrados) {
+        const tbody = document.getElementById('lista');
+        
+        if (filtrados.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-message">Nenhum motorista encontrado</td></tr>';
+          document.getElementById('paginacao').innerHTML = '';
+          document.getElementById('insightsContainer').style.display = 'none';
+          return;
+        }
+
+        paginaAtual = 1;
+        const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
+        
+        function renderizarPagina(pagina) {
+          tbody.innerHTML = '';
+          const inicio = (pagina - 1) * itensPorPagina;
+          const fim = inicio + itensPorPagina;
+          const motoristasPage = filtrados.slice(inicio, fim);
+          
+          motoristasPage.forEach(x => {
+            const tr = document.createElement('tr');
+            const statusHTML = nfcOk(x.nfc) ? '<span class="ok">Válido</span>' : '<span class="no">Inválido</span>';
+            tr.innerHTML = `
+              <td>${x.nome}</td>
+              <td>${x.cpf}</td>
+              <td>${x.transportadora}</td>
+              <td>${x.unidade}</td>
+              <td>${x.nfc || '-'}</td>
+              <td>${statusHTML}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        function renderizarPaginacao() {
+          const pag = document.getElementById('paginacao');
+          pag.innerHTML = '';
+          
+          if (totalPaginas <= 1) return;
+          
+          // Botão anterior
+          if (paginaAtual > 1) {
+            const btnAnterior = document.createElement('button');
+            btnAnterior.textContent = '← Anterior';
+            btnAnterior.style.cssText = 'margin: 0 5px; padding: 8px 12px; background: #63a3d8; color: white; border: none; border-radius: 4px; cursor: pointer;';
+            btnAnterior.onclick = () => { paginaAtual--; renderizarPagina(paginaAtual); renderizarPaginacao(); };
+            pag.appendChild(btnAnterior);
+          }
+          
+          // Números de página
+          const span = document.createElement('span');
+          span.style.cssText = 'margin: 0 10px; font-weight: bold;';
+          span.textContent = `Página ${paginaAtual} de ${totalPaginas}`;
+          pag.appendChild(span);
+          
+          // Botão próximo
+          if (paginaAtual < totalPaginas) {
+            const btnProximo = document.createElement('button');
+            btnProximo.textContent = 'Próximo →';
+            btnProximo.style.cssText = 'margin: 0 5px; padding: 8px 12px; background: #63a3d8; color: white; border: none; border-radius: 4px; cursor: pointer;';
+            btnProximo.onclick = () => { paginaAtual++; renderizarPagina(paginaAtual); renderizarPaginacao(); };
+            pag.appendChild(btnProximo);
+          }
+        }
+        
+        renderizarPagina(paginaAtual);
+        renderizarPaginacao();
+      }
+      
+      // Função de Insights (Storytelling)
+      function generateInsights(filtrados) {
+        // Função desativada - dados mostrados no Resumo Geral unificado
+        return;
+      }
+
+      // Funções de exportação
+      window.exportarCSV = function() {
+        if (data.length === 0) {
+          alert('⚠️ Nenhum dado para exportar');
+          return;
+        }
+
+        let csv = 'NOME COMPLETO,CPF,TRANSPORTADORA,UNIDADE,NFC,STATUS NFC,REGIÃO\n';
+        data.forEach(x => {
+          const nfc = x.nfc || '-';
+          const status = nfcOk(x.nfc) ? 'Válido' : 'Inválido';
+          csv += `"${x.nome}","${x.cpf}","${x.transportadora}","${x.unidade}","${nfc}","${status}","${x.regiao}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `motoristas_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+      };
+
+      window.exportarJSON = function() {
+        if (data.length === 0) {
+          alert('⚠️ Nenhum dado para exportar');
+          return;
+        }
+
+        const json = {
+          data_exportacao: new Date().toISOString(),
+          total_motoristas: data.length,
+          total_com_nfc: data.filter(x => nfcOk(x.nfc)).length,
+          motoristas: data.map(x => ({
+            nome: x.nome,
+            cpf: x.cpf,
+            transportadora: x.transportadora,
+            unidade: x.unidade,
+            nfc: x.nfc,
+            status_nfc: nfcOk(x.nfc) ? 'Válido' : 'Inválido',
+            regiao: x.regiao
+          }))
+        };
+
+        const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `motoristas_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+      };
+
+      window.imprimirRelatorio = function() {
+        if (data.length === 0) {
+          alert('⚠️ Nenhum dado para imprimir');
+          return;
+        }
+
+        const ft = document.getElementById('transportadora').value;
+        const fu = document.getElementById('unidade').value;
+        const b = document.getElementById('busca').value.toLowerCase();
+
+        let filtrados = data.filter(x =>
+          (!ft || x.transportadora === ft) &&
+          (!fu || x.unidade === fu) &&
+          (!b || x.nome.toLowerCase().includes(b) || x.nfc.toLowerCase().includes(b) || (b === 'válido' && nfcOk(x.nfc)) || (b === 'inválido' && !nfcOk(x.nfc)))
+        );
+
+        const ok = filtrados.filter(x => nfcOk(x.nfc)).length;
+        const pct = filtrados.length > 0 ? Math.round((ok / filtrados.length) * 100) : 0;
+
+        let relatorio = `
+TELEMETRIA CCO - RELATÓRIO DE MOTORISTAS
+Data: ${new Date().toLocaleDateString('pt-BR')}
+${ft ? `Transportadora: ${ft}` : ''}
+${fu ? `Unidade: ${fu}` : ''}
+
+RESUMO EXECUTIVO
+===============
+Total de Motoristas: ${filtrados.length}
+Com NFC Válido: ${ok}
+Sem NFC Válido: ${filtrados.length - ok}
+Cobertura NFC: ${pct}%
+
+DETALHAMENTO
+============
+`;
+        filtrados.forEach((x, i) => {
+          relatorio += `\n${i + 1}. ${x.nome}
+   CPF: ${x.cpf}
+   Transportadora: ${x.transportadora}
+   Unidade: ${x.unidade}
+   NFC: ${x.nfc || 'N/A'}
+   Status: ${nfcOk(x.nfc) ? '✓ Válido' : '✗ Inválido'}`;
+        });
+
+        const printWindow = window.open('', '', 'height=800,width=1000');
+        printWindow.document.write('<pre>' + relatorio + '</pre>');
+        printWindow.document.close();
+        printWindow.print();
+      };
+    });
+  </script>
+  </div>
+</body>
+</html>

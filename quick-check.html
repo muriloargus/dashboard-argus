@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Quick Check - Plataforma Recuperada</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        .checks {
+            text-align: left;
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            border-left: 4px solid #ddd;
+        }
+        .check-item.pass {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        .check-item.fail {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .check-icon {
+            font-size: 2em;
+            min-width: 50px;
+            text-align: center;
+        }
+        .check-text {
+            flex: 1;
+        }
+        .check-text strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .check-text small {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        .result.success {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+        }
+        .result.error {
+            background: linear-gradient(135deg, #fe5e5e, #fd3838);
+            color: white;
+        }
+        .buttons {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        a, button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+        a {
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .quick-link {
+            padding: 10px 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+        .quick-link:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #d4edda;
+            color: #155724;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Quick Check</h1>
+        
+        <div class="status-badge" id="statusBadge">
+            ⏳ Verificando...
+        </div>
+
+        <div class="checks" id="checks"></div>
+
+        <div class="result" id="result" style="display: none;"></div>
+
+        <div class="buttons">
+            <button class="btn-primary" onclick="refresh()">🔄 Recheck</button>
+            <button class="btn-secondary" onclick="openDashboard()">📊 Abrir Dashboard</button>
+        </div>
+
+        <div class="grid-2" style="margin-top: 20px; gap: 8px;">
+            <a href="index.html" class="quick-link">🏠 Home</a>
+            <a href="status_frota.html" class="quick-link">🚗 Status Frota</a>
+            <a href="tv_dashboard.html" class="quick-link">📺 TV Dashboard</a>
+            <a href="validacao-recuperacao.html" class="quick-link">🧪 Testes Completos</a>
+            <a href="diagnostico-storage.html" class="quick-link">📊 Diagnóstico</a>
+            <a href="README-RECUPERACAO.md" class="quick-link">📖 Documentação</a>
+        </div>
+    </div>
+
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+
+    <script>
+        const checks = [];
+
+        function addCheck(name, icon, status, message) {
+            const checksEl = document.getElementById('checks');
+            const check = document.createElement('div');
+            check.className = `check-item ${status ? 'pass' : 'fail'}`;
+            check.innerHTML = `
+                <div class="check-icon">${icon}</div>
+                <div class="check-text">
+                    <strong>${name}</strong>
+                    <small>${message}</small>
+                </div>
+            `;
+            checksEl.appendChild(check);
+            checks.push(status);
+            return status;
+        }
+
+        function updateStatus() {
+            const badgeEl = document.getElementById('statusBadge');
+            const resultEl = document.getElementById('result');
+            const allPass = checks.every(c => c);
+
+            if (allPass) {
+                badgeEl.textContent = '✅ TUDO OK!';
+                badgeEl.style.background = '#34d399';
+                badgeEl.style.color = 'white';
+                
+                resultEl.className = 'result success';
+                resultEl.textContent = '🎉 Plataforma recuperada com sucesso!';
+                resultEl.style.display = 'block';
+            } else {
+                badgeEl.textContent = '❌ PROBLEMAS DETECTADOS';
+                badgeEl.style.background = '#fe5e5e';
+                badgeEl.style.color = 'white';
+                
+                resultEl.className = 'result error';
+                resultEl.textContent = '⚠️ Verifique os erros acima';
+                resultEl.style.display = 'block';
+            }
+        }
+
+        async function runChecks() {
+            document.getElementById('checks').innerHTML = '';
+            checks.length = 0;
+
+            // Check 1: localStorage
+            try {
+                const test = 'test_' + Date.now();
+                localStorage.setItem(test, 'valor');
+                if (localStorage.getItem(test) === 'valor') {
+                    addCheck('localStorage', '📝', true, 'Funciona 100%');
+                    localStorage.removeItem(test);
+                } else {
+                    addCheck('localStorage', '📝', false, 'Não conseguiu ler dados');
+                }
+            } catch (e) {
+                addCheck('localStorage', '📝', false, `Erro: ${e.message}`);
+            }
+
+            // Check 2: IDBManager
+            try {
+                if (typeof IDBManager !== 'undefined' && typeof idb !== 'undefined') {
+                    addCheck('IDBManager', '💾', true, `Carregado, pronto: ${idb.isReady}`);
+                } else {
+                    addCheck('IDBManager', '💾', false, 'Script não carregou');
+                }
+            } catch (e) {
+                addCheck('IDBManager', '💾', false, `Erro: ${e.message}`);
+            }
+
+            // Check 3: StorageAdapter
+            try {
+                if (typeof StorageAdapter !== 'undefined' && typeof storageAdapter !== 'undefined') {
+                    addCheck('StorageAdapter', '🔗', true, 'Carregado e instânciado');
+                } else {
+                    addCheck('StorageAdapter', '🔗', false, 'Script não carregou');
+                }
+            } catch (e) {
+                addCheck('StorageAdapter', '🔗', false, `Erro: ${e.message}`);
+            }
+
+            // Check 4: Dark Mode
+            try {
+                const before = document.body.classList.contains('dark');
+                document.body.classList.toggle('dark');
+                const saved = localStorage.getItem('darkMode');
+                const works = saved === 'true' || saved === 'false';
+                if (works) {
+                    addCheck('Dark Mode', '🌙', true, 'Toggle funciona');
+                    document.body.classList.remove('dark');
+                } else {
+                    addCheck('Dark Mode', '🌙', false, 'localStorage não funcionou');
+                }
+            } catch (e) {
+                addCheck('Dark Mode', '🌙', false, `Erro: ${e.message}`);
+            }
+
+            // Check 5: No Prototype Interception
+            try {
+                const hasInterception = Storage.prototype.setItem.toString().includes('storageAdapter');
+                if (!hasInterception) {
+                    addCheck('Sem Bloqueio', '🔐', true, 'Storage.prototype intacto');
+                } else {
+                    addCheck('Sem Bloqueio', '🔐', false, 'Interceptação ainda ativa');
+                }
+            } catch (e) {
+                addCheck('Sem Bloqueio', '🔐', false, `Erro: ${e.message}`);
+            }
+
+            updateStatus();
+        }
+
+        function refresh() {
+            runChecks();
+        }
+
+        function openDashboard() {
+            window.location.href = 'index.html';
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(runChecks, 500);
+        });
+    </script>
+</body>
+</html>

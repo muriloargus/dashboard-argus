@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Exceções - Sistema Argus Ambev</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --secondary-color: #e60000;
+            --accent-color: #FFD700;
+            --success-color: #28a745;
+            --light-color: #f8fafc;
+            --dark-color: #1a1a1a;
+            --sidebar-width: 280px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+            border-right: 1px solid rgba(255, 215, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header i {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            gap: 12px;
+            position: relative;
+        }
+        
+        .sidebar-menu a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-color);
+            border-radius: 0 3px 3px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFF44F;
+            padding-left: 12px;
+        }
+        
+        .sidebar-menu a.active::before {
+            opacity: 1;
+        }
+        
+        .sidebar-menu a i {
+            width: 24px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85rem;
+            text-align: center;
+            position: absolute;
+            bottom: 20px;
+            width: calc(var(--sidebar-width) - 40px);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px 40px;
+            overflow-y: auto;
+        }
+        
+        .topo {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            padding: 25px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(99, 163, 216, 0.2);
+            position: relative;
+            z-index: 100;
+        }
+        
+        .topo h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .btn-toggle {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: rgba(255, 215, 0, 0.18);
+            border: 2px solid var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid rgba(99, 163, 216, 0.1);
+            text-align: center;
+            position: relative;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid rgba(99, 163, 216, 0.1);
+            position: relative;
+        }
+        
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-card.full-width .chart-wrapper {
+            height: 600px !important;
+        }
+        
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 2px dashed rgba(99, 163, 216, 0.3);
+        }
+        
+        .upload-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .upload-input {
+            padding: 10px;
+            border: 1px solid rgba(99, 163, 216, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .table-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow-x: auto;
+        }
+        
+        .table-section table {
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        
+        .table-section th {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+            text-align: left;
+        }
+        
+        .table-section td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        
+        .table-section tbody tr:hover {
+            background: rgba(99, 163, 216, 0.05);
+        }
+        
+        .badge-exception {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge-exception.critical {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge-exception.warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .badge-exception.info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        /* Dark mode */
+        body.dark {
+            background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+            color: var(--light-color);
+        }
+        
+        body.dark .sidebar {
+            background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+            box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+            border-right-color: rgba(255,215,0,0.06);
+        }
+        
+        body.dark .topo {
+            background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+            color: #fff !important;
+        }
+        
+        body.dark .stat-card,
+        body.dark .chart-card,
+        body.dark .upload-section,
+        body.dark .table-section {
+            background: #081226;
+            border-color: rgba(255,255,255,0.03);
+            box-shadow: none;
+            color: var(--light-color);
+        }
+        
+        body.dark .stat-card .label,
+        body.dark .chart-card .label {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        body.dark .stat-card .value,
+        body.dark .chart-title {
+            color: var(--accent-color);
+        }
+        
+        body.dark .table-section th {
+            background: var(--primary-dark);
+            color: white;
+        }
+
+        body.dark .table-section td {
+            color: var(--light-color);
+            border-color: rgba(255,255,255,0.06);
+        }
+        
+        body.dark .table-section tbody tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        body.dark .sidebar-menu a:hover,
+        body.dark .sidebar-menu a.active {
+            background: rgba(255, 215, 0, 0.15);
+            color: #FFF44F;
+        }
+        
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+        
+        .dashboard-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+        .dark .dashboard-description {
+            color: #aaa;
+        }
+
+        /* INSIGHTS CONTAINER - PADRÃO */
+        .insights-container {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+        }
+
+        body.dark .insights-container {
+            background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+        }
+
+        .insights-card h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        body.dark .insights-card h2 {
+            color: #63a3d8;
+        }
+
+        .insight-section {
+            margin-bottom: 20px;
+        }
+
+        .insight-section h3 {
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            gap: 8px;
+        }
+
+        body.dark .insight-section h3 {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .insight-section p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        body.dark .insight-section p {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+
+        .insight-section ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .insight-section li {
+            color: #555;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            border-left: 3px solid var(--primary-color);
+            line-height: 1.5;
+        }
+
+        body.dark .insight-section li {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+
+        /* Map Container */
+        #mapContainer {
+            width: 100%;
+            height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .map-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .map-card h3 {
+            margin: 0 0 15px 0;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        body.dark #mapContainer,
+        body.dark .map-card {
+            background: #081226;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        body.dark .map-card h3 {
+            color: #63a3d8;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+
+        .leaflet-popup-content {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
+                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+                <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
+                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
+                <li><a href="dashboard_excecoes.html" class="active"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
+                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
+                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
+                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
+                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <p></p>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Logos -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 40px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
+                <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" style="height: 40px; width: auto; object-fit: contain;">
+            </div>
+            
+            <!-- Header -->
+            <div class="topo">
+                <h1><i class="bi bi-exclamation-triangle"></i> Análise de Exceções</h1>
+                <button class="btn-toggle" onclick="toggleDark()">🌙</button>
+            </div>
+            
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-label">
+                    <i class="bi bi-cloud-upload"></i> Carregar arquivo de exceções (CSV)
+                </div>
+                <input type="file" id="csvUpload" accept=".csv" class="upload-input">
+                <small style="color: #999; display: block; margin-top: 8px;">
+                    Selecione um arquivo CSV com dados de exceções/infrações Geotab
+                </small>
+            </div>
+            
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon"><i class="bi bi-exclamation-circle"></i></div>
+                    <div class="label">Total de Exceções</div>
+                    <div class="value" id="totalExcecoes">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon"><i class="bi bi-person"></i></div>
+                    <div class="label">Motoristas com Exceção</div>
+                    <div class="value" id="motoristasComExcecao">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon"><i class="bi bi-truck"></i></div>
+                    <div class="label">Veículos Envolvidos</div>
+                    <div class="value" id="veiculosEnvolvidos">0</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon"><i class="bi bi-shield-exclamation"></i></div>
+                    <div class="label">Tipo de Exceção Mais Comum</div>
+                    <div class="value" id="excecaoComum" style="font-size: 1.1rem;">-</div>
+                </div>
+            </div>
+            
+            <!-- Storytelling de Dados -->
+            <div id="insightsContainer" class="insights-container" style="display: none;">
+                <div class="insights-card">
+                    <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+                    
+                    <div class="insight-section">
+                        <h3>🎯 Situação Principal</h3>
+                        <p id="insightPrincipal">Carregando análise...</p>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>📈 Padrões Detectados</h3>
+                        <ul id="insightPadroes">
+                            <li>Carregando padrões...</li>
+                        </ul>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>💡 Recomendações</h3>
+                        <ul id="insightRecomendacoes">
+                            <li>Carregando recomendações...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-pie-chart"></i> Top 5 Tipos de Exceção
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="tiposExcecaoChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-bar-chart"></i> Exceções por Região
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="excecoesPorRegiaoChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-building"></i> Exceções por Transportadora
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="excecoesPorTransportadoraChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-warehouse"></i> Exceções por Unidade
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="excecoesPorUnidadeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-shield-exclamation"></i> Severidade das Exceções
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="severidadeExcecaoChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-person-slash"></i> Motorista Identificado vs Não Identificado
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="motoristasIdentificadosChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-bar-chart"></i> Top 10 Motoristas com Exceções
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="motoristasExcecaoChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-truck"></i> Top 10 Veículos com Mais Exceções
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="veiculosExcecaoChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card full-width">
+                    <div class="chart-title">
+                        <i class="bi bi-geo-alt"></i> Top 20 Endereços com Mais Eventos
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="placasEventosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="map-card">
+                <h3>
+                    <i class="bi bi-map"></i> Mapa de Localização dos Top 20 Endereços
+                </h3>
+                <div id="mapContainer"></div>
+            </div>
+            
+            <!-- Filters and Table -->
+            <div class="table-section">
+                <h3 style="margin-bottom: 20px; color: var(--primary-color);">
+                    <i class="bi bi-table"></i> Base de Dados de Exceções
+                </h3>
+                
+                <!-- Search and Filters -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div>
+                        <label style="font-weight: 600; color: var(--primary-color); display: block; margin-bottom: 6px;">
+                            <i class="bi bi-search"></i> Buscar
+                        </label>
+                        <input type="text" id="searchInput" placeholder="Buscar por dispositivo, motorista, localização..." 
+                               style="width: 100%; padding: 10px; border: 1px solid rgba(99, 163, 216, 0.2); border-radius: 6px;" 
+                               onkeyup="filterTable()">
+                    </div>
+                    
+                    <div>
+                        <label style="font-weight: 600; color: var(--primary-color); display: block; margin-bottom: 6px;">
+                            <i class="bi bi-building"></i> Transportadora
+                        </label>
+                        <select id="transportadoraFilter" 
+                                style="width: 100%; padding: 10px; border: 1px solid rgba(99, 163, 216, 0.2); border-radius: 6px;" 
+                                onchange="filterTable()">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="font-weight: 600; color: var(--primary-color); display: block; margin-bottom: 6px;">
+                            <i class="bi bi-warehouse"></i> Unidade
+                        </label>
+                        <select id="unidadeFilter" 
+                                style="width: 100%; padding: 10px; border: 1px solid rgba(99, 163, 216, 0.2); border-radius: 6px;" 
+                                onchange="filterTable()">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.9rem; color: #666; margin-bottom: 12px;">
+                    Mostrando <strong id="recordCount">0</strong> de <strong id="totalCount">0</strong> registros (máximo 15 exibidos)
+                </div>
+                
+                <table id="excecoesPTable">
+                    <thead>
+                        <tr>
+                            <th>Dispositivo</th>
+                            <th>Motorista</th>
+                            <th>Tipo de Exceção</th>
+                            <th>Localização</th>
+                            <th>Transportadora</th>
+                            <th>Unidade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="excecoesTbody">
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                    <button onclick="previousPage()" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: white; color: var(--primary-color); font-weight: 600;">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </button>
+                    <div id="paginationInfo" style="color: #666; font-weight: 600;">Página 1</div>
+                    <button onclick="nextPage()" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: white; color: var(--primary-color); font-weight: 600;">
+                        Próxima <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let rawData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const itemsPerPage = 15;
+        let charts = {};
+
+        // Registrar plugin de datalabels
+        Chart.register(ChartDataLabels);
+
+        // ===== INICIALIZAÇÃO =====
+        function toggleDark() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            console.log('Dark mode:', isDark);
+            const btn = document.querySelector('.btn-toggle');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+            
+            // Atualizar gráficos quando dark mode é toggled
+            setTimeout(function() {
+              if (window.graficoExcecoes) try { window.graficoExcecoes.update(); } catch(e) { console.log('Erro ao atualizar gráfico'); }
+            }, 50);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkMode = localStorage.getItem('darkMode');
+            const btn = document.querySelector('.btn-toggle');
+            console.log('Carregando dark mode:', darkMode);
+            if (darkMode === 'true') {
+                document.body.classList.add('dark');
+                if (btn) btn.textContent = '☀️';
+                console.log('Dark mode aplicado ao carregar');
+            }
+
+            // Carregar dados persistidos
+            const savedData = localStorage.getItem('excecoesData');
+            if (savedData) {
+              try {
+                rawData = JSON.parse(savedData);
+                filteredData = [...rawData];
+                initCharts();
+                populateFilters();
+                filterTable();
+                updateKPIs();
+                renderMap();
+                generateInsightsExcecoes(filteredData);
+                document.getElementById('insightsContainer').style.display = 'block';
+                console.log('Dados carregados do localStorage');
+              } catch(e) {
+                console.log('Erro ao carregar dados persistidos');
+              }
+            }
+
+            // ===== PARSE CSV =====
+            document.getElementById('csvUpload').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            console.log('Upload iniciado', file.name);
+            
+            Papa.parse(file, {
+                header: true,
+                delimiter: ';',
+                skipEmptyLines: true,
+                complete: function(results) {
+                    try {
+                        console.log('Papa.parse complete - registros:', results.data.length);
+                        rawData = (results.data || []).map(normalizeRow);
+                        console.log('Após normalizeRow:', rawData.length, 'primeiro:', rawData[0]);
+                        filteredData = [...rawData];
+                        
+                        // Salva com fallback para IndexedDB
+                        window.saveDataSafely('excecoesData', rawData);
+                        
+                        console.log('Criando gráficos...');
+                        initCharts();
+                        console.log('Gráficos criados');
+                        populateFilters();
+                        console.log('Filtros populados');
+                        filterTable();
+                        console.log('Tabela filtrada');
+                        updateKPIs();
+                        console.log('KPIs atualizados');
+                        renderMap();
+                        console.log('Mapa renderizado');
+                        generateInsightsExcecoes(filteredData);
+                        document.getElementById('insightsContainer').style.display = filteredData.length > 0 ? 'block' : 'none';
+                        
+                        alert(`✅ ${rawData.length} exceções carregadas com sucesso!`);
+                    } catch (e) {
+                        console.error('Erro no complete:', e);
+                        alert(`❌ Erro: ${e.message}`);
+                    }
+                },
+                error: err => {
+                    console.error('Papa.parse error:', err);
+                    alert(`❌ Erro CSV: ${err.message}`);
+                }
+            });
+            });
+        });
+
+        // ===== NORMALIZAR LINHA =====
+        function normalizeRow(row) {
+            const normalized = {};
+            Object.keys(row).forEach(k => {
+                normalized[k] = typeof row[k] === 'string' ? row[k].trim() : row[k];
+            });
+
+            const grupo = normalized['Grupo de dispositivo'] || '';
+            
+            // Extrair padrões
+            const trs = grupo.match(/TRS_[^,;]+/i);
+            const uni = grupo.match(/UNI_[^,;]+/i);
+            const reg = grupo.match(/REG_[^,;]+/i);
+
+            normalized.TRANSPORTADORA = trs ? trs[0].trim() : 'SEM CADASTRO';
+            normalized.UNIDADE = uni ? uni[0].trim() : 'SEM CADASTRO';
+            normalized.REGIAO = reg ? reg[0].trim() : 'SEM CADASTRO';
+
+            return normalized;
+        }
+
+        // ===== GERAR INSIGHTS =====
+        function generateInsightsExcecoes(filteredData) {
+            if (!filteredData || filteredData.length === 0) return;
+            
+            const tiposExcecao = {};
+            const transportadoras = {};
+            const motoristas = {};
+            
+            filteredData.forEach(d => {
+                const tipo = d['Regra'] || 'Desconhecido';
+                tiposExcecao[tipo] = (tiposExcecao[tipo] || 0) + 1;
+                const transp = d['TRANSPORTADORA'] || 'Desconhecida';
+                transportadoras[transp] = (transportadoras[transp] || 0) + 1;
+                const motorista = d['Nome'] || 'Desconhecido';
+                motoristas[motorista] = (motoristas[motorista] || 0) + 1;
+            });
+            
+            const tipoMaior = Object.entries(tiposExcecao).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+            const transpMaior = Object.entries(transportadoras).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+            const motoristasRepetentes = Object.values(motoristas).filter(v => v > 2).length;
+            
+            const insightPrincipal = `O sistema registrou <strong>${filteredData.length} exceções</strong> no período analisado com diversas regras de segurança. A concentração maior encontra-se em <strong>${transpMaior[0]}</strong> com <strong>${transpMaior[1]} exceções</strong>, e o tipo predominante é <strong>${tipoMaior[0]}</strong> (<strong>${tipoMaior[1]} ocorrências</strong>).`;
+            
+            const padroes = [
+                `⚠️ Total de exceções: <strong>${filteredData.length}</strong>`,
+                `🚛 Transportadora crítica: <strong>${transpMaior[0]}</strong> (${transpMaior[1]} exceções)`,
+                `📋 Tipo predominante: <strong>${tipoMaior[0]}</strong> (${tipoMaior[1]} eventos)`,
+                `👥 Motoristas com múltiplas exceções: <strong>${motoristasRepetentes}</strong>`,
+                `📊 Distribuição: ${Object.keys(tiposExcecao).length} tipos diferentes de exceções`
+            ];
+            
+            const recomendacoes = [
+                motoristasRepetentes > 5 ? `🔴 CRÍTICO: ${motoristasRepetentes} motoristas com múltiplas exceções - intervenção necessária` : 
+                transpMaior[1] > (filteredData.length * 0.3) ? `⚠️ ${transpMaior[0]} representa ${((transpMaior[1]/filteredData.length)*100).toFixed(0)}% das exceções` :
+                `✅ Distribuição equilibrada entre transportadoras`,
+                `📊 Investigar causa raiz de ${tipoMaior[0]} (${tipoMaior[1]} ocorrências)`,
+                `🎯 Implementar programa de treinamento para ${transpMaior[0]}`,
+                `📈 Monitorar evolução de ${tipoMaior[0]}`,
+                `👥 Realizar coaching com motoristas repetentes`
+            ];
+            
+            document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+            document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+        }
+
+        // ===== CRIAR GRÁFICOS =====
+        function initCharts() {
+            destroyAllCharts();
+            
+            charts['tipos'] = createChart('tiposExcecaoChart', 'doughnut');
+            charts['regiao'] = createChart('excecoesPorRegiaoChart', 'bar');
+            charts['transportadora'] = createChart('excecoesPorTransportadoraChart', 'bar');
+            charts['unidade'] = createChart('excecoesPorUnidadeChart', 'bar');
+            charts['severidade'] = createChart('severidadeExcecaoChart', 'doughnut');
+            charts['motoristas_id'] = createChart('motoristasIdentificadosChart', 'pie');
+            charts['top_motoristas'] = createChart('motoristasExcecaoChart', 'bar');
+            charts['veiculos'] = createChart('veiculosExcecaoChart', 'bar');
+            charts['placas'] = createChart('placasEventosChart', 'bar');
+        }
+
+        function destroyAllCharts() {
+            Object.values(charts).forEach(c => { if (c) c.destroy(); });
+            charts = {};
+        }
+
+        function createChart(canvasId, type) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return null;
+            
+            // Para gráfico de endereços, usar barra horizontal
+            const isPlacas = canvasId === 'placasEventosChart';
+            
+            return new Chart(canvas.getContext('2d'), {
+                type: type,
+                data: { 
+                    labels: [], 
+                    datasets: [{ 
+                        label: 'Quantidade', 
+                        data: [], 
+                        backgroundColor: '#63a3d8', 
+                        borderColor: '#63a3d8',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }] 
+                },
+                options: {
+                    indexAxis: isPlacas ? 'y' : 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            anchor: isPlacas ? 'end' : 'end',
+                            align: isPlacas ? 'end' : 'top',
+                            font: { size: 11, weight: 'bold' },
+                            color: '#fff',
+                            formatter: function(value) { return value > 0 ? value : ''; }
+                        }
+                    },
+                    scales: { 
+                        y: { beginAtZero: true },
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+
+        // ===== ATUALIZAR GRÁFICOS =====
+        function updateCharts() {
+            const source = filteredData.length > 0 ? filteredData : rawData;
+            if (source.length === 0) return;
+
+            // Tipos de exceção
+            const tipos = {};
+            source.forEach(e => {
+                const t = e['Regra'] || 'SEM CADASTRO';
+                tipos[t] = (tipos[t] || 0) + 1;
+            });
+            const top5 = Object.entries(tipos).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            updateChart(charts['tipos'], top5.map(x => x[0].substring(0, 40)), top5.map(x => x[1]), ['#dc3545', '#ffc107', '#17a2b8', '#28a745', '#6f42c1']);
+
+            // Região
+            const regiao = {};
+            source.forEach(e => {
+                const r = e.REGIAO || 'SEM CADASTRO';
+                regiao[r] = (regiao[r] || 0) + 1;
+            });
+            updateChart(charts['regiao'], Object.keys(regiao), Object.values(regiao), '#63a3d8');
+
+            // Transportadora
+            const trs = {};
+            source.forEach(e => {
+                const t = e.TRANSPORTADORA || 'SEM CADASTRO';
+                trs[t] = (trs[t] || 0) + 1;
+            });
+            updateChart(charts['transportadora'], Object.keys(trs), Object.values(trs), '#e60000');
+
+            // Unidade
+            const uni = {};
+            source.forEach(e => {
+                const u = e.UNIDADE || 'SEM CADASTRO';
+                uni[u] = (uni[u] || 0) + 1;
+            });
+            const topUni = Object.entries(uni).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            updateChart(charts['unidade'], topUni.map(x => x[0].substring(0, 30)), topUni.map(x => x[1]), '#28a745');
+
+            // Severidade
+            let critica = 0, aviso = 0, info = 0;
+            source.forEach(e => {
+                const tipo = e['Regra'] || '';
+                if (tipo.includes('Sem cinto') || tipo.includes('Segurança')) critica++;
+                else if (tipo.includes('Velocidade') || tipo.includes('Agressiva')) aviso++;
+                else info++;
+            });
+            updateChart(charts['severidade'], ['Crítica', 'Aviso', 'Informação'], [critica, aviso, info], ['#dc3545', '#ffc107', '#17a2b8']);
+
+            // Motorista Identificado
+            const ident = source.filter(e => e['Nome'] && e['Nome'] !== '0' && e['Nome'] !== 'N/A').length;
+            updateChart(charts['motoristas_id'], ['Identificados', 'Não Identificados'], [ident, source.length - ident], ['#28a745', '#dc3545']);
+
+            // Top Motoristas
+            const motores = {};
+            source.forEach(e => {
+                const m = (e['Nome'] === '0' || !e['Nome']) ? 'NÃO IDENTIFICADO' : e['Nome'];
+                motores[m] = (motores[m] || 0) + 1;
+            });
+            const topMot = Object.entries(motores).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            updateChart(charts['top_motoristas'], topMot.map(x => x[0].substring(0, 30)), topMot.map(x => x[1]), '#e60000');
+
+            // Veículos
+            const veics = {};
+            source.forEach(e => {
+                const v = e['Dispositivo'] || 'N/A';
+                veics[v] = (veics[v] || 0) + 1;
+            });
+            const topVeics = Object.entries(veics).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const cores10 = [
+                '#63a3d8', '#e60000', '#FFD700', '#28a745', '#9B59B6',
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'
+            ];
+            updateChart(charts['veiculos'], topVeics.map(x => x[0]), topVeics.map(x => x[1]), cores10);
+
+            // Endereços com Mais Eventos
+            const enderecos = {};
+            source.forEach(e => {
+                const end = e['Localização'] || 'N/A';
+                enderecos[end] = (enderecos[end] || 0) + 1;
+            });
+            const topEnderecos = Object.entries(enderecos).sort((a, b) => b[1] - a[1]).slice(0, 20);
+            const cores = [
+                '#63a3d8', '#e60000', '#FFD700', '#28a745', '#9B59B6',
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+                '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#AED6F1',
+                '#87CEEB', '#F06292', '#00BCD4', '#8BC34A', '#FF9800'
+            ];
+            updateChart(charts['placas'], topEnderecos.map(x => x[0].substring(0, 45)), topEnderecos.map(x => x[1]), cores);
+        }
+
+        function updateChart(chart, labels, data, colors) {
+            if (!chart) return;
+            
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            
+            if (Array.isArray(colors)) {
+                chart.data.datasets[0].backgroundColor = colors;
+            } else {
+                chart.data.datasets[0].backgroundColor = colors;
+            }
+            
+            // Para gráfico de placas (endereços), ajustar legenda dinamicamente
+            if (chart.canvas.id === 'placasEventosChart') {
+                const maxValor = Math.max(...data);
+                const legendaPosicao = maxValor > 50 ? 'chartArea' : 'top';
+                chart.options.plugins.legend.position = legendaPosicao;
+            }
+            
+            chart.update();
+        }
+
+        // ===== RENDERIZAR MAPA COM MARCADORES =====
+        let mapInstance = null;
+        const mapMarkers = [];
+
+        function renderMap() {
+            const source = filteredData.length > 0 ? filteredData : rawData;
+            if (source.length === 0) return;
+
+            const enderecos = {};
+            source.forEach(e => {
+                const end = e['Localização'] || 'N/A';
+                enderecos[end] = (enderecos[end] || 0) + 1;
+            });
+            
+            const topEnderecos = Object.entries(enderecos).sort((a, b) => b[1] - a[1]).slice(0, 20);
+            
+            const cores = [
+                '#63a3d8', '#e60000', '#FFD700', '#28a745', '#9B59B6',
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+                '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#AED6F1',
+                '#87CEEB', '#F06292', '#00BCD4', '#8BC34A', '#FF9800'
+            ];
+
+            // Inicializar mapa
+            if (!mapInstance) {
+                mapInstance = L.map('mapContainer').setView([-15.8, -52.0], 4); // Centro do Brasil
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19,
+                    minZoom: 3
+                }).addTo(mapInstance);
+            } else {
+                // Limpar marcadores antigos
+                mapMarkers.forEach(marker => mapInstance.removeLayer(marker));
+                mapMarkers.length = 0;
+            }
+
+            // Pseudo-coordenadas para cidades brasileiras comuns
+            const localidadeCoord = {
+                'SP': [-23.55, -46.63], 'São Paulo': [-23.55, -46.63],
+                'RJ': [-22.9, -43.1], 'Rio de Janeiro': [-22.9, -43.1],
+                'BH': [-19.92, -43.94], 'Belo Horizonte': [-19.92, -43.94],
+                'MG': [-19.92, -43.94], 'Minas Gerais': [-19.92, -43.94],
+                'RS': [-30.0, -51.2], 'Rio Grande do Sul': [-30.0, -51.2],
+                'BA': [-13.0, -39.0], 'Bahia': [-13.0, -39.0],
+                'PE': [-8.0, -35.0], 'Pernambuco': [-8.0, -35.0],
+                'CE': [-3.73, -38.54], 'Ceará': [-3.73, -38.54],
+                'SC': [-27.0, -48.88], 'Santa Catarina': [-27.0, -48.88],
+                'PR': [-25.5, -51.5], 'Paraná': [-25.5, -51.5],
+                'DF': [-15.8, -48.0], 'Brasília': [-15.8, -48.0],
+                'GO': [-15.89, -48.04], 'Goiás': [-15.89, -48.04],
+                'MT': [-15.6, -56.1], 'Mato Grosso': [-15.6, -56.1],
+                'MS': [-20.0, -55.0], 'Mato Grosso do Sul': [-20.0, -55.0],
+                'ES': [-20.3, -40.3], 'Espírito Santo': [-20.3, -40.3],
+                'PA': [-1.5, -48.5], 'Pará': [-1.5, -48.5],
+                'AM': [-3.1, -60.0], 'Amazonas': [-3.1, -60.0]
+            };
+
+            // Criar marcadores
+            topEnderecos.forEach((item, index) => {
+                const endereco = item[0];
+                const quantidade = item[1];
+                const cor = cores[index % cores.length];
+                
+                // Tentar extrair localidade do endereço ou usar coordenada aleatória próxima ao Brasil
+                let lat = -15.8 + (Math.random() - 0.5) * 10;
+                let lng = -52 + (Math.random() - 0.5) * 15;
+
+                for (const [cidade, coord] of Object.entries(localidadeCoord)) {
+                    if (endereco.toUpperCase().includes(cidade.toUpperCase())) {
+                        lat = coord[0] + (Math.random() - 0.5) * 0.5;
+                        lng = coord[1] + (Math.random() - 0.5) * 0.5;
+                        break;
+                    }
+                }
+
+                const marker = L.circleMarker([lat, lng], {
+                    radius: 8 + (quantidade / Math.max(...topEnderecos.map(x => x[1]))) * 5,
+                    fillColor: cor,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(mapInstance);
+
+                marker.bindPopup(`
+                    <div style="font-weight: bold; color: ${cor};">● ${endereco.substring(0, 40)}</div>
+                    <div style="margin-top: 5px; font-size: 12px;">
+                        <strong>Eventos:</strong> ${quantidade}
+                    </div>
+                `);
+
+                mapMarkers.push(marker);
+            });
+
+            // Ajustar zoom para mostrar todos os marcadores
+            if (mapMarkers.length > 0) {
+                const group = new L.featureGroup(mapMarkers);
+                mapInstance.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // ===== KPIs =====
+        function updateKPIs() {
+            const source = filteredData.length > 0 ? filteredData : rawData;
+            if (source.length === 0) return;
+
+            const total = source.length;
+            const motoristas = new Set(source.map(e => e['Nome']).filter(n => n && n !== '0' && n !== 'N/A')).size;
+            const veiculos = new Set(source.map(e => e['Dispositivo'])).size;
+
+            const tipos = {};
+            source.forEach(e => {
+                const t = e['Regra'] || 'N/A';
+                tipos[t] = (tipos[t] || 0) + 1;
+            });
+            const comum = Object.entries(tipos).sort((a, b) => b[1] - a[1])[0]?.[0]?.substring(0, 30) || '-';
+
+            document.getElementById('totalExcecoes').textContent = total;
+            document.getElementById('motoristasComExcecao').textContent = motoristas;
+            document.getElementById('veiculosEnvolvidos').textContent = veiculos;
+            document.getElementById('excecaoComum').textContent = comum;
+            generateInsightsExcecoes(source);
+        }
+
+        // ===== FILTROS =====
+        function populateFilters() {
+            const trs = new Set(rawData.map(x => x.TRANSPORTADORA).filter(x => x && x !== 'SEM CADASTRO'));
+            const sel = document.getElementById('transportadoraFilter');
+            sel.innerHTML = '<option value="">Todas</option>';
+            Array.from(trs).sort().forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                sel.appendChild(opt);
+            });
+        }
+
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const trs = document.getElementById('transportadoraFilter').value;
+            const uni = document.getElementById('unidadeFilter').value;
+
+            filteredData = rawData.filter(e => {
+                const matchSearch = !search || 
+                    (e['Dispositivo'] || '').toLowerCase().includes(search) ||
+                    (e['Nome'] || '').toLowerCase().includes(search) ||
+                    (e['Localização'] || '').toLowerCase().includes(search) ||
+                    (e['Regra'] || '').toLowerCase().includes(search);
+
+                const matchTrs = !trs || e.TRANSPORTADORA === trs;
+                const matchUni = !uni || e.UNIDADE === uni;
+
+                return matchSearch && matchTrs && matchUni;
+            });
+
+            // Atualizar unidades
+            if (trs) {
+                const unis = new Set(rawData.filter(x => x.TRANSPORTADORA === trs).map(x => x.UNIDADE).filter(x => x && x !== 'SEM CADASTRO'));
+                const selUni = document.getElementById('unidadeFilter');
+                const current = selUni.value;
+                selUni.innerHTML = '<option value="">Todas</option>';
+                Array.from(unis).sort().forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u;
+                    opt.textContent = u;
+                    selUni.appendChild(opt);
+                });
+                selUni.value = current;
+            }
+
+            currentPage = 1;
+            renderTable();
+            updateCharts();
+            updateKPIs();
+            renderMap();
+        }
+
+        // ===== TABELA =====
+        function renderTable() {
+            const tbody = document.getElementById('excecoesTbody');
+            tbody.innerHTML = '';
+
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = startIdx + itemsPerPage;
+            const display = filteredData.slice(startIdx, endIdx);
+
+            display.forEach(e => {
+                const row = document.createElement('tr');
+                const tipo = e['Regra'] || 'N/A';
+                let badge = 'info';
+                if (tipo.includes('Sem cinto') || tipo.includes('Segurança')) badge = 'critical';
+                else if (tipo.includes('Velocidade') || tipo.includes('Agressiva')) badge = 'warning';
+
+                row.innerHTML = `
+                    <td><strong>${e['Dispositivo'] || '-'}</strong></td>
+                    <td>${e['Nome'] || '-'}</td>
+                    <td><span class="badge-exception ${badge}">${tipo.substring(0, 40)}</span></td>
+                    <td style="font-size: 0.85rem;">${(e['Localização'] || '-').substring(0, 50)}</td>
+                    <td>${e.TRANSPORTADORA || '-'}</td>
+                    <td>${e.UNIDADE || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            const maxPage = Math.ceil(filteredData.length / itemsPerPage);
+            document.getElementById('recordCount').textContent = display.length;
+            document.getElementById('totalCount').textContent = filteredData.length;
+            document.getElementById('paginationInfo').textContent = `Página ${currentPage} de ${maxPage || 1}`;
+        }
+
+        function nextPage() {
+            const maxPage = Math.ceil(filteredData.length / itemsPerPage);
+            if (currentPage < maxPage) {
+                currentPage++;
+                renderTable();
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        }
+    </script>
+</body>
+</html>

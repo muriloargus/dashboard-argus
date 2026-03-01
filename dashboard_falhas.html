@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Telemetria CCO - Falhas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --accent-color: #FFD700;
+            --light-color: #e6eef6;
+            --dark-color: #111;
+            --sidebar-width: 280px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%);
+            color: var(--dark-color);
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: #fff;
+            padding: 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 100;
+            box-shadow: 8px 0 20px rgba(0, 0, 0, 0.1);
+            border-right: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            font-weight: 800;
+        }
+
+        .sidebar-header i {
+            font-size: 1.6rem;
+            color: var(--accent-color);
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            margin: 6px 0 0 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+        }
+
+        .sidebar-menu li {
+            margin: 6px 0;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            border-radius: 8px;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(255, 215, 0, 0.15);
+            color: #fff;
+        }
+
+        .sidebar-menu a.active {
+            background: rgba(255, 215, 0, 0.18);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.85rem;
+            width: calc(var(--sidebar-width) - 40px);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 28px;
+        }
+
+        .logo-ambev {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 18px;
+            gap: 12px;
+        }
+
+        .logo-ambev img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .container {
+            max-width: 100%;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        h1 + p {
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .kpi-section {
+            margin-bottom: 40px;
+        }
+
+        .kpi-section h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .kpi-section h2 i {
+            font-size: 2rem;
+            color: var(--accent-color);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, white 0%, #f9fafb 100%);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(99, 163, 216, 0.08);
+            border: 1px solid rgba(99, 163, 216, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(99, 163, 216, 0.15);
+        }
+
+        .kpi-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+
+        .kpi-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .kpi-description {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(99, 163, 216, 0.1);
+        }
+
+        input[type=file] {
+            display: none;
+        }
+
+        .btn-upload {
+            background: var(--primary-color);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-upload:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 163, 216, 0.3);
+        }
+
+        select, input[type="text"] {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+            background: white;
+            color: var(--dark-color);
+        }
+
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 163, 216, 0.1);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            min-height: 350px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(99, 163, 216, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        .card h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .table-section {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(99, 163, 216, 0.1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .table-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        .table-section h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            border: 1px solid rgba(99, 163, 216, 0.1);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        table th {
+            background: #f5f7ff;
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.85rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            word-break: break-word;
+        }
+
+        table tr:hover {
+            background: #f9fafb;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .table-info {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .page-btn {
+            background: var(--primary-color);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .page-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .page-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .controls input[type="text"] {
+                min-width: 100%;
+            }
+        }
+        
+        .dashboard-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+        .dark .dashboard-description {
+            color: #aaa;
+        }
+    </style>
+</head>
+<style>
+/* Dark mode aprimorado */
+body.dark {
+    background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+    color: var(--light-color);
+}
+body.dark .sidebar {
+    background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+    box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+    border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .topo {
+    background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+    color: #fff !important;
+}
+body.dark .main-content { 
+    background: linear-gradient(135deg, #071124 0%, #0b1726 100%); 
+}
+body.dark .controls, body.dark .card, body.dark .kpi-card, body.dark .table-section { 
+    background: #081226; 
+    color: var(--light-color); 
+    border-color: rgba(255,255,255,0.03); 
+}
+body.dark .kpi-title { 
+    color: rgba(255,255,255,0.8); 
+}
+body.dark .kpi-value, body.dark .card h4, body.dark .table-section h3 { 
+    color: var(--accent-color); 
+}
+body.dark table th { 
+    background: var(--primary-dark); 
+    color: var(--light-color);
+}
+body.dark table td {
+    color: var(--light-color);
+    border-color: rgba(255,255,255,0.1);
+}
+body.dark table tr:hover {
+    background: #1a2235;
+}
+body.dark .sidebar-menu a:hover,
+body.dark .sidebar-menu a.active {
+    background: rgba(255, 215, 0, 0.15);
+    color: #FFF44F;
+}
+body.dark select, body.dark input[type="text"] {
+    background: #1a2235;
+    color: var(--light-color);
+    border-color: rgba(255,255,255,0.1);
+}
+
+/* INSIGHTS CONTAINER - PADRÃO */
+.insights-container {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border-left: 5px solid var(--primary-color);
+    box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+}
+
+body.dark .insights-container {
+    background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+    box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+}
+
+.insights-card h2 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+body.dark .insights-card h2 {
+    color: #63a3d8;
+}
+
+.insight-section {
+    margin-bottom: 20px;
+}
+
+.insight-section h3 {
+    color: #333;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+    display: flex;
+    gap: 8px;
+}
+
+body.dark .insight-section h3 {
+    color: rgba(255,255,255,0.9);
+}
+
+.insight-section p {
+    color: #555;
+    line-height: 1.6;
+    font-size: 14px;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-color);
+}
+
+body.dark .insight-section p {
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.85);
+}
+
+.insight-section ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.insight-section li {
+    color: #555;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 6px;
+    font-size: 14px;
+    border-left: 3px solid var(--primary-color);
+    line-height: 1.5;
+}
+
+body.dark .insight-section li {
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.85);
+}
+</style>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
+                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+                <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
+                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
+                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+                <li><a href="dashboard_falhas.html" class="active"><i class="bi bi-bug"></i> Falhas</a></li>
+                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
+                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
+                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
+                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+            </ul>
+            <div class="sidebar-footer"><p style="margin:0"></p></div>
+        </nav>
+
+        <main class="main-content">
+            <div class="logo-ambev">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
+                <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" style="height: 40px; width: auto; object-fit: contain;">
+            </div>
+
+            <div class="container">
+                <h1><i class="bi bi-bug"></i> Dashboard de Falhas</h1>
+
+                <div class="controls">
+                    <label class="btn-upload" for="csvFile" style="cursor:pointer"><i class="bi bi-upload"></i> Selecionar CSV</label>
+                    <input id="csvFile" type="file" accept=".csv" />
+                    <button id="loadLocal" class="btn-upload"><i class="bi bi-download"></i> Carregar localStorage</button>
+                    <button id="saveSample" class="btn-upload" style="background:#28a745"><i class="bi bi-save"></i> Salvar Amostra</button>
+                    <button id="toggleDark" class="btn-upload" style="background:#444"><i class="bi bi-moon"></i> Dark Mode</button>
+                    <select id="transportadoraFilter" style="min-width: 150px;">
+                        <option value="">Todas Transportadoras</option>
+                    </select>
+                    <select id="unidadeFilter" style="min-width: 150px;">
+                        <option value="">Todas Unidades</option>
+                    </select>
+                    <input id="searchInput" type="text" placeholder="Pesquisar..." style="flex:1;min-width:200px" />
+                </div>
+
+                <section class="kpi-section">
+                    <h2><i class="bi bi-speedometer2"></i> Indicadores de Desempenho</h2>
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                            <div class="kpi-title">Total de Falhas</div>
+                            <div class="kpi-value" id="kpiTotal">0</div>
+                            <div class="kpi-description">Registro geral</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="bi bi-clock"></i></div>
+                            <div class="kpi-title">Últimas 24h</div>
+                            <div class="kpi-value" id="kpi24h">0</div>
+                            <div class="kpi-description">Falhas recentes</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="bi bi-truck"></i></div>
+                            <div class="kpi-title">Dispositivos</div>
+                            <div class="kpi-value" id="kpiDevices">0</div>
+                            <div class="kpi-description">Com falhas reportadas</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="bi bi-gear"></i></div>
+                            <div class="kpi-title">Controladores Afetados</div>
+                            <div class="kpi-value" id="kpiControladores">0</div>
+                            <div class="kpi-description">Módulos com problemas</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Storytelling de Dados -->
+                <div id="insightsContainer" class="insights-container">
+                    <div class="insights-card">
+                        <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+                        
+                        <div class="insight-section">
+                            <h3>🎯 Situação Principal</h3>
+                            <p id="insightPrincipal">Carregando análise...</p>
+                        </div>
+
+                        <div class="insight-section">
+                            <h3>📈 Padrões Detectados</h3>
+                            <ul id="insightPadroes">
+                                <li>Carregando padrões...</li>
+                            </ul>
+                        </div>
+
+                        <div class="insight-section">
+                            <h3>💡 Recomendações</h3>
+                            <ul id="insightRecomendacoes">
+                                <li>Carregando recomendações...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="charts-grid">
+                    <div class="card">
+                        <h4><i class="bi bi-bar-chart"></i> Top 10 - Falhas por Descrição</h4>
+                        <div class="chart-wrapper"><canvas id="descChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h4><i class="bi bi-pie-chart"></i> Distribuição - Controladores</h4>
+                        <div class="chart-wrapper"><canvas id="controladoresChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h4><i class="bi bi-diagram-3"></i> Top Dispositivos com Mais Falhas</h4>
+                        <div class="chart-wrapper"><canvas id="deviceChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h4><i class="bi bi-graph-up"></i> Evolução de Falhas (30 dias)</h4>
+                        <div class="chart-wrapper"><canvas id="timeChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h4><i class="bi bi-list-check"></i> Origem das Falhas - Fonte</h4>
+                        <div class="chart-wrapper"><canvas id="fonteChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <h4><i class="bi bi-geo-alt"></i> Falhas por Unidade</h4>
+                        <div class="chart-wrapper"><canvas id="unidadeChart"></canvas></div>
+                    </div>
+                </section>
+
+                <div class="table-section">
+                    <h3><i class="bi bi-table"></i> Base de Dados de Falhas</h3>
+                    <div class="table-wrapper">
+                        <table id="table">
+                            <thead><tr>
+                                <th>Dispositivo</th><th>Descrição</th><th>Data</th><th>Fonte</th><th>Unidade</th><th>Transportadora</th>
+                            </tr></thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-controls">
+                        <div class="table-info">
+                            Página <span id="currentPage">1</span> de <span id="totalPages">1</span> 
+                            (<span id="totalRows">0</span> linhas) — 10 por página
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="prevBtn" class="page-btn" disabled><i class="bi bi-chevron-left"></i> Anterior</button>
+                            <input id="pageInput" type="number" value="1" min="1" style="width:50px;padding:6px;border-radius:6px;border:1px solid #ddd;text-align:center">
+                            <button id="nextBtn" class="page-btn" disabled><i class="bi bi-chevron-right"></i> Próximo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script>
+        const DEFAULT_COLORS = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600','#63a3d8','#28a745','#e60000','#ffc107'];
+        let rawData = [];
+        let currentPage = 1;
+        const ROWS_PER_PAGE = 10;
+        let transportadoraToUnidades = {};
+
+        function parseDateFlexible(value) {
+            if (!value || value === '0') return null;
+            const str = String(value).trim();
+            const asNum = Number(str.replace(',', '.'));
+            if (!isNaN(asNum) && asNum > 1000) {
+                const utc_days = asNum - 25569;
+                const date_info = new Date(utc_days * 86400 * 1000);
+                if (!isNaN(date_info.getTime())) return date_info;
+            }
+            return null;
+        }
+
+        function extractTransportadoraUnidade(grupo) {
+            if(!grupo) return { transportadora: '', unidade: '' };
+            const str = String(grupo);
+            let transportadora = '', unidade = '';
+            const trsMatch = str.match(/TRS_([^,;\s]+)|TRS\s+([^,;\s]+)/i);
+            if (trsMatch) transportadora = (trsMatch[1] || trsMatch[2] || '').trim();
+            const uniMatch = str.match(/UNI_([^,;]+?)(?:,|;|$)|UNI\s+([^,;]+?)(?:,|;|$)/i);
+            if (uniMatch) {
+                unidade = (uniMatch[1] || uniMatch[2] || '').trim();
+            } else {
+                const cddMatch = str.match(/CDD\s+([^,;]+?)(?:,|;|$)/i);
+                if (cddMatch) unidade = cddMatch[1].trim();
+            }
+            return { transportadora, unidade };
+        }
+
+        function generateInsightsFalhas(filteredData) {
+            const container = document.getElementById('insightsContainer');
+            if (!filteredData || filteredData.length === 0) {
+                if (container) container.style.display = 'none';
+                return;
+            }
+            if (container) container.style.display = 'block';
+            
+            const now = new Date();
+            const oneDay = 24 * 60 * 60 * 1000;
+            const falhas24h = filteredData.filter(d => {
+                if (!d.date) return false;
+                return (now - d.date) <= oneDay;
+            }).length;
+            
+            const controladores = {};
+            const descricoes = {};
+            const devices = new Set();
+            
+            filteredData.forEach(d => {
+                const ctrl = d.controlador || 'Desconhecido';
+                controladores[ctrl] = (controladores[ctrl] || 0) + 1;
+                const desc = d.descricao || 'Desconhecida';
+                descricoes[desc] = (descricoes[desc] || 0) + 1;
+                if (d.device) devices.add(d.device);
+            });
+            
+            const controladorMaior = Object.entries(controladores).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+            const descricaoMaior = Object.entries(descricoes).reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
+            const falhas24hPct = ((falhas24h / filteredData.length) * 100).toFixed(1);
+            
+            const insightPrincipal = `O sistema registrou <strong>${filteredData.length} falhas</strong> no período analisado, com <strong>${falhas24h}</strong> ocorrências nas últimas 24 horas (${falhas24hPct}%). O módulo crítico é <strong>${controladorMaior[0]}</strong> com <strong>${controladorMaior[1]} falhas</strong>, e a descrição predominante é <strong>${descricaoMaior[0]}</strong> com <strong>${descricaoMaior[1]} registros</strong>.`;
+            
+            const padroes = [
+                `⚠️ Total de falhas: <strong>${filteredData.length}</strong>`,
+                `🔴 Falhas em 24h: <strong>${falhas24h}</strong> (${falhas24hPct}%)`,
+                `⚙️ Módulo crítico: <strong>${controladorMaior[0]}</strong> (${controladorMaior[1]} falhas)`,
+                `🐛 Falha predominante: <strong>${descricaoMaior[0]}</strong> (${descricaoMaior[1]} eventos)`,
+                `🚛 Dispositivos afetados: <strong>${devices.size}</strong> únicos`
+            ];
+            
+            const recomendacoes = [
+                falhas24h > 50 ? `🔴 CRÍTICO: ${falhas24h} falhas em 24h - intervir em ${controladorMaior[0]}` :
+                falhas24h > 20 ? `⚠️ ${falhas24h} falhas recentes - investigar ${descricaoMaior[0]}` :
+                `✅ Padrão estável de falhas`,
+                `📊 Revisar configuração de ${controladorMaior[0]} (${controladorMaior[1]} falhas acumuladas)`,
+                `🔍 Investigar causa raiz de ${descricaoMaior[0]}`,
+                `🚨 Monitorar ${devices.size} dispositivos afetados`,
+                `📈 Implementar alertas automáticos para falhas críticas`
+            ];
+            
+            document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+            document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+        }
+
+        function normalizeRow(row) {
+            const device = String(row['Dispositivo'] || '').trim();
+            const grupo = String(row['Grupo de dispositivo'] || '').trim();
+            const data = String(row['Data'] || '').trim();
+            const descricao = String(row['Descrição'] || '').trim();
+            const fonte = String(row['Fonte'] || '').trim();
+            const controlador = String(row['Controlador'] || '').trim();
+
+            let regiao = '';
+            const regMatch = grupo.match(/REG(?:_MACRO)?\s*REGIÃO\s+([^,;]+)|REG[_\s]([^,;]+)/i);
+            if (regMatch) regiao = (regMatch[1] || regMatch[2] || '').trim();
+
+            const extracted = extractTransportadoraUnidade(grupo);
+            return {
+                device, grupo, regiao,
+                rawDate: data, 
+                date: parseDateFlexible(data),
+                descricao, fonte, controlador,
+                transportadora: extracted.transportadora,
+                unidade: extracted.unidade
+            };
+        }
+
+        function populateFilters() {
+            const tSet = new Set(), uSet = new Set();
+            transportadoraToUnidades = {};
+            
+            rawData.forEach(r => {
+                if (r.transportadora) {
+                    tSet.add(r.transportadora);
+                    if (!transportadoraToUnidades[r.transportadora]) {
+                        transportadoraToUnidades[r.transportadora] = new Set();
+                    }
+                    if (r.unidade) {
+                        transportadoraToUnidades[r.transportadora].add(r.unidade);
+                    }
+                }
+                if (r.unidade) uSet.add(r.unidade);
+            });
+            
+            const tSel = document.getElementById('transportadoraFilter');
+            tSel.innerHTML = '<option value="">Todas Transportadoras</option>';
+            Array.from(tSet).sort().forEach(t => {
+                const o = document.createElement('option');
+                o.value = t;
+                o.textContent = t;
+                tSel.appendChild(o);
+            });
+            
+            updateUnidadeFilter();
+        }
+
+        function updateUnidadeFilter() {
+            const trsFilter = document.getElementById('transportadoraFilter').value;
+            const uSel = document.getElementById('unidadeFilter');
+            
+            let availableUnidades = new Set();
+            if (!trsFilter) {
+                rawData.forEach(r => { if (r.unidade) availableUnidades.add(r.unidade); });
+            } else {
+                if (transportadoraToUnidades[trsFilter]) {
+                    availableUnidades = transportadoraToUnidades[trsFilter];
+                }
+            }
+            
+            const currentValue = uSel.value;
+            uSel.innerHTML = '<option value="">Todas Unidades</option>';
+            Array.from(availableUnidades).sort().forEach(u => {
+                const o = document.createElement('option');
+                o.value = u;
+                o.textContent = u;
+                uSel.appendChild(o);
+            });
+            
+            if (currentValue && Array.from(availableUnidades).includes(currentValue)) {
+                uSel.value = currentValue;
+            } else {
+                uSel.value = '';
+            }
+        }
+
+        function buildCharts() {
+            if (!rawData.length) return;
+
+            const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+            const trsFilter = document.getElementById('transportadoraFilter').value;
+            const uniFilter = document.getElementById('unidadeFilter').value;
+
+            let filtered = rawData;
+
+            if (q) {
+                filtered = filtered.filter(r =>
+                    String(r.device).toLowerCase().includes(q) ||
+                    String(r.descricao).toLowerCase().includes(q) ||
+                    String(r.unidade).toLowerCase().includes(q) ||
+                    String(r.transportadora).toLowerCase().includes(q)
+                );
+            }
+            if (trsFilter) filtered = filtered.filter(r => r.transportadora === trsFilter);
+            if (uniFilter) filtered = filtered.filter(r => r.unidade === uniFilter);
+
+            // KPIs
+            document.getElementById('kpiTotal').textContent = filtered.length;
+        generateInsightsFalhas(filtered);
+            const since24 = new Date(Date.now() - 24*3600*1000);
+            document.getElementById('kpi24h').textContent = filtered.filter(r => r.date && r.date > since24).length;
+            document.getElementById('kpiDevices').textContent = new Set(filtered.map(r => r.device)).size;
+            document.getElementById('kpiControladores').textContent = new Set(filtered.map(r => r.controlador).filter(c => c)).size;
+
+            // Gráficos
+            const desc = {}, fonte = {}, controladores = {};
+            const devices = {}, unidades = {};
+            filtered.forEach(r => {
+                if (r.descricao && r.descricao !== '0') desc[r.descricao] = (desc[r.descricao] || 0) + 1;
+                const k1 = r.fonte || 'Sem cadastro'; fonte[k1] = (fonte[k1] || 0) + 1;
+                const k2 = r.controlador || 'Desconhecido'; controladores[k2] = (controladores[k2] || 0) + 1;
+                const kd = r.device || 'Desconhecido'; devices[kd] = (devices[kd] || 0) + 1;
+                const ku = r.unidade || 'Sem Unidade'; unidades[ku] = (unidades[ku] || 0) + 1;
+            });
+
+            const topDesc = Object.entries(desc).sort((a,b) => b[1]-a[1]).slice(0,10);
+            descChart.data.labels = topDesc.map(d => d[0].substring(0,45));
+            descChart.data.datasets[0].data = topDesc.map(d => d[1]);
+            descChart.data.datasets[0].backgroundColor = DEFAULT_COLORS;
+            descChart.update();
+
+            const cEntries = Object.entries(controladores).sort((a,b) => b[1]-a[1]).slice(0,8);
+            controladoresChart.data.labels = cEntries.map(c => c[0]);
+            controladoresChart.data.datasets[0].data = cEntries.map(c => c[1]);
+            controladoresChart.data.datasets[0].backgroundColor = DEFAULT_COLORS;
+            controladoresChart.update();
+
+            // Top dispositivos
+            const dEntries = Object.entries(devices).sort((a,b) => b[1]-a[1]).slice(0,10);
+            deviceChart.data.labels = dEntries.map(d => d[0]);
+            deviceChart.data.datasets[0].data = dEntries.map(d => d[1]);
+            deviceChart.data.datasets[0].backgroundColor = DEFAULT_COLORS;
+            deviceChart.update();
+
+            // Falhas por unidade (top 10)
+            const uEntries = Object.entries(unidades).sort((a,b) => b[1]-a[1]).slice(0,10);
+            unidadeChart.data.labels = uEntries.map(u => u[0]);
+            unidadeChart.data.datasets[0].data = uEntries.map(u => u[1]);
+            unidadeChart.data.datasets[0].backgroundColor = DEFAULT_COLORS;
+            unidadeChart.update();
+
+            const fEntries = Object.entries(fonte).sort((a,b) => b[1]-a[1]);
+            fonteChart.data.labels = fEntries.map(f => f[0]);
+            fonteChart.data.datasets[0].data = fEntries.map(f => f[1]);
+            fonteChart.data.datasets[0].backgroundColor = DEFAULT_COLORS;
+            fonteChart.update();
+
+            // Série temporal (últimos 30 dias)
+            const days = {};
+            const today = new Date(); today.setHours(0,0,0,0);
+            for (let i=29; i>=0; i--) {
+                const d = new Date(today); d.setDate(today.getDate()-i);
+                const k = d.toISOString().slice(0,10);
+                days[k] = 0;
+            }
+            filtered.forEach(r => {
+                if (r.date) {
+                    const d = new Date(r.date); d.setHours(0,0,0,0);
+                    const k = d.toISOString().slice(0,10);
+                    if (k in days) days[k]++;
+                }
+            });
+            const labels = Object.keys(days);
+            const data = labels.map(l => days[l]);
+            timeChart.data.labels = labels;
+            timeChart.data.datasets[0].data = data;
+            timeChart.update();
+
+            // Paginação de tabela
+            updateTablePagination(filtered);
+        }
+
+        function updateTablePagination(filteredData) {
+            const totalRows = filteredData.length;
+            const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE) || 1;
+            
+            if (currentPage > totalPages) currentPage = 1;
+            
+            const startIdx = (currentPage - 1) * ROWS_PER_PAGE;
+            const endIdx = Math.min(startIdx + ROWS_PER_PAGE, totalRows);
+            const rowsToShow = filteredData.slice(startIdx, endIdx);
+            
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            rowsToShow.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${r.device}</td><td>${r.descricao.substring(0,40)}</td><td>${r.date ? r.date.toLocaleDateString('pt-BR') : r.rawDate}</td><td>${r.fonte}</td><td>${r.unidade || '-'}</td><td>${r.transportadora || '-'}</td>`;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('totalRows').textContent = totalRows;
+            document.getElementById('pageInput').value = currentPage;
+            document.getElementById('pageInput').max = totalPages;
+            
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        }
+
+        // Inicializa Charts
+        Chart.register(ChartDataLabels);
+        
+        const descChart = new Chart(document.getElementById('descChart').getContext('2d'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+        });
+        const controladoresChart = new Chart(document.getElementById('controladoresChart').getContext('2d'), {
+            type: 'doughnut', data: { labels: [], datasets: [{ data: [], backgroundColor: DEFAULT_COLORS }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, datalabels: { font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } } }
+        });
+        const deviceChart = new Chart(document.getElementById('deviceChart').getContext('2d'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+        });
+        const fonteChart = new Chart(document.getElementById('fonteChart').getContext('2d'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+        });
+        const timeChart = new Chart(document.getElementById('timeChart').getContext('2d'), {
+            type: 'line', data: { labels: [], datasets: [{ label: 'Falhas/dia', data: [], borderColor: '#e60000', backgroundColor: 'rgba(230,0,0,0.1)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#e60000' }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: true }, datalabels: { anchor: 'end', align: 'top', font: { size: 10, weight: 'bold' }, color: '#e60000', formatter: (value) => value > 0 ? value : '' } }, scales: { y: { beginAtZero: true } } }
+        });
+        const unidadeChart = new Chart(document.getElementById('unidadeChart').getContext('2d'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+        });
+
+        // Eventos
+        document.getElementById('csvFile').addEventListener('change', function(e) {
+            const f = e.target.files[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const text = evt.target.result;
+                const firstLine = (text || '').split(/\r\n|\n/)[0] || '';
+                let delim = ';';
+                if (firstLine.split(',').length > firstLine.split(';').length) delim = ',';
+                if (firstLine.split('\t').length > firstLine.split(delim).length) delim = '\t';
+                
+                Papa.parse(text, {
+                    header: true,
+                    skipEmptyLines: true,
+                    delimiter: delim,
+                    complete: function(res) {
+                        if (!res || !res.data || !res.data.length) {
+                            alert('Arquivo vazio ou inválido');
+                            return;
+                        }
+                        rawData = res.data.map(normalizeRow);
+                        window.saveDataSafely('falhasData', rawData);
+                        currentPage = 1;
+                        populateFilters();
+                        buildCharts();
+                    },
+                    error: function(err) { alert('Erro parsing CSV: ' + (err.message || err)); }
+                });
+            };
+            reader.onerror = function() { alert('Erro lendo arquivo'); };
+            reader.readAsText(f, 'latin1');
+        });
+
+        document.getElementById('loadLocal').addEventListener('click', function() {
+            const s = localStorage.getItem('falhasData');
+            if (!s) return alert('Nenhum dado no localStorage');
+            try {
+                const parsed = JSON.parse(s);
+                rawData = parsed.map(normalizeRow);
+                currentPage = 1;
+                populateFilters();
+                buildCharts();
+            } catch(e) { alert('Erro: ' + e.message); }
+        });
+
+        document.getElementById('saveSample').addEventListener('click', function() {
+            const sample = [];
+            for(let i=0; i<50; i++) {
+                sample.push({
+                    'Dispositivo': 'DEV' + (1000+i),
+                    'Grupo de dispositivo': 'REG_SP, TRS_CONLOG, UNI_CDD SP',
+                    'Data': (45000 + i),
+                    'Descrição': ['Engine fault detected', 'GPS signal lost', 'Battery voltage low', 'Communication error'][i%4],
+                    'Fonte': i%2 ? 'Telematics Device' : 'J1939',
+                    'Controlador': i%3 ? 'Body controller' : 'Engine controller'
+                });
+            }
+            window.saveDataSafely('falhasData', sample);
+            alert('Amostra salva em localStorage/IndexedDB');
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function() { currentPage = 1; buildCharts(); });
+        document.getElementById('transportadoraFilter').addEventListener('change', function() {
+            updateUnidadeFilter();
+            currentPage = 1;
+            buildCharts();
+        });
+        document.getElementById('unidadeFilter').addEventListener('change', function() { currentPage = 1; buildCharts(); });
+
+        // Paginação
+        document.getElementById('prevBtn').addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                buildCharts();
+            }
+        });
+        document.getElementById('nextBtn').addEventListener('click', function() {
+            const totalPages = Math.ceil(rawData.length / ROWS_PER_PAGE) || 1;
+            if (currentPage < totalPages) {
+                currentPage++;
+                buildCharts();
+            }
+        });
+        document.getElementById('pageInput').addEventListener('change', function() {
+            const newPage = Math.max(1, parseInt(this.value) || 1);
+            const totalPages = Math.ceil(rawData.length / ROWS_PER_PAGE) || 1;
+            currentPage = Math.min(newPage, totalPages);
+            buildCharts();
+        });
+
+        // Dark Mode
+        function toggleDark() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            console.log('Dark mode:', isDark);
+            
+            // Atualizar gráficos quando dark mode é toggled
+            setTimeout(function() {
+              if (window.graficoFalhas) try { window.graficoFalhas.update(); } catch(e) { console.log('Erro ao atualizar gráfico'); }
+            }, 50);
+        }
+        
+        // Carregar preferência dark mode ao iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkMode = localStorage.getItem('darkMode');
+            console.log('Carregando dark mode:', darkMode);
+            if (darkMode === 'true') {
+                document.body.classList.add('dark');
+                console.log('Dark mode aplicado ao carregar');
+            }
+
+            // Carregar dados persistidos
+            const savedData = localStorage.getItem('falhasData');
+            if (savedData) {
+              try {
+                const parsed = JSON.parse(savedData);
+                rawData = parsed.map(normalizeRow);
+                populateFilters();
+                buildCharts();
+                console.log('Dados carregados do localStorage');
+              } catch(e) {
+                console.log('Erro ao carregar dados persistidos');
+              }
+            }
+            
+            document.getElementById('toggleDark').addEventListener('click', toggleDark);
+        });
+    </script>
+</body>
+</html>

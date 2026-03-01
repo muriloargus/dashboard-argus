@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários - Sistema Argus Ambev</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --secondary-color: #e60000;
+            --accent-color: #FFD700;
+            --success-color: #28a745;
+            --light-color: #f8fafc;
+            --dark-color: #1a1a1a;
+            --sidebar-width: 280px;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+        
+        .dashboard-container { display: flex; min-height: 100vh; }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+            padding-bottom: 140px;
+        }
+        
+        .sidebar-header {
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header i { font-size: 1.8rem; color: var(--accent-color); }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-menu li { margin-bottom: 5px; }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            gap: 12px;
+        }
+        
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        .sidebar-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 15px;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .sidebar-footer p {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, var(--primary-color), #7bb5e0);
+            color: white;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(99, 163, 216, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-branding {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo.argus {
+            height: 48px;
+        }
+        
+        .logo.ambev {
+            height: 36px;
+        }
+        
+        .header .titulo {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            flex: 1;
+        }
+        
+        .header .titulo small {
+            display: block;
+            font-size: 13px;
+            font-weight: 400;
+            opacity: 0.95;
+            margin-top: 4px;
+        }
+        
+        .upload-section {
+            background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+            border-radius: 12px;
+            padding: 20px 15px;
+            box-shadow: 0 2px 10px rgba(99, 163, 216, 0.08);
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px dashed rgba(99, 163, 216, 0.2);
+        }
+        
+        .upload-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .upload-section p {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-upload {
+            background: rgba(255, 215, 0, 0.3);
+            color: white;
+            border: 2px solid var(--accent-color);
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload:hover {
+            background: rgba(255, 215, 0, 0.5);
+            transform: scale(1.05);
+        }
+
+        .btn-toggle {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: rgba(255, 215, 0, 0.18);
+            border: 2px solid var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            margin-left: 12px;
+        }
+
+        .btn-toggle:hover { transform: scale(1.02); }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .summary-cards.visible { display: grid; }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .card-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+        
+        .card-title {
+            font-size: 0.75rem;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .card-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .charts-section.visible { display: grid; }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        body.dark .chart-container {
+            background: #0d1b2a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        body.dark .chart-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .chart-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 200px;
+        }
+
+        /* Gráfico 3 (Unidade) - ocupa toda a largura na segunda linha */
+        .chart-container:nth-child(3) {
+            grid-column: 1 / -1;
+        }
+
+        .chart-container:nth-child(3) .chart-wrapper {
+            height: 300px;
+        }
+        
+        .filters-section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            align-items: end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            background: white;
+            color: var(--dark-color);
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 163, 216, 0.1);
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .filter-buttons button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-buttons button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .filter-buttons button.reset {
+            background: #f0f0f0;
+            color: #666;
+        }
+        
+        .filter-buttons button.reset:hover {
+            background: #e0e0e0;
+        }
+        
+        .table-section {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            display: none;
+        }
+        
+        .table-section.visible { display: block; }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead th {
+            background: linear-gradient(180deg, var(--primary-color) 0%, #4a8fb8 100%);
+            color: white;
+            font-weight: 600;
+            padding: 10px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.85rem;
+        }
+        
+        tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 0.85rem;
+        }
+        
+        tbody tr:hover {
+            background-color: #f5f7ff;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        
+        .pagination button, .pagination span {
+            padding: 6px 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination button.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, white 0%, var(--gray-50) 100%);
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 12px;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.05);
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .footer p { margin: 5px 0; }
+        
+        @media (max-width: 1200px) {
+            .charts-section { grid-template-columns: repeat(2, 1fr); }
+            .filters-section { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-content { margin-left: 0; }
+            .charts-section { grid-template-columns: 1fr; }
+            .filters-section { grid-template-columns: 1fr; }
+        }
+        
+        .dashboard-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+        .dark .dashboard-description {
+            color: #aaa;
+        }
+        
+        /* INSIGHTS CONTAINER - PADRÃO */
+        .insights-container {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+        }
+
+        body.dark .insights-container {
+            background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+        }
+
+        .insights-card h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        body.dark .insights-card h2 {
+            color: #63a3d8;
+        }
+
+        .insight-section {
+            margin-bottom: 20px;
+        }
+
+        .insight-section h3 {
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            gap: 8px;
+        }
+
+        body.dark .insight-section h3 {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .insight-section p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        body.dark .insight-section p {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+
+        .insight-section ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .insight-section li {
+            color: #555;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            border-left: 3px solid var(--primary-color);
+            line-height: 1.5;
+        }
+
+        body.dark .insight-section li {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .insights-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Dark Mode para Tabelas e Seções */
+        body.dark .table-section {
+            background: #0d1b2a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        body.dark .table-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        body.dark .table-title {
+            color: #FFD700;
+        }
+        
+        body.dark table tbody td {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        body.dark tbody tr:hover {
+            background-color: rgba(99, 163, 216, 0.1);
+        }
+        
+        body.dark .pagination button,
+        body.dark .pagination span {
+            background: #081226;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        body.dark .pagination button:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        body.dark .pagination button.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+    </style>
+</head>
+<style>
+/* Dark mode aprimorado (injetado automaticamente) */
+body.dark {
+    background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+    color: var(--light-color);
+}
+body.dark .sidebar {
+    background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+    box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+    border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .main-content { background: linear-gradient(135deg, #071124 0%, #0b1726 100%); }
+body.dark .header {
+    background: linear-gradient(90deg, #0b2440 0%, #081830 100%);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+/* Dark Mode para Gráficos e Tabelas */
+body.dark .topo {
+    background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+    color: #fff !important;
+}
+
+body.dark .card, body.dark .chart-card, body.dark .kpi-card { 
+    background: #081226; 
+    color: var(--light-color); 
+    border-color: rgba(255,255,255,0.03); 
+}
+body.dark .label, body.dark .kpi-title { color: rgba(255,255,255,0.8); }
+body.dark .value, body.dark .chart-title { color: var(--accent-color); }
+body.dark table th { background: var(--primary-dark); color: white; }
+
+body.dark table td { color: var(--light-color); border-color: rgba(255,255,255,0.06); }
+
+body.dark table tbody td {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark tbody tr:hover {
+    background-color: rgba(99, 163, 216, 0.15);
+}
+
+body.dark .sidebar-menu a:hover,
+body.dark .sidebar-menu a.active {
+    background: rgba(255, 215, 0, 0.15);
+    color: #FFF44F;
+}
+
+body.dark .pagination button,
+body.dark .pagination span {
+    background: #081226;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.dark .pagination button:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+body.dark .pagination button.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+</style>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-person-walking"></i> Motoristas</a></li>
+                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+                <li><a href="dashboard_usuarios.html" class="active"><i class="bi bi-people"></i> Usuários</a></li>
+                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
+                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
+                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
+                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
+                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
+                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+            </ul>
+            <div class="sidebar-footer">
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-branding">
+                    <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
+                    <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
+                </div>
+                <div class="titulo">
+                    Usuários do Sistema
+                    <small>Gerenciamento de Usuários</small>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-upload" id="uploadBtn">
+                    <i class="bi bi-cloud-upload"></i> Carregar CSV
+                </button>
+                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+                </div>
+                <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+            </header>
+            
+            <!-- Summary Cards -->
+            <section class="summary-cards" id="summaryCards">
+                <div class="card">
+                    <div class="card-icon"><i class="bi bi-people-fill"></i></div>
+                    <div class="card-title">Total de Usuários</div>
+                    <div class="card-value" id="totalUsers">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="bi bi-building"></i></div>
+                    <div class="card-title">Transportadoras</div>
+                    <div class="card-value" id="totalTransportadoras">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="bi bi-map"></i></div>
+                    <div class="card-title">Unidades</div>
+                    <div class="card-value" id="totalUnidades">0</div>
+                </div>
+            </section>
+            
+            <!-- Filters -->
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label for="searchEmail">Pesquisar Email</label>
+                    <input 
+                        type="text" 
+                        id="searchEmail" 
+                        placeholder="Ex: usuario@ambev.com"
+                        oninput="applyFilters()"
+                    >
+                </div>
+                <div class="filter-group">
+                    <label for="filterTransportadora">Transportadora</label>
+                    <select id="filterTransportadora" onchange="updateUnidadesByTransportadora(); applyFilters();">
+                        <option value="">Todas as Transportadoras</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterUnidade">Unidade</label>
+                    <select id="filterUnidade" onchange="applyFilters()">
+                        <option value="">Todas as Unidades</option>
+                    </select>
+                </div>
+                <div class="filter-group filter-buttons">
+                    <button onclick="applyFilters()"><i class="bi bi-funnel"></i> Filtrar</button>
+                    <button class="reset" onclick="resetFilters()"><i class="bi bi-arrow-clockwise"></i> Limpar</button>
+                </div>
+            </div>
+            
+            <!-- Charts Section -->
+            <section class="charts-section" id="chartsSection">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-building"></i> Usuários por Transportadora
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="transportadoraChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-briefcase"></i> Usuários por Designação (Top 5)
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="designacaoChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-map"></i> Usuários por Unidade
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="unidadeChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Insights Section -->
+            <!-- Storytelling de Dados -->
+            <div id="insightsContainer" class="insights-container" style="display: none;">
+                <div class="insights-card">
+                    <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+                    
+                    <div class="insight-section">
+                        <h3>🎯 Situação Principal</h3>
+                        <p id="insightPrincipal">Carregando análise...</p>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>📈 Padrões Detectados</h3>
+                        <ul id="insightPadroes">
+                            <li>Carregando padrões...</li>
+                        </ul>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>💡 Recomendações</h3>
+                        <ul id="insightRecomendacoes">
+                            <li>Carregando recomendações...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Table Section -->
+            <section class="table-section" id="tableSection">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="bi bi-list-ul"></i> Lista de Usuários
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Nome Completo</th>
+                                <th>Email</th>
+                                <th>Designação</th>
+                                <th>CPF</th>
+                                <th>Transportadora</th>
+                                <th>Unidade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </section>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <p>Dashboard de Usuários • Dados atualizados em tempo real • Versão 1.0</p>
+                <p>Sistema de Telemetria CCO Ambev - Argus</p>
+            </footer>
+        </main>
+    </div>
+    
+    <script>
+        let userData = [];
+        let filteredData = [];
+        let transportadoraChart, designacaoChart, unidadeChart;
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        
+        // Normalizar designações com agrupamento de variações
+        function normalizeDesignacao(value) {
+            const normalized = (value || '').trim().toLowerCase().replace(/[àáäâãè]/g, 'a').replace(/[ìíïî]/g, 'i').replace(/[òóöôõ]/g, 'o').replace(/[ùúüû]/g, 'u').replace(/[ç]/g, 'c');
+            
+            // Converter números para categorias
+            if (normalized === '0' || normalized === '') return 'Analista';
+            if (normalized === '1') return 'Gestor';
+            if (normalized === '2') return 'Supervisor';
+            
+            // Padrão: GERENTE
+            if (normalized.includes('gerente') || normalized.includes('god') || normalized === 'manager') {
+                return 'Gerente';
+            }
+            
+            // Padrão: SUPERVISOR
+            if (normalized.includes('supervisor') || normalized === 'sup') {
+                return 'Supervisor';
+            }
+            
+            // Padrão: ANALISTA
+            if (normalized.includes('analista') || normalized.includes('analyst') || normalized === 'an') {
+                return 'Analista';
+            }
+            
+            // Padrão: GESTOR
+            if (normalized.includes('gestor') || normalized.includes('administrador') || normalized.includes('admin') || normalized.includes('diretor')) {
+                return 'Gestor';
+            }
+            
+            // Padrão: OPERADOR
+            if (normalized.includes('operador') || normalized.includes('operator') || normalized.includes('op')) {
+                return 'Operador';
+            }
+            
+            // Padrão: TÉCNICO
+            if (normalized.includes('tecnico') || normalized.includes('technical') || normalized.includes('tech')) {
+                return 'Técnico';
+            }
+            
+            // Padrão: COORDENADOR
+            if (normalized.includes('coordenador') || normalized.includes('coordinator')) {
+                return 'Coordenador';
+            }
+            
+            // Se não bater nada, capitalizar e retornar
+            return value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase();
+        }
+            function toggleDark() {
+                document.body.classList.toggle('dark');
+                const isDark = document.body.classList.contains('dark');
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+                const btn = document.querySelector('.btn-toggle');
+                if (btn) btn.textContent = isDark ? '☀️' : '🌙 Dark / ☀️ Light';
+                console.log('Dark mode:', isDark);
+                // Recriar gráficos com cores apropriadas
+                updateChartColors();
+            }
+            
+            function updateChartColors() {
+                // Destruir todos os gráficos
+                if (transportadoraChart) transportadoraChart.destroy();
+                if (designacaoChart) designacaoChart.destroy();
+                if (unidadeChart) unidadeChart.destroy();
+                
+                // Recriar com cores apropriadas
+                initCharts();
+                
+                // Recarregar dados se existirem
+                if (userData && userData.length > 0) {
+                    updateChartsWithFilteredData();
+                }
+            }
+
+            // Carregar preferência dark mode ao iniciar
+            document.addEventListener('DOMContentLoaded', function() {
+                const darkMode = localStorage.getItem('darkMode');
+                console.log('Carregando dark mode:', darkMode);
+                if (darkMode === 'true') {
+                    document.body.classList.add('dark');
+                    const btn = document.querySelector('.btn-toggle');
+                    if (btn) btn.textContent = '☀️';
+                    console.log('Dark mode aplicado ao carregar');
+                }
+
+                // Declarar elementos do DOM
+                const uploadBtn = document.getElementById('uploadBtn');
+                const csvFileInput = document.getElementById('csvFileInput');
+                window.filterTransportadora = document.getElementById('filterTransportadora');
+                window.filterUnidade = document.getElementById('filterUnidade');
+                window.tableBody = document.getElementById('tableBody');
+                window.summaryCards = document.getElementById('summaryCards');
+                window.chartsSection = document.getElementById('chartsSection');
+                window.tableSection = document.getElementById('tableSection');
+
+                // Carregar dados persistidos
+                const savedData = localStorage.getItem('usuariosData');
+                if (savedData) {
+                  try {
+                    userData = JSON.parse(savedData);
+                    filteredData = [...userData];
+                    populateFilterSelects();
+                    initCharts();
+                    updateCharts(filteredData);
+                    console.log('Dados carregados do localStorage');
+                  } catch(e) {
+                    console.log('Erro ao carregar dados persistidos');
+                  }
+                }
+
+                if (uploadBtn && csvFileInput) {
+                    uploadBtn.addEventListener('click', () => csvFileInput.click());
+                    csvFileInput.addEventListener('change', handleFileSelect);
+                } else {
+                    console.error('Elementos uploadBtn ou csvFileInput não encontrados');
+                }
+            
+            initCharts();
+            loadSampleData();
+        });
+        
+        function initCharts() {
+            // Registrar plugin de data labels
+            Chart.register(ChartDataLabels);
+            
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? '#e0e0e0' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tooltipBg = isDarkMode ? 'rgba(13, 27, 42, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+            
+            const transportadoraCtx = document.getElementById('transportadoraChart').getContext('2d');
+            transportadoraChart = new Chart(transportadoraCtx, {
+                type: 'bar',
+                data: { 
+                    labels: [], 
+                    datasets: [{ 
+                        label: 'Usuários', 
+                        data: [], 
+                        backgroundColor: ['#63a3d8', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#96CEB4', '#FFEAA7'],
+                        borderColor: isDarkMode ? '#0d1b2a' : '#fff',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: tooltipBg },
+                        datalabels: {
+                            anchor: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? 'center' : 'end';
+                            },
+                            offset: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? 0 : 5;
+                            },
+                            color: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? '#fff' : textColor;
+                            },
+                            font: { weight: 'bold', size: 12 },
+                            formatter: function(value) { return value || 0; }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+            
+            const designacaoCtx = document.getElementById('designacaoChart').getContext('2d');
+            designacaoChart = new Chart(designacaoCtx, {
+                type: 'doughnut',
+                data: { 
+                    labels: [], 
+                    datasets: [{ 
+                        data: [], 
+                        backgroundColor: ['#63a3d8', '#FFD700', '#FF6B6B', '#28a745', '#FF9500'],
+                        borderColor: isDarkMode ? '#0d1b2a' : '#fff',
+                        borderWidth: 2
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { 
+                                font: { size: 10 },
+                                color: textColor,
+                                padding: 15
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    }
+                }
+            });
+            
+            const unidadeCtx = document.getElementById('unidadeChart').getContext('2d');
+            unidadeChart = new Chart(unidadeCtx, {
+                type: 'bar',
+                data: { 
+                    labels: [], 
+                    datasets: [{ 
+                        label: 'Usuários', 
+                        data: [], 
+                        backgroundColor: ['#28a745', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#96CEB4', '#FFEAA7', '#9B59B6'],
+                        borderColor: isDarkMode ? '#0d1b2a' : '#fff',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: tooltipBg },
+                        datalabels: {
+                            anchor: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? 'center' : 'end';
+                            },
+                            offset: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? 0 : 5;
+                            },
+                            color: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                return value > 10 ? '#fff' : textColor;
+                            },
+                            font: { weight: 'bold', size: 12 },
+                            formatter: function(value) { return value || 0; }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                delimiter: ';',
+                dynamicTyping: false,
+                complete: (results) => {
+                    if (results.errors && results.errors.length > 0) {
+                        alert('❌ Erro ao processar CSV: ' + results.errors[0].message);
+                        return;
+                    }
+
+                    userData = results.data.map(row => {
+                        const grupo = (row['Grupo'] || '').trim();
+                        const transportadora = extrairTransportadora(grupo);
+                        const unidade = extrairUnidade(grupo);
+                        
+                        return {
+                            nome: (row['NOME COMPLETO'] || '').trim(),
+                            email: (row['E-mail'] || '').trim(),
+                            designacao: normalizeDesignacao(row['Designação']),
+                            cpf: (row['CPF'] || '').trim(),
+                            transportadora: transportadora,
+                            unidade: unidade
+                        };
+                    }).filter(u => u.nome);
+                    
+                    if (userData.length === 0) {
+                        alert('⚠️ Nenhum usuário válido encontrado no arquivo!');
+                        return;
+                    }
+                    
+                    localStorage.setItem('usuariosData', JSON.stringify(userData));
+                    filteredData = [...userData];
+                    populateFilterSelects();
+                    updateDashboard();
+                    alert('✅ Arquivo carregado com sucesso! ' + userData.length + ' usuários encontrados.');
+                },
+                error: (error) => {
+                    alert('❌ Erro ao ler arquivo: ' + error.message);
+                }
+            });
+        }
+
+        function extrairTransportadora(grupo) {
+            if (!grupo) return 'Sem cadastro';
+            const match = grupo.match(/TRS_([^,]+)/);
+            if (!match) return 'Sem cadastro';
+            let transp = 'TRS_' + match[1].trim();
+            // Normalizar variações de LOG 20
+            transp = transp.replace(/LOG\s+20/i, 'LOG20').replace(/LOG20\s+/i, 'LOG20');
+            return transp;
+        }
+
+        function extrairUnidade(grupo) {
+            if (!grupo) return 'Sem UNI';
+            const match = grupo.match(/UNI_([^,]+)/);
+            return match ? 'UNI_' + match[1].trim() : 'Sem UNI';
+        }
+        
+        function populateFilterSelects() {
+            const transportadoras = [...new Set(userData.map(u => u.transportadora).filter(Boolean))].sort();
+            filterTransportadora.innerHTML = '<option value="">Todas as Transportadoras</option>';
+            transportadoras.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t;
+                option.textContent = t;
+                filterTransportadora.appendChild(option);
+            });
+            
+            const unidades = [...new Set(userData.map(u => u.unidade).filter(Boolean))].sort();
+            filterUnidade.innerHTML = '<option value="">Todas as Unidades</option>';
+            unidades.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u;
+                option.textContent = u.length > 30 ? u.substring(0, 30) + '...' : u;
+                filterUnidade.appendChild(option);
+            });
+        }
+        
+        function updateUnidadesByTransportadora() {
+            const transportadoraSelecionada = filterTransportadora.value;
+            
+            // Filtrar unidades pela transportadora selecionada
+            let unidades;
+            if (transportadoraSelecionada) {
+                unidades = [...new Set(userData
+                    .filter(u => u.transportadora === transportadoraSelecionada)
+                    .map(u => u.unidade)
+                    .filter(Boolean)
+                )].sort();
+            } else {
+                // Se nenhuma transportadora selecionada, mostrar todas as unidades
+                unidades = [...new Set(userData.map(u => u.unidade).filter(Boolean))].sort();
+            }
+            
+            // Resetar filtro de unidade
+            filterUnidade.value = '';
+            filterUnidade.innerHTML = '<option value="">Todas as Unidades</option>';
+            
+            // Preencher com as unidades filtradas
+            unidades.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u;
+                option.textContent = u.length > 30 ? u.substring(0, 30) + '...' : u;
+                filterUnidade.appendChild(option);
+            });
+        }
+        
+        function applyFilters() {
+            currentPage = 1;
+            const emailBusca = (searchEmail.value || '').toLowerCase().trim();
+            const transportadoraSelecionada = filterTransportadora.value;
+            const unidadeSelecionada = filterUnidade.value;
+            
+            filteredData = userData.filter(u => {
+                const emailMatch = !emailBusca || u.email.toLowerCase().includes(emailBusca);
+                const transportadoraMatch = !transportadoraSelecionada || u.transportadora === transportadoraSelecionada;
+                const unidadeMatch = !unidadeSelecionada || u.unidade === unidadeSelecionada;
+                
+                return emailMatch && transportadoraMatch && unidadeMatch;
+            });
+            
+            updateChartsWithFilteredData();
+            renderTable();
+        }
+        
+        function resetFilters() {
+            searchEmail.value = '';
+            filterTransportadora.value = '';
+            filterUnidade.value = '';
+            currentPage = 1;
+            filteredData = [...userData];
+            
+            updateChartsWithFilteredData();
+            renderTable();
+            generateInsights(filteredData);
+        }
+        
+        function generateInsights(d) {
+            if (d.length === 0) return;
+            
+            const total = d.length;
+            const porTransportadora = {};
+            d.forEach(u => {
+                const t = u.transportadora || 'Não informado';
+                porTransportadora[t] = (porTransportadora[t] || 0) + 1;
+            });
+            const transportadoraLider = Object.entries(porTransportadora).sort((a, b) => b[1] - a[1])[0];
+            const transportadoraPct = transportadoraLider ? Math.round((transportadoraLider[1] / total) * 100) : 0;
+            
+            const porDesignacao = {};
+            d.forEach(u => {
+                const des = u.designacao || 'Não informado';
+                porDesignacao[des] = (porDesignacao[des] || 0) + 1;
+            });
+            const designacaoPrincipal = Object.entries(porDesignacao).sort((a, b) => b[1] - a[1])[0];
+            const designacaoPct = designacaoPrincipal ? Math.round((designacaoPrincipal[1] / total) * 100) : 0;
+            
+            const unidadesCobertas = new Set(d.map(u => u.unidade).filter(Boolean)).size;
+            const transportadorasCobertas = new Set(d.map(u => u.transportadora).filter(Boolean)).size;
+            
+            const usuariosPorUnidade = {};
+            d.forEach(u => {
+                const un = u.unidade || 'Não informado';
+                usuariosPorUnidade[un] = (usuariosPorUnidade[un] || 0) + 1;
+            });
+            const mediaUsuariosUnidade = Math.round(total / unidadesCobertas);
+            
+            const insightPrincipal = `O sistema registra <strong>${total} usuários cadastrados</strong>, distribuídos em <strong>${unidadesCobertas} unidades</strong> operadas por <strong>${transportadorasCobertas} transportadora(s)</strong>. A concentração maior está em <strong>${transportadoraLider ? transportadoraLider[0] : 'diversas'}</strong> (${transportadoraPct}%) com predominância de função <strong>${designacaoPrincipal ? designacaoPrincipal[0] : 'variada'}</strong> (${designacaoPct}%).`;
+            
+            const padroes = [
+                `👥 <strong>${total}</strong> usuários no total`,
+                `🏢 Concentração: <strong>${transportadoraLider ? transportadoraLider[0] : '-'}</strong> com ${transportadoraPct}%`,
+                `📋 Designação líder: <strong>${designacaoPrincipal ? designacaoPrincipal[0] : 'N/A'}</strong> (${designacaoPct}%)`,
+                `📍 Cobertura: <strong>${unidadesCobertas}</strong> unidades`,
+                `📊 Distribuição: Média de <strong>${mediaUsuariosUnidade}</strong> usuários/unidade`
+            ];
+            
+            const recomendacoes = [
+                total >= 200 ? '✅ Cobertura robusta - manter acompanhamento operacional' : 
+                total >= 100 ? '⚠️ Base sólida - considerar expansão em novas regiões' :
+                total >= 50 ? '🔔 Equipe em crescimento - priorizar treinamento' :
+                '📋 Base inicial - expandir cobertura operacional',
+                `📊 Revisar concentração em ${transportadoraLider ? transportadoraLider[0] : 'transportadora líder'}`,
+                `👨💼 Avaliar distribuição de ${designacaoPrincipal ? designacaoPrincipal[0] : 'designações'} conforme necessidade operacional`,
+                `🎯 Harmonizar distribuição entre unidades (meta: ${mediaUsuariosUnidade} usuários/un)`,
+                `📈 Implementar KPIs de efetividade por função e unidade`
+            ];
+            
+            document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+            document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+        }
+        
+        function updateChartsWithFilteredData() {
+            const dataSource = filteredData.length > 0 ? filteredData : userData;
+            
+            document.getElementById('totalUsers').textContent = dataSource.length;
+            document.getElementById('totalTransportadoras').textContent = new Set(dataSource.map(u => u.transportadora).filter(Boolean)).size;
+            document.getElementById('totalUnidades').textContent = new Set(dataSource.map(u => u.unidade).filter(Boolean)).size;
+            
+            const transportadoras = {};
+            dataSource.forEach(u => {
+                const t = u.transportadora || 'Não informado';
+                transportadoras[t] = (transportadoras[t] || 0) + 1;
+            });
+            
+            transportadoraChart.data.labels = Object.keys(transportadoras).sort();
+            transportadoraChart.data.datasets[0].data = Object.keys(transportadoras).sort().map(k => transportadoras[k]);
+            transportadoraChart.update();
+            
+            const designacoes = {};
+            dataSource.forEach(u => {
+                const d = normalizeDesignacao(u.designacao) || 'Não informado';
+                designacoes[d] = (designacoes[d] || 0) + 1;
+            });
+            
+            const designacoesLabels = Object.keys(designacoes).slice(0, 5);
+            designacaoChart.data.labels = designacoesLabels;
+            designacaoChart.data.datasets[0].data = designacoesLabels.map(k => designacoes[k]);
+            designacaoChart.update();
+            
+            const unidades = {};
+            dataSource.forEach(u => {
+                const un = u.unidade || 'Não informado';
+                unidades[un] = (unidades[un] || 0) + 1;
+            });
+            
+            // Top 15 por quantidade
+            const top15Unidades = Object.entries(unidades)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 15);
+            
+            unidadeChart.data.labels = top15Unidades.map(u => u[0]);
+            unidadeChart.data.datasets[0].data = top15Unidades.map(u => u[1]);
+            unidadeChart.update();
+            
+            generateInsights(dataSource);
+            document.getElementById('insightsContainer').style.display = dataSource.length > 0 ? 'block' : 'none';
+        }
+        
+        function updateDashboard() {
+            filteredData = [...userData];
+            updateChartsWithFilteredData();
+            renderTable();
+            
+            summaryCards.classList.add('visible');
+            chartsSection.classList.add('visible');
+            document.getElementById('insightsContainer').style.display = filteredData.length > 0 ? 'block' : 'none';
+            tableSection.classList.add('visible');
+        }
+        
+        function renderTable() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            tableBody.innerHTML = pageData.map(u => `
+                <tr>
+                    <td><strong>${u.nome}</strong></td>
+                    <td>${u.email}</td>
+                    <td>${u.designacao}</td>
+                    <td>${u.cpf}</td>
+                    <td>${u.transportadora}</td>
+                    <td>${u.unidade}</td>
+                </tr>
+            `).join('');
+            
+            renderPagination();
+        }
+        
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            let html = '';
+            
+            if (totalPages > 1) {
+                html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(1)">« Primeira</button>`;
+                html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">‹ Anterior</button>`;
+                
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+                
+                if (startPage > 1) html += '<span>...</span>';
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<button ${i === currentPage ? 'class="active"' : ''} onclick="goToPage(${i})">${i}</button>`;
+                }
+                
+                if (endPage < totalPages) html += '<span>...</span>';
+                
+                html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">Próxima ›</button>`;
+                html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${totalPages})">Última »</button>`;
+                
+                html += `<span class="page-info">Página ${currentPage} de ${totalPages}</span>`;
+            }
+            
+            document.getElementById('pagination').innerHTML = html;
+        }
+        
+        function goToPage(page) {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderTable();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+        
+        function loadSampleData() {
+            // Tentar carregar dados do localStorage
+            const storedData = localStorage.getItem('usersData');
+            if (storedData) {
+                try {
+                    userData = JSON.parse(storedData);
+                    console.log('Dados carregados do localStorage:', userData.length, 'usuários');
+                } catch (error) {
+                    console.error('Erro ao carregar dados do localStorage:', error);
+                    loadDefaultSampleData();
+                }
+            } else {
+                loadDefaultSampleData();
+            }
+            filteredData = [...userData];
+            populateFilterSelects();
+            updateDashboard();
+        }
+        
+        function loadDefaultSampleData() {
+            userData = [
+                { nome: 'THIAGO ALEXANDRE', email: '99773674@AMBEV.COM.BR', designacao: 'GOD', cpf: '8433463642', transportadora: 'AMBEV', unidade: 'UNI_CDD UBERABA' },
+                { nome: 'Gabriela Yuna Kondo', email: '99810245@ambev.com.br', designacao: 'Gerente Transportes', cpf: '45387146827', transportadora: 'Company Group', unidade: 'Company Group' }
+            ];
+            console.log('Usando dados padrão (2 usuários)');
+        }
+    </script>
+</body>
+</html>

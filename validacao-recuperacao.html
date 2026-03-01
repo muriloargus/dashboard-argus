@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Validação de Recuperação - Argus Dashboards</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .check-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .check-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .check-card.success {
+            border-left: 5px solid #28a745;
+        }
+        
+        .check-card.warning {
+            border-left: 5px solid #ffc107;
+        }
+        
+        .check-card.error {
+            border-left: 5px solid #dc3545;
+        }
+        
+        .check-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .check-result {
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .icon {
+            font-size: 1.5em;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .logs {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+        
+        .log-entry.success {
+            color: #28a745;
+        }
+        
+        .log-entry.error {
+            color: #dc3545;
+        }
+        
+        .log-entry.info {
+            color: #17a2b8;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #0c3d7a;
+        }
+        
+        .success-banner {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .success-banner.show {
+            display: block;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Validação de Recuperação</h1>
+            <p>Verificando se a plataforma Argus foi recuperada com sucesso</p>
+        </div>
+        
+        <div class="success-banner" id="successBanner">
+            ✅ PLATAFORMA RECUPERADA COM SUCESSO!
+        </div>
+        
+        <div class="info-box">
+            <strong>📌 O que aconteceu:</strong> Storage.prototype foi removida para evitar travamentos. 
+            localStorage agora funciona 100% normal. IndexedDB sincroniza em background.
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-primary" onclick="executarTodosTestes()">🧪 Executar Todos os Testes</button>
+            <button class="btn-secondary" onclick="testeLocalStorage()">📝 localStorage</button>
+            <button class="btn-secondary" onclick="testeDarkMode()">🌙 Dark Mode</button>
+            <button class="btn-secondary" onclick="testeIndexedDB()">💾 IndexedDB</button>
+            <button class="btn-secondary" onclick="limparLogs()">🗑️ Limpar Logs</button>
+        </div>
+        
+        <div class="status-grid" id="statusGrid"></div>
+        
+        <h2 style="color: white; margin-top: 30px; margin-bottom: 15px;">📋 Detalhes de Execução</h2>
+        <div class="logs" id="logs"></div>
+    </div>
+
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    
+    <script>
+        const checks = {
+            localStorage: false,
+            indexedDB: false,
+            darkMode: false,
+            scripts: false,
+            adapters: false
+        };
+
+        function log(msg, type = 'info') {
+            const logsEl = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
+            logsEl.appendChild(entry);
+            logsEl.scrollTop = logsEl.scrollHeight;
+        }
+
+        function addCheck(id, title, icon, result, type = 'success') {
+            const grid = document.getElementById('statusGrid');
+            const card = document.createElement('div');
+            card.className = `check-card ${type}`;
+            card.id = `check-${id}`;
+            card.innerHTML = `
+                <div class="check-title">
+                    <span class="icon">${icon}</span>
+                    <span>${title}</span>
+                </div>
+                <div class="check-result">${result}</div>
+            `;
+            grid.appendChild(card);
+            checks[id] = (type === 'success');
+            
+            if (allChecksPassed()) {
+                document.getElementById('successBanner').classList.add('show');
+            }
+        }
+
+        function updateCheck(id, result, type = 'success') {
+            const card = document.getElementById(`check-${id}`);
+            if (card) {
+                card.className = `check-card ${type}`;
+                card.querySelector('.check-result').textContent = result;
+                checks[id] = (type === 'success');
+            }
+        }
+
+        function allChecksPassed() {
+            return Object.values(checks).every(v => v === true);
+        }
+
+        async function testeLocalStorage() {
+            log('Iniciando teste de localStorage...');
+            try {
+                const start = performance.now();
+                localStorage.setItem('teste_fix_' + Date.now(), 'valor');
+                const elapsed = (performance.now() - start).toFixed(2);
+                
+                log(`✅ localStorage.setItem completou em ${elapsed}ms`, 'success');
+                addCheck('localStorage', 'localStorage', '📝', `✅ Funciona (${elapsed}ms)`, 'success');
+            } catch (err) {
+                log(`❌ Erro: ${err.message}`, 'error');
+                addCheck('localStorage', 'localStorage', '📝', `❌ ${err.message}`, 'error');
+            }
+        }
+
+        async function testeDarkMode() {
+            log('Testando dark mode...');
+            try {
+                const start = performance.now();
+                const isDark = !document.body.classList.contains('dark');
+                document.body.classList.toggle('dark');
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+                const elapsed = (performance.now() - start).toFixed(2);
+                
+                const saved = localStorage.getItem('darkMode');
+                log(`✅ Dark mode toggle: ${saved} (${elapsed}ms)`, 'success');
+                addCheck('darkMode', 'Dark Mode', '🌙', `✅ Toggle funciona (${elapsed}ms)`, 'success');
+            } catch (err) {
+                log(`❌ Erro: ${err.message}`, 'error');
+                addCheck('darkMode', 'Dark Mode', '🌙', `❌ ${err.message}`, 'error');
+            }
+        }
+
+        async function testeIndexedDB() {
+            log('Verificando IndexedDB...');
+            try {
+                if (typeof idb !== 'undefined' && idb.isReady) {
+                    log('✅ IndexedDB está pronto', 'success');
+                    
+                    // Tenta uma operação
+                    await idb.setItem('teste_idb', 'valor_teste');
+                    const value = await idb.getItem('teste_idb');
+                    
+                    if (value === 'valor_teste') {
+                        log('✅ IndexedDB read/write funcionando', 'success');
+                        addCheck('indexedDB', 'IndexedDB', '💾', '✅ Pronto (R/W OK)', 'success');
+                    }
+                } else {
+                    log('⚠️ IndexedDB não suportado ou não pronto', 'info');
+                    addCheck('indexedDB', 'IndexedDB', '💾', '⚠️ Não suportado', 'warning');
+                }
+            } catch (err) {
+                log(`❌ IndexedDB erro: ${err.message}`, 'error');
+                addCheck('indexedDB', 'IndexedDB', '💾', `❌ ${err.message}`, 'error');
+            }
+        }
+
+        function testeScripts() {
+            log('Verificando se scripts carregaram...');
+            
+            let allOk = true;
+            
+            if (typeof IDBManager !== 'undefined') {
+                log('✅ IDBManager carregado', 'success');
+            } else {
+                log('❌ IDBManager NOT encontrado', 'error');
+                allOk = false;
+            }
+            
+            if (typeof StorageAdapter !== 'undefined') {
+                log('✅ StorageAdapter carregado', 'success');
+            } else {
+                log('❌ StorageAdapter NOT encontrado', 'error');
+                allOk = false;
+            }
+            
+            if (typeof idb !== 'undefined') {
+                log('✅ Instância global "idb" disponível', 'success');
+            } else {
+                log('❌ Instância global "idb" NÃO encontrada', 'error');
+                allOk = false;
+            }
+            
+            if (typeof storageAdapter !== 'undefined') {
+                log('✅ Instância global "storageAdapter" disponível', 'success');
+            } else {
+                log('❌ Instância global "storageAdapter" NÃO encontrada', 'error');
+                allOk = false;
+            }
+            
+            addCheck('scripts', 'Scripts JS', '⚙️', 
+                allOk ? '✅ Todos carregados' : '❌ Faltam scripts', 
+                allOk ? 'success' : 'error');
+            
+            return allOk;
+        }
+
+        function testePrototypeIntercept() {
+            log('Verificando integridade de Storage.prototype...');
+            
+            try {
+                // Verifica se prototype foi interceptado
+                const originalSetItem = Storage.prototype.setItem;
+                const hasCustom = originalSetItem.toString().includes('storageAdapter');
+                
+                if (hasCustom) {
+                    log('⚠️ AVISO: Storage.prototype AINDA foi interceptado!', 'error');
+                    addCheck('adapters', 'Storage.prototype', '🔒', '❌ Ainda interceptado', 'error');
+                    return false;
+                } else {
+                    log('✅ Storage.prototype intacto (SEM interceptação)', 'success');
+                    addCheck('adapters', 'Storage.prototype', '🔒', '✅ Seguro (SEM interceptação)', 'success');
+                    return true;
+                }
+            } catch (err) {
+                log(`⚠️ Erro ao verificar: ${err.message}`, 'error');
+                addCheck('adapters', 'Storage.prototype', '🔒', '⚠️ Erro ao verificar', 'warning');
+                return false;
+            }
+        }
+
+        async function executarTodosTestes() {
+            document.getElementById('statusGrid').innerHTML = '';
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('successBanner').classList.remove('show');
+            
+            log('🚀 Iniciando suite de testes...', 'info');
+            
+            testeScripts();
+            await new Promise(r => setTimeout(r, 200));
+            
+            testePrototypeIntercept();
+            await new Promise(r => setTimeout(r, 200));
+            
+            await testeLocalStorage();
+            await new Promise(r => setTimeout(r, 200));
+            
+            await testeDarkMode();
+            await new Promise(r => setTimeout(r, 200));
+            
+            await testeIndexedDB();
+            await new Promise(r => setTimeout(r, 200));
+            
+            log('✅ Suite de testes completa!', 'success');
+        }
+
+        function limparLogs() {
+            document.getElementById('logs').innerHTML = '';
+            log('Logs limpos', 'info');
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            log('Página carregada, aguardando 1s antes de testes...', 'info');
+            setTimeout(() => {
+                testeScripts();
+                testePrototypeIntercept();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

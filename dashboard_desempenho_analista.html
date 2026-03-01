@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desempenho - Analista - Sistema Argus Ambev</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
+    <script src="idb-manager.js"></script>
+    <script src="storage-adapter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --secondary-color: #e60000;
+            --accent-color: #FFD700;
+            --success-color: #28a745;
+            --light-color: #f8fafc;
+            --dark-color: #1a1a1a;
+            --sidebar-width: 280px;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+        
+        .dashboard-container { display: flex; min-height: 100vh; }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+            padding-bottom: 140px;
+        }
+        
+        .sidebar-header {
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header i {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-menu li { margin-bottom: 5px; }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            gap: 12px;
+            position: relative;
+        }
+        
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: rgba(255,255,255,0.15);
+            color: var(--accent-color);
+            padding-left: 25px;
+        }
+        
+        .sidebar-footer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: calc(var(--sidebar-width) - 40px);
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+        
+        .topo {
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            color: #fff;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 51, 160, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo.argus { height: 48px; }
+        .logo.ambev { height: 36px; }
+
+        .btn-toggle {
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 20px;
+            background: rgba(255, 215, 0, 0.18);
+            border: 2px solid var(--accent-color);
+            color: #fff;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-toggle:hover { transform: scale(1.03); }
+
+        .titulo {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .titulo small {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .header-branding {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo img { height: 40px; width: auto; object-fit: contain; }
+
+        .logo.argus { padding: 6px 12px; }
+        .logo.ambev { padding: 6px 10px; }
+        
+        .header-title h1 {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .header-info {
+            text-align: right;
+            color: var(--gray-700);
+            font-size: 0.9rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .page-title i {
+            font-size: 2.2rem;
+            color: var(--accent-color);
+        }
+        
+        .filters-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .analistas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .analista-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .analista-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        .analista-foto {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .analista-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .analista-name i {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+        
+        .analista-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-item {
+            background: var(--gray-50);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray-700);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-title i {
+            font-size: 1.3rem;
+            color: var(--accent-color);
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, white 0%, #f9fafb 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border: 1px dashed rgba(99, 163, 216, 0.2);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .upload-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .upload-section p {
+            color: #666;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .btn-upload {
+            background: rgba(255, 215, 0, 0.3);
+            color: white;
+            border: 2px solid var(--accent-color);
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-upload:hover {
+            background: rgba(255, 215, 0, 0.5);
+            transform: scale(1.05);
+        }
+
+        #csvFileInput {
+            display: none;
+        }
+        
+        .metrics-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .metric-icon {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+        
+        .metric-title {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .footer {
+            background: white;
+            padding: 20px;
+            text-align: center;
+            color: var(--gray-700);
+            border-top: 1px solid var(--gray-200);
+            margin-top: 40px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; padding-bottom: 20px; }
+            .main-content { margin-left: 0; padding: 20px; }
+            .header { flex-direction: column; gap: 15px; }
+            .analistas-grid { grid-template-columns: 1fr; }
+            .chart-grid { grid-template-columns: 1fr; }
+        }
+        
+        .insights-container {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+        }
+
+        body.dark .insights-container {
+            background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+        }
+
+        .insights-card h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        body.dark .insights-card h2 {
+            color: #63a3d8;
+        }
+
+        .insight-section {
+            margin-bottom: 20px;
+        }
+
+        .insight-section h3 {
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            gap: 8px;
+        }
+
+        body.dark .insight-section h3 {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .insight-section p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        body.dark .insight-section p {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+
+        .insight-section ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .insight-section li {
+            color: #555;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            border-left: 3px solid var(--primary-color);
+            line-height: 1.5;
+        }
+
+        body.dark .insight-section li {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.85);
+        }
+    </style>
+</head>
+<style>
+/* Dark mode - Padrão simples de status_frota.html */
+body.dark {
+    background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+    color: var(--light-color);
+}
+body.dark .sidebar {
+    background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+    box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+    border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .main-content { background: linear-gradient(135deg, #071124 0%, #0b1726 100%); }
+body.dark .topo { 
+    background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+    color: #fff !important;
+}
+body.dark .card, body.dark .chart-card, body.dark .kpi-card { background: #081226; color: var(--light-color); border-color: rgba(255,255,255,0.03); }
+body.dark .analista-card, body.dark .metric-card, body.dark .upload-section { 
+    background: #081226; 
+    color: var(--light-color); 
+    border-color: rgba(255,255,255,0.03); 
+}
+body.dark .label, body.dark .kpi-title { color: rgba(255,255,255,0.8); }
+body.dark .value, body.dark .chart-title { color: var(--accent-color); }
+body.dark table th { background: var(--primary-dark); color: white; }
+body.dark table td { color: var(--light-color); border-color: rgba(255,255,255,0.06); }
+body.dark table tbody tr:hover { background: rgba(255,255,255,0.05); }
+body.dark .chart-container { background: rgba(255,255,255,0.02); }
+body.dark .filters-section { background: #081226; border-color: rgba(255,255,255,0.06); }
+body.dark .chart-card, body.dark .chart-wrapper { background: #0b1726; }
+body.dark .logo { background: rgba(255,255,255,0.06); box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+body.dark .btn-toggle { background: rgba(255, 215, 0, 0.12); border-color: #FFD700; color: white; }
+body.dark .btn-toggle:hover { background: rgba(255, 215, 0, 0.25); }
+body.dark .upload-section h3 { color: #63a3d8; }
+body.dark .upload-section p { color: #aaa; }
+body.dark .btn-upload { background: rgba(255, 215, 0, 0.12); border-color: #FFD700; color: white; }
+body.dark input, body.dark textarea, body.dark select { background: #0b1726; color: #f8fafc; border-color: rgba(255,255,255,0.1); }
+body.dark input:focus, body.dark textarea:focus, body.dark select:focus { border-color: #63a3d8; outline: none; }
+body.dark .analista-card { background: #081226; border-color: rgba(255,255,255,0.06); }
+body.dark .analista-stats { background: transparent; }
+body.dark .stat-item { background: rgba(255,255,255,0.05); }
+</style>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
+                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
+                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-person-walking"></i> Motoristas</a></li>
+                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
+                <li><a href="dashboard_usuarios.html"><i class="bi bi-people"></i> Usuários</a></li>
+                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
+                <li><a href="dashboard_desempenho_analista.html" class="active"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
+                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
+                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
+                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
+                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
+                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
+                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
+                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <p></p>
+                <p style="font-size: 0.7rem; margin: 8px 0 0 0; opacity: 0.7;">Última sincronização: 29/01/2026</p>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topo">
+                <div class="logo-container">
+                    <div class="logo argus"><img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'"></div>
+                    <div class="logo ambev"><img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'"></div>
+                </div>
+                <div class="titulo">
+                    Desempenho - Analista
+                    <small>Monitoramento de Desempenho dos Analistas</small>
+                </div>
+                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+            </header>
+
+            <!-- Upload CSV Section -->
+            <section class="upload-section">
+                <h3><i class="bi bi-cloud-upload"></i> Carregar Dados (CSV)</h3>
+                <p>Envie um arquivo CSV com dados de desempenho dos analistas</p>
+                <button class="btn-upload" onclick="document.getElementById('csvFileInput').click()">
+                    <i class="bi bi-folder-open"></i> Selecionar Arquivo
+                </button>
+                <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVUpload(event)">
+            </section>
+
+            <!-- Analistas Grid -->
+            <section class="analistas-grid">
+                <div class="analista-card">
+                    <img src="gabriel.png" alt="Gabriel Faria" class="analista-foto" onerror="this.style.display='none'">
+                    <div class="analista-name">
+                        <i class="bi bi-person-circle"></i> Gabriel Faria
+                    </div>
+                    <div class="analista-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Atividades</div>
+                            <div class="stat-value" id="gabriel-atividades">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Taxa de Conclusão</div>
+                            <div class="stat-value" id="gabriel-taxa">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Tempo Médio</div>
+                            <div class="stat-value" id="gabriel-tempo">0h</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Índice de Qualidade</div>
+                            <div class="stat-value" id="gabriel-qualidade">0%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analista-card">
+                    <img src="murilo.png" alt="Murilo Anjos" class="analista-foto" onerror="this.style.display='none'">
+                    <div class="analista-name">
+                        <i class="bi bi-person-circle"></i> Murilo Anjos
+                    </div>
+                    <div class="analista-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Atividades</div>
+                            <div class="stat-value" id="murilo-atividades">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Taxa de Conclusão</div>
+                            <div class="stat-value" id="murilo-taxa">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Tempo Médio</div>
+                            <div class="stat-value" id="murilo-tempo">0h</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Índice de Qualidade</div>
+                            <div class="stat-value" id="murilo-qualidade">0%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analista-card">
+                    <img src="ellen.png" alt="Ellen Ferreira" class="analista-foto" onerror="this.style.display='none'">
+                    <div class="analista-name">
+                        <i class="bi bi-person-circle"></i> Ellen Ferreira
+                    </div>
+                    <div class="analista-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Atividades</div>
+                            <div class="stat-value" id="ellen-atividades">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Taxa de Conclusão</div>
+                            <div class="stat-value" id="ellen-taxa">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Tempo Médio</div>
+                            <div class="stat-value" id="ellen-tempo">0h</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Índice de Qualidade</div>
+                            <div class="stat-value" id="ellen-qualidade">0%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analista-card">
+                    <img src="angelica.png" alt="Angelica Luz" class="analista-foto" onerror="this.style.display='none'">
+                    <div class="analista-name">
+                        <i class="bi bi-person-circle"></i> Angelica Luz
+                    </div>
+                    <div class="analista-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Atividades</div>
+                            <div class="stat-value" id="angelica-atividades">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Taxa de Conclusão</div>
+                            <div class="stat-value" id="angelica-taxa">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Tempo Médio</div>
+                            <div class="stat-value" id="angelica-tempo">0h</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Índice de Qualidade</div>
+                            <div class="stat-value" id="angelica-qualidade">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Métricas Gerais -->
+            <section class="metrics-section">
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="bi bi-people"></i></div>
+                    <div class="metric-title">Total de Analistas</div>
+                    <div class="metric-value">4</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="bi bi-check-circle"></i></div>
+                    <div class="metric-title">Atividades Concluídas</div>
+                    <div class="metric-value" id="total-concluidas">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="bi bi-hourglass"></i></div>
+                    <div class="metric-title">Atividades em Andamento</div>
+                    <div class="metric-value" id="total-andamento">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="bi bi-graph-up"></i></div>
+                    <div class="metric-title">Produtividade Média</div>
+                    <div class="metric-value" id="produtividade-media">0%</div>
+                </div>
+            </section>
+            
+            <!-- Storytelling de Dados -->
+            <div id="insightsContainer" class="insights-container" style="display: none;">
+                <div class="insights-card">
+                    <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+                    
+                    <div class="insight-section">
+                        <h3>🎯 Situação Principal</h3>
+                        <p id="insightPrincipal">Carregando análise...</p>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>📈 Padrões Detectados</h3>
+                        <ul id="insightPadroes">
+                            <li>Carregando padrões...</li>
+                        </ul>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>💡 Recomendações</h3>
+                        <ul id="insightRecomendacoes">
+                            <li>Carregando recomendações...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráficos -->
+            <section class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-bar-chart"></i> Desempenho por Analista
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="desempenhoChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-pie-chart"></i> Distribuição de Atividades
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="atividadesChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-graph-up"></i> Horas Trabalhadas
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="horasChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-check2-circle"></i> Taxa de Conclusão
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="taxaChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-line-chart"></i> Qualidade ao Longo do Tempo
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="qualidadeChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-title">
+                        <i class="bi bi-speedometer2"></i> Índice de Produtividade
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="produtividadeChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <p><strong>Sistema Argus Ambev</strong> • Telemetria CCO v2.0</p>
+                <p>Atualizado em: <span id="dataAtual"></span></p>
+                <p>© 2026 Ambev • Todos os direitos reservados</p>
+            </footer>
+        </main>
+    </div>
+    
+    <script>
+        let allCharts = {};
+
+        function toggleDark() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            console.log('Dark mode:', isDark);
+            
+            // Atualizar cores dos gráficos quando dark mode é toggled
+            setTimeout(function() {
+                updateChartColors();
+            }, 100);
+        }
+        
+        function updateChartColors() {
+            const isDarkMode = document.body.classList.contains('dark');
+            
+            // Destruir gráficos antigos
+            Object.keys(allCharts).forEach(key => {
+                if (allCharts[key]) {
+                    try {
+                        allCharts[key].destroy();
+                    } catch(e) {
+                        console.log('Erro ao destruir gráfico:', key);
+                    }
+                }
+            });
+            allCharts = {};
+            
+            // Reinicializar gráficos com cores apropriadas
+            setTimeout(function() {
+                inicializarGraficos();
+            }, 50);
+        }
+
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    Papa.parse(e.target.result, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            console.log('CSV carregado:', results.data);
+                            window.saveDataSafely('desempenhoData', results.data);
+                            alert('✅ Arquivo CSV carregado com sucesso! (' + results.data.length + ' registros)');
+                        },
+                        error: function(error) {
+                            alert('❌ Erro ao carregar CSV: ' + error.message);
+                        }
+                    });
+                } catch(error) {
+                    alert('❌ Erro ao processar arquivo: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM carregado');
+            
+            // Carregar preferência dark mode ao iniciar
+            const darkMode = localStorage.getItem('darkMode');
+            console.log('Carregando dark mode:', darkMode);
+            if (darkMode === 'true') {
+                document.body.classList.add('dark');
+                console.log('Dark mode aplicado ao carregar');
+            }
+
+            // Carregar dados persistidos
+            const savedData = localStorage.getItem('desempenhoData');
+            if (savedData) {
+              try {
+                analistas = JSON.parse(savedData);
+                console.log('Dados carregados do localStorage');
+              } catch(e) {
+                console.log('Erro ao carregar dados persistidos');
+              }
+            }
+            
+            setTimeout(function() {
+                atualizarDataAtual();
+                console.log('Inicializando gráficos...');
+                inicializarGraficos();
+                console.log('Carregando dados...');
+                carregarDados();
+            }, 100);
+            
+            // Recarregar dados quando a aba recebe foco
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    console.log('Aba retomada, recarregando dados...');
+                    carregarDados();
+                }
+            });
+        });
+        
+        function atualizarDataAtual() {
+            const agora = new Date();
+            const opcoes = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('dataAtual').textContent = 'Atualizado em: ' + agora.toLocaleDateString('pt-BR', opcoes);
+        }
+        
+        function inicializarGraficos() {
+            console.log('Iniciando gráficos...');
+            
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.8)' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const borderColor = isDarkMode ? '#fff' : '#fff';
+            const tooltipBg = isDarkMode ? '#1f2937' : '#ffffff';
+            const tooltipColor = isDarkMode ? '#fff' : '#000';
+            
+            // Gráfico de Desempenho
+            try {
+                const ctxDesempenho = document.getElementById('desempenhoChart');
+                if (!ctxDesempenho) {
+                    console.error('Canvas desempenhoChart não encontrado');
+                    return;
+                }
+                const ctx = ctxDesempenho.getContext('2d');
+                allCharts.desempenho = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Gabriel Faria', 'Murilo Anjos', 'Ellen Ferreira', 'Angelica Luz'],
+                        datasets: [{
+                            label: 'Taxa de Conclusão (%)',
+                            data: [75, 82, 88, 79],
+                            backgroundColor: ['#63a3d8', '#4a8fb8', '#FFD700', '#e60000'],
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor, borderColor: gridColor }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, ticks: { color: textColor }, grid: { color: gridColor } },
+                            x: { ticks: { color: textColor }, grid: { color: gridColor } }
+                        }
+                    }
+                });
+                console.log('Gráfico de Desempenho criado');
+            } catch(e) {
+                console.error('Erro ao criar gráfico de Desempenho:', e);
+            }
+            
+            // Gráfico de Atividades
+            try {
+                const ctxAtividades = document.getElementById('atividadesChart');
+                if (ctxAtividades) {
+                    allCharts.atividades = new Chart(ctxAtividades.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Gabriel Faria', 'Murilo Anjos', 'Ellen Ferreira', 'Angelica Luz'],
+                            datasets: [{
+                                data: [85, 92, 78, 88],
+                                backgroundColor: ['#63a3d8', '#4a8fb8', '#FFD700', '#e60000'],
+                                borderWidth: 2,
+                                borderColor: borderColor
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { position: 'bottom', labels: { color: textColor } },
+                                tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
+                            }
+                        }
+                    });
+                    console.log('Gráfico de Atividades criado');
+                }
+            } catch(e) {
+                console.error('Erro ao criar gráfico de Atividades:', e);
+            }
+            
+            // Gráfico de Qualidade
+            try {
+                const ctxQualidade = document.getElementById('qualidadeChart');
+                if (ctxQualidade) {
+                    allCharts.qualidade = new Chart(ctxQualidade.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                            datasets: [
+                                {
+                                    label: 'Gabriel Faria',
+                                    data: [78, 80, 82, 85],
+                                    borderColor: '#63a3d8',
+                                    backgroundColor: isDarkMode ? 'rgba(99, 163, 216, 0.15)' : 'rgba(99, 163, 216, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Murilo Anjos',
+                                    data: [82, 85, 87, 89],
+                                    borderColor: '#4a8fb8',
+                                    backgroundColor: isDarkMode ? 'rgba(74, 143, 184, 0.15)' : 'rgba(74, 143, 184, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Ellen Ferreira',
+                                    data: [85, 88, 90, 92],
+                                    borderColor: '#FFD700',
+                                    backgroundColor: isDarkMode ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 215, 0, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Angelica Luz',
+                                    data: [80, 83, 85, 88],
+                                    borderColor: '#e60000',
+                                    backgroundColor: isDarkMode ? 'rgba(230, 0, 0, 0.15)' : 'rgba(230, 0, 0, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { color: textColor } },
+                                tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, max: 100, ticks: { color: textColor }, grid: { color: gridColor } },
+                                x: { ticks: { color: textColor }, grid: { color: gridColor } }
+                            }
+                        }
+                    });
+                    console.log('Gráfico de Qualidade criado');
+                }
+            } catch(e) {
+                console.error('Erro ao criar gráfico de Qualidade:', e);
+            }
+            
+            // Gráfico de Produtividade
+            try {
+                const ctxProdutividade = document.getElementById('produtividadeChart');
+                if (ctxProdutividade) {
+                    allCharts.produtividade = new Chart(ctxProdutividade.getContext('2d'), {
+                        type: 'radar',
+                        data: {
+                            labels: ['Velocidade', 'Qualidade', 'Aderência', 'Inovação', 'Colaboração'],
+                            datasets: [
+                                {
+                                    label: 'Gabriel Faria',
+                                    data: [0, 0, 0, 0, 0],
+                                    borderColor: '#63a3d8',
+                                    backgroundColor: isDarkMode ? 'rgba(99, 163, 216, 0.25)' : 'rgba(99, 163, 216, 0.2)'
+                                },
+                                {
+                                    label: 'Murilo Anjos',
+                                    data: [0, 0, 0, 0, 0],
+                                    borderColor: '#4a8fb8',
+                                    backgroundColor: isDarkMode ? 'rgba(74, 143, 184, 0.25)' : 'rgba(74, 143, 184, 0.2)'
+                                },
+                                {
+                                    label: 'Ellen Ferreira',
+                                    data: [0, 0, 0, 0, 0],
+                                    borderColor: '#FFD700',
+                                    backgroundColor: isDarkMode ? 'rgba(255, 215, 0, 0.25)' : 'rgba(255, 215, 0, 0.2)'
+                                },
+                                {
+                                    label: 'Angelica Luz',
+                                    data: [0, 0, 0, 0, 0],
+                                    borderColor: '#e60000',
+                                    backgroundColor: isDarkMode ? 'rgba(230, 0, 0, 0.25)' : 'rgba(230, 0, 0, 0.2)'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { position: 'bottom', labels: { color: textColor } },
+                                tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
+                            },
+                            scales: {
+                                r: { beginAtZero: true, max: 100, ticks: { color: textColor }, grid: { color: gridColor } }
+                            }
+                        }
+                    });
+                    console.log('Gráfico de Produtividade criado');
+                }
+            } catch(e) {
+                console.error('Erro ao criar gráfico de Produtividade:', e);
+            }
+            
+            // Gráfico de Horas Trabalhadas
+            try {
+                const ctxHoras = document.getElementById('horasChart');
+                if (ctxHoras) {
+                    allCharts.horas = new Chart(ctxHoras.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: ['Gabriel Faria', 'Murilo Anjos', 'Ellen Ferreira', 'Angelica Luz'],
+                            datasets: [{
+                                label: 'Horas Trabalhadas',
+                                data: [8, 7.5, 8.5, 7.8],
+                                backgroundColor: ['#63a3d8', '#4a8fb8', '#FFD700', '#e60000'],
+                                borderRadius: 8,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } },
+                                x: { ticks: { color: textColor }, grid: { color: gridColor } }
+                            }
+                        }
+                    });
+                    console.log('Gráfico de Horas criado');
+                }
+            } catch(e) {
+                console.error('Erro ao criar gráfico de Horas:', e);
+            }
+            
+            // Gráfico de Taxa de Conclusão
+            try {
+                const ctxTaxa = document.getElementById('taxaChart');
+                if (ctxTaxa) {
+                    allCharts.taxa = new Chart(ctxTaxa.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+                            datasets: [
+                                {
+                                    label: 'Gabriel Faria',
+                                    data: [70, 75, 72, 78, 80, 65, 68],
+                                    borderColor: '#63a3d8',
+                                    backgroundColor: isDarkMode ? 'rgba(99, 163, 216, 0.15)' : 'rgba(99, 163, 216, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Murilo Anjos',
+                                    data: [75, 82, 80, 85, 88, 70, 75],
+                                    borderColor: '#4a8fb8',
+                                    backgroundColor: isDarkMode ? 'rgba(74, 143, 184, 0.15)' : 'rgba(74, 143, 184, 0.1)',
+                                    tension: 0.4,
+                                    fill: false
+                                },
+                                {
+                                    label: 'Ellen Ferreira',
+                                    data: [80, 85, 88, 90, 92, 82, 85],
+                                    borderColor: '#FFD700',
+                                    backgroundColor: isDarkMode ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 215, 0, 0.1)',
+                                    tension: 0.4,
+                                    fill: false
+                                },
+                                {
+                                    label: 'Angelica Luz',
+                                    data: [72, 78, 75, 80, 85, 68, 72],
+                                    borderColor: '#e60000',
+                                    backgroundColor: isDarkMode ? 'rgba(230, 0, 0, 0.15)' : 'rgba(230, 0, 0, 0.1)',
+                                    tension: 0.4,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { position: 'bottom', labels: { color: textColor } },
+                                tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, max: 100, ticks: { color: textColor }, grid: { color: gridColor } },
+                                x: { ticks: { color: textColor }, grid: { color: gridColor } }
+                            }
+                        }
+                    });
+                    console.log('Gráfico de Taxa criado');
+                }
+            } catch(e) {
+                console.error('Erro ao criar gráfico de Taxa:', e);
+            }
+        };
+        
+        function carregarDados() {
+            // Simular carregamento de dados
+            // Em um cenário real, isso viria de uma API ou arquivo CSV
+            
+            const analistas = {
+                'Gabriel Faria': {
+                    atividades: Math.floor(Math.random() * 150) + 50,
+                    taxa: Math.floor(Math.random() * 40) + 60,
+                    tempo: Math.floor(Math.random() * 8) + 2,
+                    qualidade: Math.floor(Math.random() * 30) + 70
+                },
+                'Murilo Anjos': {
+                    atividades: Math.floor(Math.random() * 150) + 50,
+                    taxa: Math.floor(Math.random() * 40) + 60,
+                    tempo: Math.floor(Math.random() * 8) + 2,
+                    qualidade: Math.floor(Math.random() * 30) + 70
+                },
+                'Ellen Ferreira': {
+                    atividades: Math.floor(Math.random() * 150) + 50,
+                    taxa: Math.floor(Math.random() * 40) + 60,
+                    tempo: Math.floor(Math.random() * 8) + 2,
+                    qualidade: Math.floor(Math.random() * 30) + 70
+                },
+                'Angelica Luz': {
+                    atividades: Math.floor(Math.random() * 150) + 50,
+                    taxa: Math.floor(Math.random() * 40) + 60,
+                    tempo: Math.floor(Math.random() * 8) + 2,
+                    qualidade: Math.floor(Math.random() * 30) + 70
+                }
+            };
+            
+            // Atualizar cards dos analistas
+            Object.keys(analistas).forEach(analista => {
+                const id = analista.toLowerCase().replace(/\s+/g, '-');
+                const dados = analistas[analista];
+                
+                document.getElementById(id + '-atividades').textContent = dados.atividades;
+                document.getElementById(id + '-taxa').textContent = dados.taxa + '%';
+                document.getElementById(id + '-tempo').textContent = dados.tempo + 'h';
+                document.getElementById(id + '-qualidade').textContent = dados.qualidade + '%';
+            });
+            
+            // Atualizar métricas gerais
+            const totalAtividades = Object.values(analistas).reduce((sum, a) => sum + a.atividades, 0);
+            document.getElementById('total-concluidas').textContent = Math.floor(totalAtividades * 0.7);
+            document.getElementById('total-andamento').textContent = Math.floor(totalAtividades * 0.3);
+            document.getElementById('produtividade-media').textContent = Math.floor(Object.values(analistas).reduce((sum, a) => sum + a.taxa, 0) / 4) + '%';
+            
+            // Atualizar gráficos
+            atualizarGraficos(analistas);
+        }
+        
+        function generateInsightsAnalista(analistas) {
+            if (!analistas || Object.keys(analistas).length === 0) return;
+            
+            const nomes = Object.keys(analistas);
+            const totalAtividades = nomes.reduce((sum, n) => sum + analistas[n].atividades, 0);
+            const mediaTaxa = (nomes.reduce((sum, n) => sum + analistas[n].taxa, 0) / nomes.length).toFixed(1);
+            const mediaQualidade = (nomes.reduce((sum, n) => sum + analistas[n].qualidade, 0) / nomes.length).toFixed(1);
+            
+            const melhorAnalista = nomes.reduce((best, nome) => 
+                analistas[nome].taxa > analistas[best].taxa ? nome : best
+            );
+            const piorAnalista = nomes.reduce((worst, nome) => 
+                analistas[nome].taxa < analistas[worst].taxa ? nome : worst
+            );
+            
+            const insightPrincipal = `Equipe de <strong>${nomes.length} analistas</strong> processou <strong>${totalAtividades} atividades</strong> com taxa média de conclusão de <strong>${mediaTaxa}%</strong> e qualidade média de <strong>${mediaQualidade}%</strong>. Melhor desempenho: <strong>${melhorAnalista}</strong> (${analistas[melhorAnalista].taxa}%).`;
+            
+            const padroes = [
+                `👤 Melhor desempenho: <strong>${melhorAnalista}</strong> com <strong>${analistas[melhorAnalista].taxa}%</strong> de conclusão`,
+                `📊 Taxa média da equipe: <strong>${mediaTaxa}%</strong> (meta: 85%)`,
+                `⭐ Qualidade média: <strong>${mediaQualidade}%</strong>`,
+                `📈 Total de atividades processadas: <strong>${totalAtividades}</strong>`,
+                `⚠️ Variação de desempenho: <strong>${Math.abs(analistas[melhorAnalista].taxa - analistas[piorAnalista].taxa)}%</strong> (${melhorAnalista} vs ${piorAnalista})`
+            ];
+            
+            const recomendacoes = [];
+            if (mediaTaxa < 80) {
+                recomendacoes.push(`🔴 CRÍTICO: Taxa média ${mediaTaxa}% abaixo da meta (85%) - revisar distribuição de trabalho`);
+            } else if (mediaTaxa < 85) {
+                recomendacoes.push(`⚠️ Taxa de conclusão ${mediaTaxa}% próxima da meta - focar em ${piorAnalista}`);
+            } else {
+                recomendacoes.push(`✅ Equipe atingiu ${mediaTaxa}% de taxa - manter padrão atual`);
+            }
+            recomendacoes.push(`🎯 Implementar programa de mentoria com ${melhorAnalista} para ${piorAnalista}`);
+            recomendacoes.push(`📋 Revisar QA de atividades com qualidade < 70% `);
+            recomendacoes.push(`⏱️ Otimizar tempo médio de atividade (foco em eficiência)`);
+            recomendacoes.push(`📊 Realizar análise de competências e gaps da equipe`);
+            
+            document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+            document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+            document.getElementById('insightsContainer').style.display = nomes.length > 0 ? 'block' : 'none';
+        }
+        
+        function atualizarGraficos(analistas) {
+            const nomes = Object.keys(analistas);
+            const taxas = nomes.map(n => analistas[n].taxa);
+            const atividades = nomes.map(n => analistas[n].atividades);
+            const horas = nomes.map(n => Math.floor(Math.random() * 8) + 2);
+            
+            // Desempenho
+            allCharts.desempenho.data.datasets[0].data = taxas;
+            allCharts.desempenho.update();
+            
+            // Atividades
+            allCharts.atividades.data.datasets[0].data = atividades;
+            allCharts.atividades.update();
+            
+            // Horas Trabalhadas
+            allCharts.horas.data.datasets[0].data = horas;
+            allCharts.horas.update();
+            
+            // Taxa de Conclusão (linha - por dia da semana)
+            const dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            nomes.forEach((nome, idx) => {
+                allCharts.taxa.data.datasets[idx].data = dias.map(() => Math.floor(Math.random() * 40) + 60);
+            });
+            allCharts.taxa.update();
+            
+            // Qualidade (linha - por semana)
+            const semanas = [1, 2, 3, 4];
+            nomes.forEach((nome, idx) => {
+                allCharts.qualidade.data.datasets[idx].data = semanas.map(() => Math.floor(Math.random() * 30) + 70);
+            });
+            allCharts.qualidade.update();
+            
+            // Produtividade (radar)
+            nomes.forEach((nome, idx) => {
+                allCharts.produtividade.data.datasets[idx].data = [
+                    Math.floor(Math.random() * 30) + 70,
+                    Math.floor(Math.random() * 30) + 70,
+                    Math.floor(Math.random() * 30) + 70,
+                    Math.floor(Math.random() * 30) + 70,
+                    Math.floor(Math.random() * 30) + 70
+                ];
+            });
+            allCharts.produtividade.update();
+            
+            generateInsightsAnalista(analistas);
+        }
+    </script>
+</body>
+</html>
