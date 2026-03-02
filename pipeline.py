@@ -79,16 +79,15 @@ def load_csv_to_table(file_path, table_name):
 
     print("Colunas normalizadas:", df.columns.tolist())
 
-    # converter tudo para string (evita erro de tipo)
-    df = df.astype(str)
+    # LIMPEZA CRÍTICA PARA JSON
+    df = df.replace([float("inf"), float("-inf")], None)
+    df = df.where(pd.notnull(df), None)
 
     data = df.to_dict(orient="records")
 
-    # TRUNCATE da tabela
     print(f"Limpando tabela {table_name}...")
     supabase.rpc("truncate_table", {"table_name": table_name}).execute()
 
-    # INSERT em batch
     batch_size = 500
 
     for i in range(0, len(data), batch_size):
@@ -96,10 +95,6 @@ def load_csv_to_table(file_path, table_name):
         supabase.table(table_name).insert(batch).execute()
 
     print(f"{table_name} atualizado com sucesso\n")
-
-# ==============================
-# PIPELINE PRINCIPAL
-# ==============================
 
 def run():
     input_folder = "input"
