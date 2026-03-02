@@ -34,9 +34,8 @@ def read_csv_robusto(file_path):
 
 
 def normalizar_dataframe(df):
-    # Remove NaN, Infinity e -Infinity
+    # Remove infinitos
     df = df.replace([float("inf"), float("-inf")], None)
-    df = df.where(pd.notnull(df), None)
 
     if "Grupo de dispositivo" in df.columns:
         df = df[df["Grupo de dispositivo"].str.contains(r"^TRS_", na=False)]
@@ -70,6 +69,12 @@ def load_csv_to_table(file_path, table_name):
 
     for i in range(0, len(df), batch_size):
         batch = df.iloc[i:i + batch_size]
+
+        # 🔥 BLINDAGEM DEFINITIVA CONTRA JSON ERROR
+        batch = batch.astype(str)
+        batch = batch.replace(
+            ["nan", "NaN", "None", "inf", "-inf"], None
+        )
 
         response = supabase.table(table_name).insert(
             batch.to_dict(orient="records")
