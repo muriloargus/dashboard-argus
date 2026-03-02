@@ -11,10 +11,13 @@ from supabase import create_client
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise Exception("Variáveis SUPABASE_URL ou SUPABASE_KEY não definidas.")
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==============================
-# NORMALIZAÇÃO
+# NORMALIZAÇÃO DE COLUNAS
 # ==============================
 
 def normalizar_coluna(col):
@@ -31,7 +34,7 @@ def normalizar_coluna(col):
     col = col.replace(":", "")
     col = col.replace("-", "_")
 
-    # substituir qualquer coisa que não seja letra/número por _
+    # manter apenas letras e números
     col = re.sub(r"[^a-z0-9]+", "_", col)
 
     # remover múltiplos _
@@ -47,7 +50,6 @@ def normalizar_dataframe(df):
     df.columns = [normalizar_coluna(col) for col in df.columns]
     return df
 
-
 # ==============================
 # LEITURA CSV ROBUSTA
 # ==============================
@@ -57,7 +59,6 @@ def read_csv_robusto(path):
         return pd.read_csv(path, sep=";", encoding="utf-8")
     except:
         return pd.read_csv(path, sep=",", encoding="latin1")
-
 
 # ==============================
 # LOAD CSV -> SUPABASE
@@ -83,9 +84,11 @@ def load_csv_to_table(file_path, table_name):
 
     data = df.to_dict(orient="records")
 
+    # TRUNCATE da tabela
     print(f"Limpando tabela {table_name}...")
-    supabase.table(table_name).delete().neq("id", 0).execute()
+    supabase.rpc("truncate_table", {"table_name": table_name}).execute()
 
+    # INSERT em batch
     batch_size = 500
 
     for i in range(0, len(data), batch_size):
@@ -93,7 +96,6 @@ def load_csv_to_table(file_path, table_name):
         supabase.table(table_name).insert(batch).execute()
 
     print(f"{table_name} atualizado com sucesso\n")
-
 
 # ==============================
 # PIPELINE PRINCIPAL
@@ -117,7 +119,6 @@ def run():
             continue
 
         load_csv_to_table(path, table)
-
 
 if __name__ == "__main__":
     run()
