@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import unicodedata
 from supabase import create_client
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -10,21 +11,26 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 INPUT_FOLDER = "input"
 
 
-def clear_table(table_name):
-    print(f"Limpando tabela {table_name}...")
-    response = supabase.rpc(
-        "truncate_table",
-        {"table_name": table_name}
-    ).execute()
+# =============================
+# UTILIDADES
+# =============================
 
-    if hasattr(response, "error") and response.error:
-        print("Erro ao truncar tabela:", response.error)
+def limpar_nome_coluna(nome):
+    nome = unicodedata.normalize("NFKD", nome)
+    nome = nome.encode("ascii", "ignore").decode("utf-8")
+    nome = nome.lower()
+    nome = nome.replace(" ", "_")
+    nome = nome.replace("(", "")
+    nome = nome.replace(")", "")
+    nome = nome.replace(",", "")
+    nome = nome.replace("-", "_")
+    nome = nome.replace("__", "_")
+    return nome
 
 
 def read_csv_robusto(file_path):
     print(f"Lendo arquivo {file_path}...")
 
-    # Força separador ; (padrão Brasil)
     df = pd.read_csv(
         file_path,
         sep=";",
@@ -37,17 +43,27 @@ def read_csv_robusto(file_path):
 
     return df
 
+
 def normalizar_dataframe(df):
     # Remove infinitos
     df = df.replace([float("inf"), float("-inf")], None)
 
-    if "Grupo de dispositivo" in df.columns:
-        df = df[df["Grupo de dispositivo"].str.contains(r"^TRS_", na=False)]
-        df["Grupo de dispositivo"] = df["Grupo de dispositivo"].str.upper()
+    # Remove NaN
+    df = df.where(pd.notnull(df), None)
 
-    if "Placa" in df.columns:
-        df["Placa"] = (
-            df["Placa"]
+    # Normaliza nomes de colunas
+    df.columns = [limpar_nome_coluna(col) for col in df.columns]
+
+    print("Colunas normalizadas:", df.columns.tolist())
+
+    # Normalizações específicas
+    if "grupo_de_dispositivo" in df.columns:
+        df = df[df["grupo_de_dispositivo"].str.contains(r"^TRS_", na=False)]
+        df["grupo_de_dispositivo"] = df["grupo_de_dispositivo"].str.upper()
+
+    if "placa" in df.columns:
+        df["placa"] = (
+            df["placa"]
             .astype(str)
             .str.upper()
             .str.replace("-", "", regex=False)
@@ -56,6 +72,22 @@ def normalizar_dataframe(df):
 
     return df
 
+
+def clear_table(table_name):
+    print(f"Limpando tabela {table_name}...")
+
+    response = supabase.rpc(
+        "truncate_table",
+        {"table_name": table_name}
+    ).execute()
+
+    if hasattr(response, "error") and response.error:
+        print("Erro ao truncar:", response.error)
+
+
+# =============================
+# LOAD
+# =============================
 
 def load_csv_to_table(file_path, table_name):
     print(f"Processando {file_path} -> {table_name}")
@@ -69,13 +101,9 @@ def load_csv_to_table(file_path, table_name):
 
     clear_table(table_name)
 
-    # 🔥 CORREÇÃO DEFINITIVA AQUI
-    # Converte TUDO para objeto
+    # Converte tudo para objeto (evita erro JSON)
     df = df.astype(object)
-
-    # Substitui qualquer coisa problemática antes do JSON
     df = df.where(pd.notnull(df), None)
-    df = df.replace([float("inf"), float("-inf")], None)
 
     records = df.to_dict(orient="records")
 
@@ -91,6 +119,11 @@ def load_csv_to_table(file_path, table_name):
 
     print(f"{table_name} atualizado com sucesso")
 
+
+# =============================
+# EXECUÇÃO
+# =============================
+
 def run():
     if not os.path.exists(INPUT_FOLDER):
         print("Pasta input não encontrada.")
@@ -99,12 +132,16 @@ def run():
     arquivos = os.listdir(INPUT_FOLDER)
 
     if not arquivos:
-        print("Nenhum arquivo encontrado na pasta input.")
+        print("Nenhum arquivo encontrado.")
         return
 
     for file in arquivos:
         path = os.path.join(INPUT_FOLDER, file)
         nome = file.lower()
+
+        if not file.endswith(".csv"):
+            print(f"Arquivo ignorado: {file}")
+            continue
 
         if "ativos" in nome:
             load_csv_to_table(path, "staging_ativos")
