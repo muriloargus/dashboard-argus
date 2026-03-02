@@ -34,6 +34,10 @@ def read_csv_robusto(file_path):
 
 
 def normalizar_dataframe(df):
+    # Remove NaN, Infinity e -Infinity
+    df = df.replace([float("inf"), float("-inf")], None)
+    df = df.where(pd.notnull(df), None)
+
     if "Grupo de dispositivo" in df.columns:
         df = df[df["Grupo de dispositivo"].str.contains(r"^TRS_", na=False)]
         df["Grupo de dispositivo"] = df["Grupo de dispositivo"].str.upper()
