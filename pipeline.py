@@ -65,26 +65,27 @@ def load_csv_to_table(file_path, table_name):
 
     clear_table(table_name)
 
+    # 🔥 CORREÇÃO DEFINITIVA AQUI
+    # Converte TUDO para objeto
+    df = df.astype(object)
+
+    # Substitui qualquer coisa problemática antes do JSON
+    df = df.where(pd.notnull(df), None)
+    df = df.replace([float("inf"), float("-inf")], None)
+
+    records = df.to_dict(orient="records")
+
     batch_size = 500
 
-    for i in range(0, len(df), batch_size):
-        batch = df.iloc[i:i + batch_size]
+    for i in range(0, len(records), batch_size):
+        batch = records[i:i + batch_size]
 
-        # 🔥 BLINDAGEM DEFINITIVA CONTRA JSON ERROR
-        batch = batch.astype(str)
-        batch = batch.replace(
-            ["nan", "NaN", "None", "inf", "-inf"], None
-        )
-
-        response = supabase.table(table_name).insert(
-            batch.to_dict(orient="records")
-        ).execute()
+        response = supabase.table(table_name).insert(batch).execute()
 
         if hasattr(response, "error") and response.error:
             print("Erro ao inserir lote:", response.error)
 
     print(f"{table_name} atualizado com sucesso")
-
 
 def run():
     if not os.path.exists(INPUT_FOLDER):
