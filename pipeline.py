@@ -1,177 +1,122 @@
 import os
-import pandas as pd
+import re
 import unicodedata
+import pandas as pd
 from supabase import create_client
+
+# ==============================
+# CONFIG SUPABASE
+# ==============================
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-INPUT_FOLDER = "input"
+# ==============================
+# NORMALIZAÇÃO
+# ==============================
 
+def normalizar_coluna(col):
+    col = str(col).strip()
 
-# =============================
-# UTILIDADES
-# =============================
+    # remover acentos
+    col = unicodedata.normalize("NFKD", col)
+    col = col.encode("ASCII", "ignore").decode("ASCII")
 
-def limpar_nome_coluna(nome):
-    nome = unicodedata.normalize("NFKD", nome)
-    nome = nome.encode("ascii", "ignore").decode("utf-8")
-    nome = nome.lower()
-    nome = nome.replace(" ", "_")
-    nome = nome.replace("(", "")
-    nome = nome.replace(")", "")
-    nome = nome.replace(",", "")
-    nome = nome.replace("-", "_")
-    nome = nome.replace("__", "_")
-    return nome
+    col = col.lower()
 
+    # remover caracteres problemáticos
+    col = col.replace("/", "_")
+    col = col.replace(":", "")
+    col = col.replace("-", "_")
 
-def read_csv_robusto(file_path):
-    print(f"Lendo arquivo {file_path}...")
+    # substituir qualquer coisa que não seja letra/número por _
+    col = re.sub(r"[^a-z0-9]+", "_", col)
 
-    df = pd.read_csv(
-        file_path,
-        sep=";",
-        encoding="utf-8-sig",
-        engine="python",
-        on_bad_lines="skip"
-    )
+    # remover múltiplos _
+    col = re.sub(r"_+", "_", col)
 
-    print("Colunas detectadas:", df.columns.tolist())
+    # remover _ início/fim
+    col = col.strip("_")
 
-    return df
+    return col
 
 
 def normalizar_dataframe(df):
-    # Remove infinitos
-    df = df.replace([float("inf"), float("-inf")], None)
-
-    # Remove NaN
-    df = df.where(pd.notnull(df), None)
-
-    # Normaliza nomes de colunas
-    df.columns = [limpar_nome_coluna(col) for col in df.columns]
-
-    print("Colunas normalizadas:", df.columns.tolist())
-
-    # Normalizações específicas
-    if "grupo_de_dispositivo" in df.columns:
-        df = df[df["grupo_de_dispositivo"].str.contains(r"^TRS_", na=False)]
-        df["grupo_de_dispositivo"] = df["grupo_de_dispositivo"].str.upper()
-
-    if "placa" in df.columns:
-        df["placa"] = (
-            df["placa"]
-            .astype(str)
-            .str.upper()
-            .str.replace("-", "", regex=False)
-            .str.strip()
-        )
-
+    df.columns = [normalizar_coluna(col) for col in df.columns]
     return df
 
 
-def clear_table(table_name):
-    print(f"Limpando tabela {table_name}...")
+# ==============================
+# LEITURA CSV ROBUSTA
+# ==============================
 
-    response = supabase.rpc(
-        "truncate_table",
-        {"table_name": table_name}
-    ).execute()
-
-    if hasattr(response, "error") and response.error:
-        print("Erro ao truncar:", response.error)
+def read_csv_robusto(path):
+    try:
+        return pd.read_csv(path, sep=";", encoding="utf-8")
+    except:
+        return pd.read_csv(path, sep=",", encoding="latin1")
 
 
-# =============================
-# LOAD
-# =============================
+# ==============================
+# LOAD CSV -> SUPABASE
+# ==============================
 
 def load_csv_to_table(file_path, table_name):
     print(f"Processando {file_path} -> {table_name}")
 
     df = read_csv_robusto(file_path)
-    df = normalizar_dataframe(df)
 
     if df.empty:
-        print("Arquivo vazio após filtros. Pulando.")
+        print("Arquivo vazio. Pulando.")
         return
 
-    clear_table(table_name)
+    print("Colunas detectadas:", df.columns.tolist())
 
-    # Converte tudo para objeto (evita erro JSON)
-    df = df.astype(object)
-    df = df.where(pd.notnull(df), None)
+    df = normalizar_dataframe(df)
 
-    records = df.to_dict(orient="records")
+    print("Colunas normalizadas:", df.columns.tolist())
+
+    # converter tudo para string (evita erro de tipo)
+    df = df.astype(str)
+
+    data = df.to_dict(orient="records")
+
+    print(f"Limpando tabela {table_name}...")
+    supabase.table(table_name).delete().neq("id", 0).execute()
 
     batch_size = 500
 
-    for i in range(0, len(records), batch_size):
-        batch = records[i:i + batch_size]
+    for i in range(0, len(data), batch_size):
+        batch = data[i:i + batch_size]
+        supabase.table(table_name).insert(batch).execute()
 
-        response = supabase.table(table_name).insert(batch).execute()
-
-        if hasattr(response, "error") and response.error:
-            print("Erro ao inserir lote:", response.error)
-
-    print(f"{table_name} atualizado com sucesso")
+    print(f"{table_name} atualizado com sucesso\n")
 
 
-# =============================
-# EXECUÇÃO
-# =============================
+# ==============================
+# PIPELINE PRINCIPAL
+# ==============================
 
 def run():
-    if not os.path.exists(INPUT_FOLDER):
-        print("Pasta input não encontrada.")
-        return
+    input_folder = "input"
 
-    arquivos = os.listdir(INPUT_FOLDER)
+    arquivos = {
+        "risco de colisão.csv": "staging_risco_colisao",
+        "ativos 23-02.csv": "staging_ativos",
+        "usuarios ambev 26-02.csv": "staging_usuarios_ambev",
+        "status frota 26-02.csv": "staging_status_frota",
+    }
 
-    if not arquivos:
-        print("Nenhum arquivo encontrado.")
-        return
+    for filename, table in arquivos.items():
+        path = os.path.join(input_folder, filename)
 
-    for file in arquivos:
-        path = os.path.join(INPUT_FOLDER, file)
-        nome = file.lower()
-
-        if not file.endswith(".csv"):
-            print(f"Arquivo ignorado: {file}")
+        if not os.path.exists(path):
+            print(f"Arquivo ignorado: {filename}")
             continue
 
-        if "ativos" in nome:
-            load_csv_to_table(path, "staging_ativos")
-
-        elif "usuarios_driver" in nome:
-            load_csv_to_table(path, "staging_usuarios_driver")
-
-        elif "exce" in nome:
-            load_csv_to_table(path, "staging_excecoes")
-
-        elif "falha" in nome:
-            load_csv_to_table(path, "staging_falhas")
-
-        elif "risco" in nome:
-            load_csv_to_table(path, "staging_risco_colisao")
-
-        elif "status" in nome:
-            load_csv_to_table(path, "staging_status_frota")
-
-        elif "ambev" in nome:
-            load_csv_to_table(path, "staging_usuarios_ambev")
-
-        elif "nao_identificado" in nome:
-            load_csv_to_table(path, "staging_motorista_nao_identificado")
-
-        elif "sem_vinculo" in nome:
-            load_csv_to_table(path, "staging_dispositivos_sem_vinculo")
-
-        else:
-            print(f"Arquivo ignorado: {file}")
+        load_csv_to_table(path, table)
 
 
 if __name__ == "__main__":
