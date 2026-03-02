@@ -12,7 +12,13 @@ INPUT_FOLDER = "input"
 
 def clear_table(table_name):
     print(f"Limpando tabela {table_name}...")
-    supabase.table(table_name).delete().neq("id", 0).execute()
+    response = supabase.rpc(
+        "truncate_table",
+        {"table_name": table_name}
+    ).execute()
+
+    if hasattr(response, "error") and response.error:
+        print("Erro ao truncar tabela:", response.error)
 
 
 def read_csv_robusto(file_path):
@@ -20,20 +26,18 @@ def read_csv_robusto(file_path):
 
     return pd.read_csv(
         file_path,
-        sep=None,              # detecta automaticamente , ou ;
-        engine="python",       # parser mais tolerante
+        sep=None,
+        engine="python",
         encoding="utf-8",
-        on_bad_lines="skip"    # ignora linhas problemáticas
+        on_bad_lines="skip"
     )
 
 
 def normalizar_dataframe(df):
-    # Normaliza transportadora TRS_
     if "Grupo de dispositivo" in df.columns:
         df = df[df["Grupo de dispositivo"].str.contains(r"^TRS_", na=False)]
         df["Grupo de dispositivo"] = df["Grupo de dispositivo"].str.upper()
 
-    # Normaliza placa
     if "Placa" in df.columns:
         df["Placa"] = (
             df["Placa"]
@@ -67,8 +71,8 @@ def load_csv_to_table(file_path, table_name):
             batch.to_dict(orient="records")
         ).execute()
 
-        if response.data is None:
-            print("Erro ao inserir lote:", response)
+        if hasattr(response, "error") and response.error:
+            print("Erro ao inserir lote:", response.error)
 
     print(f"{table_name} atualizado com sucesso")
 
