@@ -24,14 +24,18 @@ def clear_table(table_name):
 def read_csv_robusto(file_path):
     print(f"Lendo arquivo {file_path}...")
 
-    return pd.read_csv(
+    # Força separador ; (padrão Brasil)
+    df = pd.read_csv(
         file_path,
-        sep=None,
+        sep=";",
+        encoding="utf-8-sig",
         engine="python",
-        encoding="utf-8",
         on_bad_lines="skip"
     )
 
+    print("Colunas detectadas:", df.columns.tolist())
+
+    return df
 
 def normalizar_dataframe(df):
     # Remove infinitos
