@@ -1,0 +1,173 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║         💾 SOLUÇÃO - ARQUIVO CSV MUITO GRANDE (>25MB) NO GITHUB               ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+❌ PROBLEMA:
+───────────────────────────────────────────────────────────────────────────────
+
+Arquivo "motorista não identificado" excedeu 25 MB
+GitHub não aceita fazer upload
+
+════════════════════════════════════════════════════════════════════════════════
+✅ SOLUÇÃO RECOMENDADA:
+════════════════════════════════════════════════════════════════════════════════
+
+NÃO precisa enviar CSVs para GitHub!
+
+Por quê? Porque agora você usa Supabase (banco de dados na nuvem)
+Os CSVs são temporários → pipeline.py lê e manda para Supabase
+
+Você pode:
+
+OPÇÃO 1: Ignorar CSVs no GitHub (RECOMENDADO)
+─────────────────────────────────────────────
+
+1. Arquivos CSV NÃO precisam estar no repositório
+2. Coloque localmente em: input/
+3. Execute: python pipeline.py
+4. Dados vão para Supabase
+5. CSVs não precisam ir para GitHub
+
+Vantagens:
+  ✅ Repositório fica menor
+  ✅ Não polui o Git com dados
+  ✅ Dados estão sempre no Supabase
+
+
+OPÇÃO 2: Ignorar apenas o arquivo grande
+─────────────────────────────────────────
+
+1. Abra arquivo: .gitignore
+2. Procure a seção # Dados e cache
+3. Adicione esta linha:
+
+   input/motorista*.csv
+
+4. Assim esse arquivo não será enviado, mas outros CSVs sim
+5. Salve e commita
+
+Vantagens:
+  ✅ Outros CSVs continuam versionados
+  ✅ Apenas o grande é ignorado
+
+
+OPÇÃO 3: Dividir arquivo em partes
+─────────────────────────────────────
+
+Se REALMENTE precisa versionar o arquivo:
+
+1. Abra arquivo: motorista não identificado 15-02 à 22-02.csv
+2. Abra no Excel
+3. Divide em 2 arquivos:
+   - motorista_parte1.csv (primeiras 50.000 linhas)
+   - motorista_parte2.csv (próximas 50.000 linhas)
+4. Deleta o original grande
+5. Carrega as duas partes
+
+Desvantagem:
+  ❌ Mais complicado
+  ❌ Precisa juntar depois
+
+
+OPÇÃO 4: Usar Git LFS (Large File Storage)
+──────────────────────────────────────────
+
+Para arquivos muito grandes:
+
+1. Instale Git LFS: https://git-lfs.github.com
+2. No PowerShell:
+   git lfs install
+3. Configure o arquivo:
+   git lfs track "*.csv"
+4. Commit normalmente
+
+Precisam:
+  ❌ Mais setup
+  ❌ Requer Git LFS no servidor
+
+
+════════════════════════════════════════════════════════════════════════════════
+🎯 QUAL OPÇÃO ESCOLHER?
+════════════════════════════════════════════════════════════════════════════════
+
+Seu caso (Supabase + pipeline.py automático):
+  → ESCOLHA A OPÇÃO 1 (não envie CSVs)
+
+Por quê?
+  · CSVs são entrada do pipeline (temporários)
+  · Supabase é a fonte de verdade (banco de dados)
+  · GitHub só precisa dos scripts (pipeline.py, supabase-client.js)
+
+════════════════════════════════════════════════════════════════════════════════
+📋 PASSO A PASSO - OPÇÃO 1 (RECOMENDADA)
+════════════════════════════════════════════════════════════════════════════════
+
+1. Procure arquivo: .gitignore
+
+2. Procure a seção que diz:
+   # Dados locais grandes
+   input/
+   output/
+
+   (Se essa seção não existir, crie)
+
+3. Se não existir, adicione:
+
+   # Ignorar todos os CSVs na pasta input
+   input/
+   output/
+   *.csv
+   
+   (Isso já está no .gitignore que criei)
+
+4. Salve o arquivo (Ctrl+S)
+
+5. No PowerShell, execute:
+
+   git add .
+   git commit -m "Remove arquivos CSV - usar Supabase como fonte"
+   git push
+
+6. Pronto! GitHub não vai reclamar mais
+
+
+════════════════════════════════════════════════════════════════════════════════
+🚀 DAQUI EM DIANTE:
+════════════════════════════════════════════════════════════════════════════════
+
+1. Coloque CSVs em subfolder: C:\Users\muril\Downloads\dashboard_argus\input\
+
+2. Execute: python pipeline.py
+
+3. Dados vão para Supabase
+
+4. Dashboard busca do Supabase (não do CSV)
+
+5. GitHub Actions executa automaticamente a cada 6 horas
+
+
+════════════════════════════════════════════════════════════════════════════════
+❓ DÚVIDAS?
+════════════════════════════════════════════════════════════════════════════════
+
+P: E se eu precisar versionar o CSV no futuro?
+R: Seus dados estão no Supabase. Sempre pode exportar de lá.
+
+P: Como fazer backup dos dados?
+R: Supabase faz backup automático. Acesse app.supabase.com
+
+P: E se alguém precisar do CSV?
+R: Pode exportar do Supabase ou você compartilha o arquivo por email/drive
+
+════════════════════════════════════════════════════════════════════════════════
+✅ RESUMO:
+
+ANTES (CSV local):
+  CSV → localStorage → Dashboard (funciona offline, mas lento)
+
+AGORA (Supabase):
+  CSV → python pipeline.py → Supabase → Dashboard (tempo real, sempre atualizado)
+
+SEM NECESSIDADE DE VERSIONAR CSV NO GIT!
+
+════════════════════════════════════════════════════════════════════════════════

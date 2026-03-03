@@ -1,0 +1,55 @@
+════════════════════════════════════════════════════════════════════════════════
+                   🎯 PRÓXIMOS 5 MINUTOS - PASSO A PASSO
+════════════════════════════════════════════════════════════════════════════════
+
+VOCÊ ESTÁ AQUI AGORA: Pasta dashboard_argus
+
+OBJETIVO: Fazer tudo funcionar em 5 minutos
+
+════════════════════════════════════════════════════════════════════════════════
+
+⏱️ MINUTO 0-1: EXECUTAR SETUP
+
+1. Procure na pasta o arquivo: COMECE-AQUI.bat
+2. Clique 2 vezes nele
+3. Aparece janela preta
+4. Espera até aparecer:   Press any key to continue
+5. Aperta qualquer tecla
+6. Janela fecha
+
+✅ PRONTO!
+
+════════════════════════════════════════════════════════════════════════════════
+
+⏱️ MINUTO 1-3: ABRIR GUIA
+
+1. Na pasta, procure: GUIA-VISUAL-SUPER-SIMPLES.txt
+2. Abra com bloco de notas
+3. Leia a PRIMEIRA SEÇÃO (Passo 1 e 2)
+   (Não precisa ler tudo, só o começo)
+
+✅ VOCÊ JÁ SABE O QUE FAZER!
+
+════════════════════════════════════════════════════════════════════════════════
+
+⏱️ MINUTO 3-5: COPIAR ARQUIVO
+
+1. Procure na pasta: SQL_SETUP_SUPABASE.sql
+2. Abra com bloco de notas
+3. Selecione TUDO (Ctrl+A)
+4. Copie (Ctrl+C)
+
+✅ VOCÊ VAI USAR ISSO NO SUPABASE
+
+════════════════════════════════════════════════════════════════════════════════
+
+⏰ DEPOIS DE 5 MINUTOS:
+
+Você terá:
+  ✅ Feito o setup
+  ✅ Entendido o processo
+  ✅ Pronto para Supabase
+
+PRÓXIMA ETAPA: Seguir o GUIA-VISUAL-SUPER-SIMPLES.txt (7 passos)
+
+════════════════════════════════════════════════════════════════════════════════

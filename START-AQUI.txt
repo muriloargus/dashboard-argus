@@ -1,0 +1,50 @@
+════════════════════════════════════════════════════════════════════════════════
+        👉 ABRA ESTE ARQUIVO PRIMEIRO - INSTRUÇÕES DE 10 SEGUNDOS
+════════════════════════════════════════════════════════════════════════════════
+
+Bem-vindo! Vamos começar o setup. É MUITO simples:
+
+🎯 1 ÚNICA COISA QUE VOCÊ PRECISA FAZER AGORA:
+
+    Procure na pasta o arquivo:  COMECE-AQUI.bat
+    Clique 2 vezes nele (duplo clique)
+
+    Isto irá:
+    ✅ Instalar programas necesários
+    ✅ Criar arquivos automaticamente  
+    ✅ Preparar tudo para funcionar
+
+    Espera aparecer "Press any key" → Pressione uma tecla
+
+════════════════════════════════════════════════════════════════════════════════
+
+Depois disso:
+
+2. Leia o arquivo: GUIA-VISUAL-SUPER-SIMPLES.txt
+   (Ele explica 7 passos super simples em ordem)
+
+3. Siga cada passo do guia
+
+4. Pronto!
+
+════════════════════════════════════════════════════════════════════════════════
+
+Não é difícil! São apenas passos que envolvem:
+  · Copiar e colar código no Supabase
+  · Adicionar 3 senhas no GitHub
+  · Colocar seus CSVs em uma pasta
+
+Tempo total: ~15 minutos
+
+════════════════════════════════════════════════════════════════════════════════
+
+DÚVIDA?
+
+Leia: GUIA-VISUAL-SUPER-SIMPLES.txt
+(Ela tem cada passo com capturas de tela explicado)
+
+════════════════════════════════════════════════════════════════════════════════
+
+Bora começar! 🚀
+
+Clique 2x em: COMECE-AQUI.bat

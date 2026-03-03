@@ -1,0 +1,275 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    🚀 GUIA VISUAL - SUPER SIMPLES                               ║
+║                     Siga EXATAMENTE como está aqui                              ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+⏱️ TEMPO TOTAL: 15 MINUTOS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👉 PASSO 1: EXECUTAR SETUP (1 MINUTO)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Procure na pasta dashboard_argus o arquivo chamado:
+   → COMECE-AQUI.bat
+
+2. Clique 2x nele (duplo clique)
+
+3. Espere aparecer várias linhas verdes (✅) 
+
+4. Pressione uma tecla quando pedir (quando aparecer "Press any key...")
+
+Pronto! Alguns arquivos foram criados automaticamente.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👉 PASSO 2: CONFIGURAR SUPABASE (3 MINUTOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Abra este link no navegador:
+   → https://app.supabase.com
+
+2. Faça login na sua conta
+
+3. Procure na lista de projetos:
+   → fnlgstkkkxzrszmxqwwf (ou seu projeto atual)
+   → Clique nele
+
+4. No menu lateral esquerdo, procure por:
+   → SQL Editor
+   → Clique nele
+
+5. Na pasta do projeto (dashboard_argus), abra o arquivo:
+   → SQL_SETUP_SUPABASE.sql
+
+6. Copie TUDO o código do arquivo (Ctrl+A → Ctrl+C)
+
+7. Volte na aba Supabase (SQL Editor)
+
+8. Cole o código no editor (Ctrl+V)
+
+9. Clique no botão: → ▶️ Run
+   (ou pressione Ctrl+Enter)
+
+Espere alguns segundos... deve aparecer mensagem de sucesso.
+
+SE RECEBER ERRO:
+  → Não tem problema, talvez já existam as tabelas
+  → É só você continuar para o próximo passo
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👉 PASSO 3: COPIAR CHAVE SECRETA (2 MINUTOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Mantenha a aba Supabase aberta
+
+2. Procure no canto inferior esquerdo por:
+   → Uma engrenagem ⚙️ (Settings)
+   → Clique nela
+
+3. No menu que abriu, procure por:
+   → API
+   → Clique nela
+
+4. Na página de API, você verá 3 chaves. Procure por:
+   → "service_role" (geralmente a segunda)
+
+5. Ao lado da chave, tem um botão para copiar 📋
+   → Clique no botão copiar (aparece ao passar mouse)
+
+6. A chave foi copiada para área de transferência
+   (ela começa com: eyJh...)
+
+Deixe a chave copiada, você vai precisar no próximo passo!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👉 PASSO 4: EDITAR ARQUIVO .env (2 MINUTOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Na pasta dashboard_argus, procure o arquivo:
+   → .env
+   (é um arquivo sem extensão, começa com ponto)
+
+2. Clique com botão direito nele
+
+3. Escolha: "Abrir com..." → Bloco de Notas (Notepad)
+
+4. Você verá algo assim:
+   ──────────────────────────────────────────
+   SUPABASE_URL=https://fnlgstkkkxzrszmxqwwf.supabase.co
+   SUPABASE_ANON_KEY=sb_publishable_n_XIoBQwq5efny__r71log_fMjQNvh1
+   SUPABASE_SERVICE_ROLE_KEY=COPIE_SUA_CHAVE_SERVICE_ROLE_AQUI
+   ──────────────────────────────────────────
+
+5. Procure a linha que diz:
+   SUPABASE_SERVICE_ROLE_KEY=COPIE_SUA_CHAVE_SERVICE_ROLE_AQUI
+
+6. Delete "COPIE_SUA_CHAVE_SERVICE_ROLE_AQUI"
+   (só isso, não delete o antes "SUPABASE_SERVICE_ROLE_KEY=")
+
+7. Cole a chave que você copiou no passo anterior
+   Ctrl+V
+
+8. Agora a linha fica assim:
+   SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+9. Salve o arquivo:
+   Ctrl+S
+
+Pronto! Arquivo salvo.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👉 PASSO 5: ADICIONAR GITHUB SECRETS (3 MINUTOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Abra seu repositório GitHub:
+   → https://github.com/muriloargus/dashboard-argus
+
+2. Clique em "Settings" (no topo da página, ao lado de "About")
+
+3. No menu lateral esquerdo, procure por:
+   → "Secrets and variables"
+   → Clique nele
+   → Escolha "Actions"
+
+4. Clique no botão verde: "New repository secret"
+
+5. Você vai adicionar 3 secrets. Siga abaixo para cada um:
+
+═════════════════════════════════════════════════════════════
+
+ADICIONAR SECRET 1:
+  Name: SUPABASE_URL
+  Secret: https://fnlgstkkkxzrszmxqwwf.supabase.co
+  → Clique "Add secret"
+
+ADICIONAR SECRET 2:
+  Name: SUPABASE_ANON_KEY
+  Secret: sb_publishable_n_XIoBQwq5efny__r71log_fMjQNvh1
+  → Clique "Add secret"
+
+ADICIONAR SECRET 3:
+  Name: SUPABASE_SERVICE_ROLE_KEY
+  Secret: (Cole a chave que você copiou do Supabase)
+  → Clique "Add secret"
+
+═════════════════════════════════════════════════════════════
+
+Depois de adicionar os 3, você verá uma lista na página com:
+  ✓ SUPABASE_URL
+  ✓ SUPABASE_ANON_KEY
+  ✓ SUPABASE_SERVICE_ROLE_KEY
+
+Perfeito! GitHub configurado.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👉 PASSO 6: COLOCAR SEUS ARQUIVOS CSV (2 MINUTOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Na pasta dashboard_argus, procure pela pasta:
+   → input
+   (foi criada quando você rodou COMECE-AQUI.bat)
+
+2. Copie seus arquivos CSV para lá:
+   → ativos*.csv
+   → falhas*.csv
+   → usuarios*.csv
+   → exceções*.csv
+
+3. Se não tiver a pasta input, crie manualmente:
+   - Clique direito na pasta dashboard_argus
+   - Novo → Pasta
+   - Nome: input
+
+Arquivo criado!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👉 PASSO 7: EXECUTAR PIPELINE (3 MINUTOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IMPORTANTE: Certifique-se que:
+  ✓ Arquivo .env foi editado com a chave secreta
+  ✓ Arquivos CSV estão em pasta input/
+  ✓ GitHub Secrets foram adicionados
+
+Agora:
+
+1. Abra Terminal (PowerShell):
+   - Clique no menu Iniciar
+   - Coloque na busca: "PowerShell"
+   - Clique em "Windows PowerShell"
+
+2. Na janela que abrir, copie e cole este comando:
+   cd C:\Users\muril\Downloads\dashboard_argus
+
+3. Pressione Enter
+
+4. Agora copie e cole este outro comando:
+   python pipeline.py
+
+5. Pressione Enter
+
+6. Vai aparecer várias linhas com informações:
+   ✅ Ativos: XXX registros lidos
+   ✅ Falhas: XXX registros lidos
+   etc...
+
+Se aparecer ✅ em verde, FUNCIONOU!
+
+SE APARECER ❌ EM VERMELHO:
+  Verificar:
+  - .env está com a chave correta?
+  - CSV está em pasta input/?
+  - Nomes dos arquivos contêm "ativos", "falhas"?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ PRONTO! TUDO CONFIGURADO!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Seus dados agora estão no Supabase!
+
+O QUE ACONTECERÁ AUTOMATICAMENTE AGORA:
+  ✓ A cada 6 horas, GitHub Actions vai rodar pipeline.py
+  ✓ Dados vão atualizar automaticamente
+  ✓ Você não precisa fazer NADA
+
+PARA USAR NOS DASHBOARDS:
+
+Se quiser usar dados DIRETO do Supabase (recomendado):
+  1. Abra arquivo: dashboard_ativos_supabase.html
+  2. Pronto! Dashboard mostra dados em tempo real
+
+Se quiser usar dados locais (modo offline):
+  1. Continue usando seus dashboards normalmente
+  2. Dados vão vir de localStorage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❓ DÚVIDAS? ERROS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ERRO: "SUPABASE_SERVICE_ROLE_KEY não configurada"
+  SOLUÇÃO: Você esqueceu de editar .env
+           Coloque a chave no lugar certo e tente novamente
+
+ERRO: "Table does not exist"
+  SOLUÇÃO: O SQL_SETUP_SUPABASE.sql não foi executado
+           Volte ao PASSO 2 e execute o SQL novamente
+
+ERRO: "0 ativos inseridos"
+  SOLUÇÃO: CSV não está em pasta input/
+           Coloque seus CSVs em: dashboard_argus/input/
+
+ERRO: "Connection refused"
+  SOLUÇÃO: A chave service_role está errada
+           Copie novamente do Supabase Settings > API
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📞 PRÓXIMOS PASSOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opcionais (futuros):
+  · Adaptar outros dashboards para usar Supabase
+  · Criar dashboard de administração
+  · Configurar notificações automáticas
+
+Mas por agora, tudo está funcionando! Parabéns! 🎉
+
+═════════════════════════════════════════════════════════════════════════════════

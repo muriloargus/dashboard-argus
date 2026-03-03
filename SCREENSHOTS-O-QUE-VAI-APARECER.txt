@@ -1,0 +1,286 @@
+════════════════════════════════════════════════════════════════════════════════
+           👀 O QUE VOCÊ VAI VER - SCREENSHOTS DE CADA PASSO
+════════════════════════════════════════════════════════════════════════════════
+
+Para não ficar assustado, aqui está o que você vai ver em cada passo!
+
+════════════════════════════════════════════════════════════════════════════════
+1️⃣ CLICANDO EM COMECE-AQUI.bat
+════════════════════════════════════════════════════════════════════════════════
+
+Uma janela preta vai abrir com texto assim:
+
+╔════════════════════════════════════════════════════════════════════╗
+║  🚀 ARGUS DASHBOARD - SETUP AUTOMÁTICO                           ║
+║  Sistema vai configurar tudo automaticamente                      ║
+╚════════════════════════════════════════════════════════════════════╝
+
+✅ Python encontrado!
+
+📦 Instalando dependências...
+(pode levar 20-30 segundos)
+
+✅ Dependências instaladas!
+
+🚀 Executando setup...
+
+[2026-03-02 14:30:15] [INFO] 🚀 Iniciando Pipeline Argus...
+[2026-03-02 14:30:15] [INFO] 📝 .env criado!
+[2026-03-02 14:30:15] [INFO] ✅ SQL_SETUP_SUPABASE.sql criado!
+[2026-03-02 14:30:15] [INFO] ✅ GITHUB_SECRETS_GUIDE.txt criado!
+
+✨ SETUP CONCLUÍDO!
+
+════════════════════════════════ RESUME ════════════════════════════════
+
+Diversos arquivos listados aqui...
+
+════════════════════════════════════════════════════════════════════════════════
+
+Depois aparece:
+  Press any key to continue...
+
+Você aperta uma tecla (qualquer uma) e a janela fecha.
+
+✅ ISSO É SUCESSO! Continue...
+
+════════════════════════════════════════════════════════════════════════════════
+2️⃣ ABRINDO SQL_SETUP_SUPABASE.sql E COLANDO NO SUPABASE
+════════════════════════════════════════════════════════════════════════════════
+
+Na aba SQL Editor do Supabase, você verá:
+
+[Uma caixa branca grande com as seguintes linhas]
+-- ================================================================
+-- ARGUS DASHBOARD - SQL SETUP
+-- Copie este código inteiro e execute no Supabase SQL Editor
+-- ================================================================
+
+-- Criar tabela ATIVOS
+CREATE TABLE IF NOT EXISTS ativos (
+    id BIGSERIAL PRIMARY KEY,
+    dispositivo VARCHAR(50) UNIQUE NOT NULL,
+    ...
+    [MUITO CÓDIGO]
+    ...
+)
+
+[Você clica em ▶️ Run]
+
+Vai aparecer:
+
+✅ Success
+Query executed successfully
+(Ou mensagens similares em verde)
+
+╔════════════════════════════════════════════════════════════════════╗
+║                         ✅ ISSO É BOM!                           ║
+╚════════════════════════════════════════════════════════════════════╝
+
+════════════════════════════════════════════════════════════════════════════════
+3️⃣ ADICIONANDO GITHUB SECRETS
+════════════════════════════════════════════════════════════════════════════════
+
+Você vai em: Settings → Secrets and variables → Actions
+
+Vai ser um formulário assim:
+
+[Caixa de diálogo]
+  Name: SUPABASE_URL
+  Secret: https://fnlgstkkkxzrszmxqwwf.supabase.co
+  
+  [Botão verde: Add secret]
+
+Depois aparece:
+
+✅ SUPABASE_URL (com um cadeado 🔒)
+✅ SUPABASE_ANON_KEY (com um cadeado 🔒)
+✅ SUPABASE_SERVICE_ROLE_KEY (com um cadeado 🔒)
+
+╔════════════════════════════════════════════════════════════════════╗
+║                         ✅ ISSO É BOM!                           ║
+╚════════════════════════════════════════════════════════════════════╝
+
+════════════════════════════════════════════════════════════════════════════════
+4️⃣ EXECUTANDO teste_validacao.py
+════════════════════════════════════════════════════════════════════════════════
+
+Você abre PowerShell e digita: python teste_validacao.py
+
+Aparece:
+
+╔════════════════════════════════════════════════════════════════════╗
+║  ✅ VALIDAÇÃO RÁPIDA - Dashboard Argus                           ║
+║  Verificando se tudo está pronto                                  ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📁 CHECANDO ARQUIVOS BÁSICOS
+────────────────────────────────────────────────────────────────────
+✅ pipeline.py
+   └─ Script de sincronização
+✅ supabase-client.js
+   └─ Cliente JavaScript
+✅ requirements.txt
+   └─ Dependências Python
+
+📋 CHECANDO ARQUIVO .env
+────────────────────────────────────────────────────────────────────
+✅ .env configurado corretamente!
+   └─ Chave service_role foi adicionada
+
+📊 CHECANDO ARQUIVOS CSV
+────────────────────────────────────────────────────────────────────
+✅ 3 arquivo(s) CSV encontrado(s):
+   └─ ativos 23-02.csv (850.4 KB)
+   └─ falhas.csv (200.1 KB)
+   └─ usuarios ambev 26-02.csv (50.3 KB)
+
+[MAIS VERIFICAÇÕES...]
+
+════════════════════════════════════════════════════════════════════════
+
+📊 RESUMO DA VALIDAÇÃO
+════════════════════════════════════════════════════════════════════════
+
+Arquivos básicos: ✅ OK
+Arquivo .env: ✅ OK
+Arquivos CSV: ✅ OK
+Python: ✅ OK
+Dependências: ✅ OK
+Credenciais Supabase: ✅ OK
+
+════════════════════════════════════════════════════════════════════════
+
+Pontuação: 6/6
+
+✨ TUDO OK! Você pode executar:
+   python pipeline.py
+
+╔════════════════════════════════════════════════════════════════════╗
+║                  ✅ ISSO SIGNIFICA QUE ESTÁ TUDO PRONTO!          ║
+╚════════════════════════════════════════════════════════════════════╝
+
+════════════════════════════════════════════════════════════════════════════════
+5️⃣ EXECUTANDO python pipeline.py
+════════════════════════════════════════════════════════════════════════════════
+
+Você abre PowerShell e digita: python pipeline.py
+
+Aparece:
+
+[2026-03-02 14:35:20] [INFO] 🚀 Iniciando Pipeline Argus...
+[2026-03-02 14:35:20] [INFO] 🗂️  Verificando estrutura de tabelas...
+[2026-03-02 14:35:20] [INFO] ✅ Tabelas já existem
+[2026-03-02 14:35:21] [INFO] 📦 Sincronizando ativos de input/ativos 23-02.csv...
+[2026-03-02 14:35:21] [INFO] ✅ input/ativos 23-02.csv: 1768 registros lidos
+[2026-03-02 14:35:22] [INFO] ✅ Batch 1: 1000 ativos inseridos
+[2026-03-02 14:35:22] [INFO] ✅ Batch 2: 768 ativos inseridos
+[2026-03-02 14:35:23] [INFO] 📦 Sincronizando falhas de input/falhas.csv...
+[2026-03-02 14:35:23] [INFO] ✅ input/falhas.csv: 6536 registros lidos
+[2026-03-02 14:35:24] [INFO] ✅ Batch 1: 1000 falhas inseridas
+[2026-03-02 14:35:24] [INFO] ✅ Batch 2: 1000 falhas inseridas
+[2026-03-02 14:35:24] [INFO] ✅ Batch 3: 1000 falhas inseridas
+[2026-03-02 14:35:25] [INFO] ✅ Batch 4: 1000 falhas inseridas
+[2026-03-02 14:35:25] [INFO] ✅ Batch 5: 1000 falhas inseridas
+[2026-03-02 14:35:25] [INFO] ✅ Batch 6: 536 falhas inseridas
+[2026-03-02 14:35:26] [INFO] ⚠️  Arquivo de usuários não encontrado
+[2026-03-02 14:35:26] [INFO] ✅ Pipeline concluído!
+[2026-03-02 14:35:26] [INFO] 📝 Log salvo em logs/pipeline_20260302_143526.log
+
+════════════════════════════════════════════════════════════════════════
+
+✨ DADOS INSERIDOS COM SUCESSO!!!
+
+╔════════════════════════════════════════════════════════════════════╗
+║        ✅ SEUS DADOS ESTÃO AGORA NO SUPABASE!                    ║
+║  Próximo passo: Abra https://app.supabase.com para confirmar     ║
+╚════════════════════════════════════════════════════════════════════╝
+
+════════════════════════════════════════════════════════════════════════════════
+6️⃣ VERIFICANDO DADOS NO SUPABASE
+════════════════════════════════════════════════════════════════════════════════
+
+Você abre: https://app.supabase.com
+
+No menu lateral, clica em: Table Editor
+
+Aparece:
+
+┌─────────────────────────────────────────────────────────────┐
+│ Tables                                                      │
+│ ├─ ativos              (1768 rows) ← Seus dados aqui!     │
+│ ├─ excecoes            (0 rows)                            │
+│ ├─ falhas              (6536 rows) ← Mais dados aqui!     │
+│ └─ usuarios            (0 rows)                            │
+└─────────────────────────────────────────────────────────────┘
+
+Clica em "ativos" e você vê:
+
+[Tabela mostrando dados]
+┌──────┬─────────┬──────────┬───────┬───────────┐
+│ id   │ device  │ nome     │ status│ placa     │
+├──────┼─────────┼──────────┼───────┼───────────┤
+│ 1    │ QSQ6G08 │ RAUL     │ OK    │ QSQ6G08   │
+│ 2    │ UDB9H63 │ -        │ OK    │ UDB9H63   │
+│ 3    │ UFJ3I07 │ LUCAS    │ OK    │ UFJ3I07   │
+│ ...  │ ...     │ ...      │ ...   │ ...       │
+└──────┴─────────┴──────────┴───────┴───────────┘
+
+╔════════════════════════════════════════════════════════════════════╗
+║        ✅ SEUS DADOS ESTÃO VIVOS NO BANCO DE DADOS!              ║
+╚════════════════════════════════════════════════════════════════════╝
+
+════════════════════════════════════════════════════════════════════════════════
+7️⃣ ABRINDO dashboard_ativos_supabase.html
+════════════════════════════════════════════════════════════════════════════════
+
+Você clica 2x no arquivo: dashboard_ativos_supabase.html
+
+Abre uma página bonita mostrando:
+
+[Topo azul com logo ARGUS]
+
+📦 Dashboard Ativos - Supabase
+
+┌──────────────┬──────────────┬──────────────┬──────────────┐
+│ Total de     │ Status OK    │ Com Problemas│ Última       │
+│ Ativos       │              │              │ Atualização  │
+│   1768       │   1600       │     168      │  14:35:20    │
+└──────────────┴──────────────┴──────────────┴──────────────┘
+
+[Dois gráficos coloridos mostrando dados]
+
+Status dos Dispositivos       Distribuição por Tipo
+   OK (1600)                  CAMINHÃO TOCO (800)
+   Erro (168)                 CAVALO (900)
+                              ÔNIBUS (68)
+
+[Tabela com dados dos ativos]
+Dispositivo | Motorista      | Status | Placa    | Atividade | Última Comunicação
+QSQ6G08     | RAUL FRANCIS   | ✓ OK   | QSQ6G08  | Stopped   | 23/02/2026 10:30
+UFJ3I07     | LUCAS ALEXANDRE| ✓ OK   | UFJ3I07  | Driving   | 23/02/2026 14:35
+
+╔════════════════════════════════════════════════════════════════════╗
+║     ✅ DASHBOARD FUNCIONANDO EM TEMPO REAL COM SUPABASE!          ║
+║        Você agora tem um sistema moderno e automático!            ║
+╚════════════════════════════════════════════════════════════════════╝
+
+════════════════════════════════════════════════════════════════════════════════
+📞 E DEPOIS?
+════════════════════════════════════════════════════════════════════════════════
+
+Depois disso tudo estar funcionando:
+
+✅ Seus dados estão seguros no Supabase
+✅ Dashboard mostra tudo em TEMPO REAL
+✅ GitHub Actions roda a cada 6 horas automaticamente
+✅ Você não precisa fazer mais NADA
+
+Você pode:
+  · Editar dados no Supabase
+  · Ver histórico de execução no GitHub Actions
+  · Ir embora e deixar o sistema rodar! ☕
+
+════════════════════════════════════════════════════════════════════════════════
+✨ PARABÉNS! VOCÊ CONSEGUIU! 🎉
+════════════════════════════════════════════════════════════════════════════════

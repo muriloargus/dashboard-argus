@@ -1,0 +1,233 @@
+════════════════════════════════════════════════════════════════════════════════
+                       🔧 TROUBLESHOOTING - RESOLVENDO PROBLEMAS
+════════════════════════════════════════════════════════════════════════════════
+
+Se algo não funcionou, leia aqui a solução!
+
+════════════════════════════════════════════════════════════════════════════════
+❌ COMECE-AQUI.bat não funciona
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Arquivo não abre ou pede algo estranho
+
+Solução:
+1. Abra PowerShell (procure no menu Iniciar)
+2. Digite: cd C:\Users\muril\Downloads\dashboard_argus
+3. Digite: python setup.py
+4. Pressione Enter
+
+Se aparecer erro dizendo "Python não foi encontrado":
+  → Instale Python em: https://www.python.org/downloads
+  → Marque a opção "Add Python to PATH"
+  → Reinicie seu computador
+  → Tente novamente
+
+════════════════════════════════════════════════════════════════════════════════
+❌ Arquivo .env não foi criado
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Arquivo .env não aparece após rodar setup
+
+Solução:
+1. Abra PowerShell
+2. Navegue até a pasta: cd C:\Users\muril\Downloads\dashboard_argus
+3. Crie manualmente: Copy-Item .env.example .env
+4. Edite .env com bloco de notas e preencha a chave
+
+════════════════════════════════════════════════════════════════════════════════
+❌ "SUPABASE_SERVICE_ROLE_KEY não configurada"
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Erro ao tentar rodar python pipeline.py
+
+Causa: Você esqueceu de editar .env com a chave secreta
+
+Solução:
+1. Abra arquivo .env com bloco de notas
+2. Procure a linha: SUPABASE_SERVICE_ROLE_KEY=COPIE_SUA_CHAVE_SERVICE_ROLE_AQUI
+3. Delete "COPIE_SUA_CHAVE_SERVICE_ROLE_AQUI"
+4. Cole a chave que você copiou do Supabase (começa com eyJh)
+5. Salve (Ctrl+S)
+6. Tente novamente: python pipeline.py
+
+════════════════════════════════════════════════════════════════════════════════
+❌ "Table does not exist" ou erro de tabelas no Supabase
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Erro dizendo que tabelas não existem
+
+Causa: Você esqueceu de executar o SQL no Supabase
+
+Solução:
+1. Abra https://app.supabase.com
+2. Faça login na sua conta
+3. Clique em SQL Editor (no menu lateral)
+4. Abra arquivo: SQL_SETUP_SUPABASE.sql
+5. Copie TODO o código (Ctrl+A → Ctrl+C)
+6. Cole no Supabase SQL Editor (Ctrl+V)
+7. Clique em ▶️ Run (ou Ctrl+Enter)
+8. Espere aparecer mensagem de sucesso
+9. Tente novamente: python pipeline.py
+
+════════════════════════════════════════════════════════════════════════════════
+❌ "0 ativos inseridos" ou nenhum dado foi sincronizado
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Pipeline roda mas não insere dados
+
+Causas possíveis:
+
+Causa 1: CSVs não estão em pasta input/
+  Solução:
+  1. Procure seus arquivos: ativos*.csv, falhas*.csv, usuarios*.csv
+  2. Coloque-os em: dashboard_argus/input/
+  3. Os nomes devem conter as palavras "ativos", "falhas", "usuarios"
+  4. Tente novamente: python pipeline.py
+
+Causa 2: Arquivo CSV está corrompido
+  Solução:
+  1. Abra o CSV no Excel ou Bloco de Notas
+  2. Verifique se tem dados
+  3. Verifique se o delimitador é ';' (ponto e vírgula)
+  4. Se não, converta: abra no Excel → Salvar como CSV UTF-8
+
+Causa 3: Credenciais Supabase estão erradas
+  Solução:
+  1. Abra arquivo .env
+  2. Copie a linha SUPABASE_URL
+  3. Abra https://app.supabase.com
+  4. Verifique se URL bate exatamente
+  5. Mesma coisa para ANON_KEY (valores devem ser idênticos)
+
+════════════════════════════════════════════════════════════════════════════════
+❌ Erro "Connection refused" ou não consegue conectar ao Supabase
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Erro de conexão ao banco de dados
+
+Causas:
+
+1. Sua chave service_role está errada
+   Solução:
+   - Vá em https://app.supabase.com
+   - Settings → API
+   - Copie a chave "service_role" novamente
+   - Ela deve começar com: eyJh
+   - Cole em .env
+
+2. Sua chave service_role expirou
+   Solução:
+   - Regenere a chave no Supabase
+   - Copie a nova
+   - Cole em .env
+
+════════════════════════════════════════════════════════════════════════════════
+❌ GitHub Actions não está rodando
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: GitHub Actions não executa automaticamente
+
+Causas: Secrets não foram configurados
+
+Solução:
+1. Vá em: https://github.com/muriloargus/dashboard-argus/settings/secrets/actions
+2. Verifique se tem 3 secrets:
+   ✓ SUPABASE_URL
+   ✓ SUPABASE_ANON_KEY
+   ✓ SUPABASE_SERVICE_ROLE_KEY
+3. Se faltar, adicione novamente
+4. Para testar, vá em Actions → "Sincronizar Dados" → Run workflow
+
+════════════════════════════════════════════════════════════════════════════════
+❌ Dashboard não mostra dados do Supabase
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Abre dashboard_ativos_supabase.html mas não mostra dados
+
+Causas:
+
+1. Browser está bloqueando requisições (CORS)
+   Solução:
+   - Abra console (F12)
+   - Veja mensagens de erro
+   - Deve aparecer mensagem de CORS error
+   - Supabase configuração de CORS é restritiva
+   - Tente em outro navegador
+
+2. Dados ainda não foram inseridos
+   Solução:
+   - Execute python pipeline.py primeiro
+   - Aguarde alguns segundos
+   - Atualize o dashboard (F5)
+
+3. URL do Supabase ou chave está errada no HTML
+   Solução:
+   - Abra: dashboard_ativos_supabase.html
+   - Procure por: const SUPABASE_URL
+   - Verifique se URL é: https://fnlgstkkkxzrszmxqwwf.supabase.co
+   - Procure: const SUPABASE_ANON_KEY
+   - Verifique se começa com: sb_publishable
+
+════════════════════════════════════════════════════════════════════════════════
+❌ Erro "Access denied" ou permissão negada
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: Mensagem dizendo que não tem permissão
+
+Causa: Tabelas estão com RLS muito restritivo
+
+Solução: Execute este SQL no Supabase:
+  
+  ALTER TABLE ativos DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE falhas DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE excecoes DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE usuarios DISABLE ROW LEVEL SECURITY;
+
+Depois tente novamente.
+
+════════════════════════════════════════════════════════════════════════════════
+❌ Erro ao executar teste_validacao.py
+════════════════════════════════════════════════════════════════════════════════
+
+Sintoma: teste_validacao.py não funciona
+
+Solução:
+1. Abra PowerShell
+2. Navegue até pasta: cd C:\Users\muril\Downloads\dashboard_argus
+3. Instale dependências: pip install -r requirements.txt
+4. Execute: python teste_validacao.py
+5. Leia as mensagens vermelhas (❌) para saber o que falta
+6. Corrija cada problema listado
+7. Tente novamente
+
+════════════════════════════════════════════════════════════════════════════════
+✅ TESTE RÁPIDO - Verificar se tudo está OK
+════════════════════════════════════════════════════════════════════════════════
+
+Antes de rodar pipeline.py ou fazer qualquer coisa:
+
+1. Abra PowerShell
+2. Digite: python teste_validacao.py
+3. Leia o resultado
+4. Se aparecer "❌ ERRO", leia qual é o erro
+5. Corrija usando as soluções acima
+6. Tente novamente
+
+════════════════════════════════════════════════════════════════════════════════
+📞 NÃO CONSIGO RESOLVER
+════════════════════════════════════════════════════════════════════════════════
+
+Se nenhuma solução acima funcionar:
+
+1. Copie o ERRO exato (a mensagem vermelha)
+2. Abra Google e procure por: "[SUA ERRO] supabase" ou "[SUA ERRO] github"
+3. Geralmente a resposta está no Stack Overflow ou documentação Supabase
+
+Documentação:
+  · Supabase: https://supabase.com/docs
+  · GitHub: https://docs.github.com
+  · Python: https://docs.python.org
+
+════════════════════════════════════════════════════════════════════════════════
+✨ Você vai conseguir! Paciência e boa sorte! 💪
+════════════════════════════════════════════════════════════════════════════════

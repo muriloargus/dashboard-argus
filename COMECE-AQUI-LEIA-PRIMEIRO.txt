@@ -1,0 +1,194 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                    🗺️ MAPA COMPLETO - COMECE AQUI!                             ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+👉 SE VOCÊ CHEGOU AQUI, SUCESSO! Vamos começar.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1️⃣ PRIMEIRO: EXECUTE ESTE ARQUIVO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   📁 COMECE-AQUI.bat
+   
+   Clique 2 vezes (duplo clique) neste arquivo
+   Ele vai:
+   ✅ Instalar bibliotecas Python
+   ✅ Criar arquivo .env
+   ✅ Criar arquivo SQL_SETUP_SUPABASE.sql
+   ✅ Criar pasta input/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2️⃣ PRÓXIMO: SIGA ESTE GUIA (Copie e cole as instruções visuais)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   📄 GUIA-VISUAL-SUPER-SIMPLES.txt
+   
+   Este arquivo tem 7 passos MUITO simples:
+   1. Executar setup (já foi acima)
+   2. Configurar Supabase (Copiar e colar SQL)
+   3. Copiar chave secreta do Supabase
+   4. Editar arquivo .env (colar a chave)
+   5. Adicionar GitHub Secrets (3 valores)
+   6. Colocar seus CSVs em pasta input/
+   7. Executar pipeline.py no terminal
+
+   ⏱️ Tempo total: ~15 minutos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3️⃣ ARQUIVOS CRIADOS AUTOMATICAMENTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Depois que você executar COMECE-AQUI.bat, esses arquivos aparecerão:
+
+📄 .env
+   → Arquivo de configuração (EDITE COM SUA CHAVE)
+   → Contém suas credenciais do Supabase
+   
+📄 SQL_SETUP_SUPABASE.sql
+   → Código SQL para copiar no Supabase
+   → Cria todas as tabelas necessárias
+   
+📁 input/
+   → Pasta para seus arquivos CSV
+   → Coloque aqui: ativos*.csv, falhas*.csv, usuarios*.csv
+   
+📁 logs/
+   → Pasta com histórico de execução
+   → Criada automaticamente
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4️⃣ ARQUIVOS QUE JÁ EXISTEM (NÃO MEXA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🐍 pipeline.py
+   → Sincroniza seus CSVs com Supabase
+   → Você roda com: python pipeline.py
+   
+📄 requirements.txt
+   → Lista de bibliotecas Python necessárias
+   → Instalado automaticamente por COMECE-AQUI.bat
+   
+🌐 supabase-client.js
+   → Código JavaScript para dashboards
+   → Permite usar dados do Supabase nos gráficos
+   
+🌐 dashboard_ativos_supabase.html
+   → Dashboard exemplo já com Supabase integrado
+   → Abra no navegador para ver em tempo real
+   
+🔧 storage-adapter.js, idb-manager.js
+   → Gerenciamento de dados locais
+   → Manter como estão
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5️⃣ SEUS DADOS - FLUXO COMPLETO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Seus arquivos CSV:
+          ↓
+   📁 input/ (coloque aqui)
+          ↓
+   🐍 pipeline.py (execute com: python pipeline.py)
+          ↓
+   🗄️ Supabase PostgreSQL (dados salvos na nuvem)
+          ↓
+   🌐 supabase-client.js (JavaScript busca dados)
+          ↓
+   📊 Seu dashboard HTML (mostra gráficos em TEMPO REAL)
+
+AUTOMÁTICO a cada 6 horas:
+   GitHub Actions → rodará pipeline.py → atualizará dados automaticamente
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 RESUMO RÁPIDO - 3 PASSOS PRINCIPAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Abra COMECE-AQUI.bat
+   ↓
+2. Siga o arquivo GUIA-VISUAL-SUPER-SIMPLES.txt
+   ↓
+3. Tudo pronto! Seus dados estarão no Supabase automaticamente
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❓ PERGUNTAS FREQUENTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+P: Vou perder meus dados antigos?
+R: Não! Os dados são sincronizados, não substituídos.
+   Dados antigos e novos ficam no Supabase.
+
+P: Preciso rodar pipeline.py toda vez?
+R: Não! GitHub Actions faz isso automaticamente a cada 6 horas.
+   Você roda só para testes ou quando quer sincronizar rápido.
+
+P: E se eu colocasse arquivo .csv errado?
+R: Sem problema! Delete de input/ e coloque o certo.
+   Roda pipeline.py novamente.
+
+P: Preciso de internet para os dashboards funcionarem?
+R: SIM, se usar dados do Supabase (recomendado).
+   NÃO, se usar dados locais (localStorage).
+
+P: Posso parar de usar CSVs?
+R: Sim! Depois que tudo estiver funcionando,
+   você pode deletar os CSVs e usar só Supabase.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 DOCUMENTAÇÃO TÉCNICA (Se quiser entender melhor)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SETUP-SUPABASE.md
+  → Documentação técnica completa
+  → Referência para troubleshooting avançado
+
+GUIA-RAPIDO-SUPABASE.md
+  → Guia intermediário
+  → Mais detalhes que o super simples
+
+GITHUB_SECRETS_GUIDE.txt
+  → Instruções específicas para GitHub Secrets
+  → Criado automaticamente por COMECE-AQUI.bat
+
+📋 README.md
+  → Documentação original do Dashboard Argus
+  → Informações sobre os dashboards
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 DEPOIS QUE TUDO ESTIVER FUNCIONANDO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Seus dados estão seguros no Supabase
+✅ Dashboards atualizam em tempo real
+✅ GitHub Actions roda automaticamente
+✅ Você não precisa fazer mais NADA
+
+VOCÊ PODE:
+  · Editar https://app.supabase.com para ver seus dados
+  · Ver histórico em GitHub Actions
+  · Criar novos dashboards usando supabase-client.js
+  · Ir para o braço! ☕
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ TIMING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AGORA:
+  Tempo necessário para completar = ~15 minutos
+
+DEPOIS:
+  Seu trabalho = 0 minutos (tudo é automático! ✨)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✨ VAMOS COMEÇAR?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Clique 2x em: COMECE-AQUI.bat
+2. Leias instruções que aparecem
+3. Siga arquivo: GUIA-VISUAL-SUPER-SIMPLES.txt
+4. Pronto! Tudo funcionando! 🎉
+
+Qualquer dúvida, releia o GUIA-VISUAL-SUPER-SIMPLES.txt
+Ele tem todos os 7 passos explicados com clareza.
+
+BOM TRABALHO! 💪
+═════════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,66 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║              🐛 SOLUÇÃO - ERRO "ModuleNotFoundError: supabase"                 ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+❌ ERRO QUE VOCÊ RECEBEU:
+───────────────────────────────────────────────────────────────────────────────
+
+ModuleNotFoundError: No module named 'supabase'
+
+✅ SOLUÇÃO:
+───────────────────────────────────────────────────────────────────────────────
+
+OPÇÃO 1: Executar script FIX (RECOMENDADO)
+
+  1. Procure o arquivo: fix-dependencias.py
+  2. Clique 2x nele
+  3. Espere até aparecer "✅ TUDO PRONTO!"
+  4. Tente novamente: python pipeline.py
+
+
+OPÇÃO 2: Instalar manualmente no PowerShell
+
+  1. Abra PowerShell
+  2. Navegue até a pasta: cd C:\Users\muril\Downloads\dashboard_argus
+  3. Cole este comando:
+
+     pip install -r requirements.txt
+
+  4. Espere terminar (pode levar 30-60 segundos)
+  5. Tente novamente: python pipeline.py
+
+
+OPÇÃO 3: Instalar apenas Supabase
+
+  Se as outras bibliotecas já estão instaladas:
+  
+     pip install supabase
+
+
+🎯 QUAL ESCOLHER?
+
+  Iniciante? → OPÇÃO 1 (fix-dependencias.py)
+  Experiente? → OPÇÃO 2 (pip install -r requirements.txt)
+
+════════════════════════════════════════════════════════════════════════════════
+
+⚠️ SE RECEBER OUTRO ERRO:
+
+"pip is not recognized"
+  → Python não está no PATH (reinicie o computador após instalar)
+
+"Access Denied"
+  → Execute PowerShell como administrador
+    (Clique direito em PowerShell → "Executar como administrador")
+
+════════════════════════════════════════════════════════════════════════════════
+
+📝 DEPOIS QUE INSTALAR:
+
+1. Abra PowerShell
+2. Digite: cd C:\Users\muril\Downloads\dashboard_argus
+3. Digite: python pipeline.py
+4. Espera as linhas verdes apareceres (✅)
+5. Se aparecer "✅ Pipeline concluído!" - FUNCIONOU!
+
+════════════════════════════════════════════════════════════════════════════════

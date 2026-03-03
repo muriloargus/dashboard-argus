@@ -1,0 +1,80 @@
+════════════════════════════════════════════════════════════════════════════════
+                    ⚡ AÇÃO RÁPIDA - RESOLVENDO 2 PROBLEMAS
+════════════════════════════════════════════════════════════════════════════════
+
+PROBLEMA 1: "ModuleNotFoundError: No module named 'supabase'"
+PROBLEMA 2: Arquivo CSV muito grande (>25MB) no GitHub
+
+════════════════════════════════════════════════════════════════════════════════
+
+🔥 SOLUÇÃO RÁPIDA (3 MINUTOS):
+
+1️⃣ Instalar módulos faltantes:
+
+   Opção A - AUTOMÁTICO:
+     · Procure: resolva-tudo.py
+     · Clique 2x nele
+     · Espera terminar ✅
+
+   Opção B - Manual:
+     · Abra PowerShell
+     · Copie: pip install -r requirements.txt
+     · Espera terminar
+
+
+2️⃣ Resolver problema do arquivo grande:
+
+   Abra PowerShell e execute:
+
+   git add .
+   git commit -m "CSVs ignorados - usar Supabase"
+   git push
+
+   (Pronto! GitHub não reclamará mais)
+
+
+3️⃣ Rodar pipeline.py:
+
+   PowerShell:
+   
+   cd C:\Users\muril\Downloads\dashboard_argus
+   python pipeline.py
+
+   Espera aparecer: ✅ Pipeline concluído!
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+📚 ARQUIVOS DE REFERÊNCIA:
+
+ERRO-SUPABASE-MODULO.txt
+  → Explicação detalhada do problema 1
+
+SOLUCAO-ARQUIVO-GRANDE-GITHUB.txt
+  → Explicação detalhada do problema 2
+
+resolva-tudo.py
+  → Script automático que resolve ambos
+
+fix-dependencias.py
+  → Script só para instalar módulos
+
+════════════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST ANTES DE RODAR python pipeline.py:
+
+□ Executei: resolva-tudo.py (ou pip install -r requirements.txt)
+□ Coloquei CSVs em: C:\Users\muril\Downloads\dashboard_argus\input\
+□ .env foi editado com chave service_role
+□ GitHub Secrets foram adicionados
+□ SQL_SETUP_SUPABASE.sql foi executado no Supabase
+□ Rodei: git add . && git commit && git push (no PowerShell)
+
+════════════════════════════════════════════════════════════════════════════════
+
+🎯 PRÓXIMAS LINHAS NO POWERSHELL:
+
+cd C:\Users\muril\Downloads\dashboard_argus
+python pipeline.py
+
+════════════════════════════════════════════════════════════════════════════════
