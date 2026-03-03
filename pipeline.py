@@ -7,6 +7,7 @@ Automatiza a atualização de dashboards sem necessidade de CSVs
 import os
 import csv
 import json
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -140,9 +141,17 @@ class ArgusDataPipeline:
                 sample = f.read(1024)
                 delimiter = ';' if ';' in sample else ','
             
-            df = pd.read_csv(filepath, sep=delimiter, encoding='utf-8')
-            # Normaliza nomes de colunas
-            df.columns = [col.lower().strip().replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_') for col in df.columns]
+            df = pd.read_csv(filepath, sep=delimiter, encoding='utf-8', decimal=',')
+            
+            # Normaliza nomes de colunas: remove acentos, espaços, caracteres especiais
+            def normalize_column(col):
+                # Remove acentos usando NFD decomposition
+                col_nfd = unicodedata.normalize('NFD', col)
+                col_no_accents = ''.join(c for c in col_nfd if unicodedata.category(c) != 'Mn')
+                # Converte para minúsculas e substitui espaços/caracteres especiais
+                return col_no_accents.lower().strip().replace(' ', '_').replace('-', '_').replace('(', '').replace(')', '').replace('/', '_')
+            
+            df.columns = [normalize_column(col) for col in df.columns]
             
             items = df.fillna('').to_dict(orient='records')
             self.log_message(f'✅ {filepath}: {len(items)} registros lidos')
@@ -167,15 +176,68 @@ class ArgusDataPipeline:
             return
         
         try:
-            # Limpa dados antigos (opcional - comentado para segurança)
-            # self.supabase.table('ativos').delete().neq('id', 0).execute()
+            # Colunas esperadas no Supabase
+            expected_cols = {
+                'dispositivo', 'grupo_de_dispositivo', 'device_id', 'nome', 'sobrenome',
+                'motorista_atual', 'horario_de_trabalho', 'atividade_atual', 'in_privacy_mode',
+                'ultimos_tipos_da_zona_de_parada', 'hodometro_atual', 'horas_de_motor_atuais',
+                'ativo_desde', 'ativo_ate', 'esta_arquivado', 'plano',
+                'tipo_de_dispositivo', 'versao_de_firmware', 'numero_de_serie', 'placa',
+                'placa_provincia', 'vin', 'zona_horaria', 'comentario_do_dispositivo', 'status_do_download'
+            }
+            
+            # Filtro e conversão de booleanos
+            def convert_boolean(val):
+                if isinstance(val, bool):
+                    return val
+                if isinstance(val, str):
+                    return val.lower().strip() in ('verdadeiro', 'true', '1', 'sim', 's')
+                return False if val == '' else bool(val)
+            
+            # Filtro e conversão de datas
+            def convert_date(val):
+                if val == '' or val is None or (isinstance(val, float) and pd.isna(val)):
+                    return None
+                return val
+            
+            # Filtra apenas colunas que existem no banco
+            filtered_items = []
+            for item in items:
+                filtered_item = {}
+                for k, v in item.items():
+                    if k in expected_cols:
+                        # Converte booleanos
+                        if k in ('in_privacy_mode', 'esta_arquivado'):
+                            filtered_item[k] = convert_boolean(v)
+                        # Converte datas
+                        elif k in ('ativo_desde', 'ativo_ate'):
+                            filtered_item[k] = convert_date(v)
+                        else:
+                            filtered_item[k] = v
+                filtered_items.append(filtered_item)
             
             # Insere em batches de 1000
             batch_size = 1000
-            for i in range(0, len(items), batch_size):
-                batch = items[i:i+batch_size]
-                self.supabase.table('ativos').upsert(batch, on_conflict='dispositivo').execute()
-                self.log_message(f'✅ Batch {i//batch_size + 1}: {len(batch)} ativos inseridos')
+            for i in range(0, len(filtered_items), batch_size):
+                batch = filtered_items[i:i+batch_size]
+                try:
+                    self.supabase.table('ativos').insert(batch, count='exact').execute()
+                    self.log_message(f'✅ Batch {i//batch_size + 1}: {len(batch)} ativos inseridos')
+                except Exception as e:
+                    # Se falhar com INSERT, tenta UPSERT (ignora duplicatas)
+                    try:
+                        # Remove duplicatas por dispositivo mantendo primeiro
+                        seen = set()
+                        unique_batch = []
+                        for item in batch:
+                            if item.get('dispositivo') not in seen:
+                                unique_batch.append(item)
+                                seen.add(item.get('dispositivo'))
+                        
+                        self.supabase.table('ativos').upsert(unique_batch, on_conflict='dispositivo').execute()
+                        self.log_message(f'✅ Batch {i//batch_size + 1}: {len(unique_batch)} ativos inseridos (deduplicado)')
+                    except Exception as e2:
+                        self.log_message(f'❌ Batch {i//batch_size + 1}: Erro mesmo após deduplicação: {str(e2)[:100]}', 'ERROR')
         except Exception as e:
             self.log_message(f'❌ Erro ao sincronizar ativos: {str(e)}', 'ERROR')
     
@@ -195,9 +257,23 @@ class ArgusDataPipeline:
             return
         
         try:
+            # Colunas esperadas no Supabase
+            expected_cols = {
+                'dispositivo', 'grupo_de_dispositivo', 'data',
+                'data_de_extincao_do_defeito', 'usuario_que_extinguiu_o_defeito',
+                'descricao', 'modo_de_falha', 'fonte', 'controlador', 'codigo'
+            }
+            
+            # Filtra colunas e remove datas vazias
+            filtered_items = []
+            for item in items:
+                filtered_item = {k: (None if v == '' and 'data' in k else v) 
+                                for k, v in item.items() if k in expected_cols}
+                filtered_items.append(filtered_item)
+            
             batch_size = 1000
-            for i in range(0, len(items), batch_size):
-                batch = items[i:i+batch_size]
+            for i in range(0, len(filtered_items), batch_size):
+                batch = filtered_items[i:i+batch_size]
                 self.supabase.table('falhas').upsert(batch).execute()
                 self.log_message(f'✅ Batch {i//batch_size + 1}: {len(batch)} falhas inseridas')
         except Exception as e:
@@ -219,9 +295,33 @@ class ArgusDataPipeline:
             return
         
         try:
+            # Colunas esperadas no Supabase
+            expected_cols = {'nome_completo', 'e_mail', 'grupo', 'designacao', 'cpf'}
+            
+            # Filtra colunas e limita tamanho de strings
+            filtered_items = []
+            for item in items:
+                filtered_item = {}
+                for k, v in item.items():
+                    if k in expected_cols:
+                        # Limita tamanho: nome_completo (200), e_mail (150), grupo (100), designacao (100), cpf (14)
+                        limits = {
+                            'nome_completo': 200,
+                            'e_mail': 150,
+                            'grupo': 100,
+                            'designacao': 100,
+                            'cpf': 14
+                        }
+                        max_len = limits.get(k, 100)
+                        if isinstance(v, str):
+                            filtered_item[k] = v[:max_len]
+                        else:
+                            filtered_item[k] = v
+                filtered_items.append(filtered_item)
+            
             batch_size = 1000
-            for i in range(0, len(items), batch_size):
-                batch = items[i:i+batch_size]
+            for i in range(0, len(filtered_items), batch_size):
+                batch = filtered_items[i:i+batch_size]
                 self.supabase.table('usuarios').upsert(batch).execute()
                 self.log_message(f'✅ Batch {i//batch_size + 1}: {len(batch)} usuários inseridos')
         except Exception as e:
