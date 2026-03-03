@@ -15,7 +15,7 @@ class SupabaseClient {
     async init() {
         try {
             // Testa conexão
-            const response = await fetch(`${this.url}/rest/v1/ativos?select=count(*)`, {
+            const response = await fetch(`${this.url}/rest/v1/ativos?select=count`, {
                 headers: {
                     'apikey': this.anonKey,
                     'Authorization': `Bearer ${this.anonKey}`

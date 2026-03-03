@@ -243,8 +243,12 @@
             // Inicializa Supabase
             supabaseClient = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
             
-            // Aguarda conexão
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Aguarda conexão com retry
+            let tentativas = 0;
+            while (!supabaseClient.isConnected && tentativas < 5) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                tentativas++;
+            }
             
             criarGraficos(); // Criar gráficos ANTES de carregar dados
             atualizarStatus();
