@@ -233,7 +233,7 @@
         const SUPABASE_URL = 'https://fnlgstkkkxzrszmxqwwf.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_n_XIoBQwq5efny__r71log_fMjQNvh1';
 
-        let supabase = null;
+        let supabaseClient = null;
         let todosAtivos = [];
         let statusChart = null;
         let tipoChart = null;
@@ -241,7 +241,7 @@
         // Inicialização
         async function init() {
             // Inicializa Supabase
-            supabase = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabaseClient = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
             
             // Aguarda conexão
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -255,7 +255,7 @@
         // Atualiza indicador de conexão
         function atualizarStatus() {
             const statusEl = document.getElementById('syncStatus');
-            if (supabase && supabase.isConnected) {
+            if (supabaseClient && supabaseClient.isConnected) {
                 statusEl.className = 'sync-status active connected';
                 statusEl.innerHTML = '✅ <strong>Conectado ao Supabase</strong>';
                 document.getElementById('connectionAlert').style.display = 'none';
@@ -269,7 +269,7 @@
         // Carrega dados do Supabase
         async function carregarDados() {
             try {
-                todosAtivos = await supabase.getAtivos();
+                todosAtivos = await supabaseClient.getAtivos();
                 
                 // Atualiza estatísticas
                 document.getElementById('totalAtivos').textContent = todosAtivos.length;
