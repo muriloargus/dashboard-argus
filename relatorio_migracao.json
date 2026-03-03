@@ -1,0 +1,55 @@
+{
+  "data": "2026-03-02T23:05:27.613766",
+  "analise": {
+    "migraveis": 9,
+    "ja_migrados": 1,
+    "nao_encontrados": 0
+  },
+  "dashboards_migraveis": [
+    {
+      "original": "dashboard_motoristas v2.html",
+      "novo": "dashboard_motoristas_supabase.html",
+      "fonte_dados": "motoristas"
+    },
+    {
+      "original": "dashboard_desempenho_analista.html",
+      "novo": "dashboard_desempenho_supabase.html",
+      "fonte_dados": "ativos"
+    },
+    {
+      "original": "dashboard_comparativo.html",
+      "novo": "dashboard_comparativo_supabase.html",
+      "fonte_dados": "ativos"
+    },
+    {
+      "original": "dashboard_dispositivos.html",
+      "novo": "dashboard_dispositivos_supabase.html",
+      "fonte_dados": "ativos"
+    },
+    {
+      "original": "dashboard_excecoes.html",
+      "novo": "dashboard_excecoes_supabase.html",
+      "fonte_dados": "excecoes"
+    },
+    {
+      "original": "tv_dashboard.html",
+      "novo": "tv_dashboard_supabase.html",
+      "fonte_dados": "ativos"
+    },
+    {
+      "original": "dashboard_risco_colisao.html",
+      "novo": "dashboard_risco_supabase.html",
+      "fonte_dados": "ativos"
+    },
+    {
+      "original": "dashboard_temporal_mapas.html",
+      "novo": "dashboard_temporal_supabase.html",
+      "fonte_dados": "ativos"
+    },
+    {
+      "original": "dashboard_timeline.html",
+      "novo": "dashboard_timeline_supabase.html",
+      "fonte_dados": "ativos"
+    }
+  ]
+}
