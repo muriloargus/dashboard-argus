@@ -246,10 +246,10 @@
             // Aguarda conexão
             await new Promise(resolve => setTimeout(resolve, 500));
             
+            criarGraficos(); // Criar gráficos ANTES de carregar dados
             atualizarStatus();
             await carregarDados();
             configurarBuscas();
-            criarGraficos();
         }
 
         // Atualiza indicador de conexão
