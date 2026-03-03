@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Usuários - Supabase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 3px solid #f5576c;
+        }
+
+        .container-fluid {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h5 {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #f0f0f0;
+            margin-bottom: 15px;
+        }
+
+        .sync-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .sync-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            font-size: 14px;
+        }
+
+        th {
+            background: #f5576c;
+            color: white;
+            font-weight: 600;
+        }
+
+        .spinner {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner-border {
+            color: #f5576c;
+        }
+
+        .btn-primary {
+            background: #f5576c;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #f093fb;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+        }
+
+        .badge-primary {
+            background: #f5576c;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        .search-bar {
+            margin-bottom: 15px;
+        }
+
+        .search-bar input {
+            border: 2px solid #f5576c;
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+
+        .search-bar input:focus {
+            border-color: #f093fb;
+            box-shadow: 0 0 0 0.2rem rgba(245, 87, 108, 0.25);
+        }
+
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .stat-card {
+                margin-bottom: 15px;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><strong>👥 Dashboard Usuários - Supabase</strong></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard_menu.html">🏠 Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard_ativos_supabase.html">📦 Ativos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard_falhas_supabase.html">🔴 Falhas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">👥 Usuários</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid" style="max-width: 1400px;">
+        <!-- Status -->
+        <div id="syncStatus" class="sync-status">
+            ⏳ Conectando...
+        </div>
+        <div id="connectionAlert" class="alert alert-warning" style="display: none;">
+            ⚠️ <strong>Modo offline:</strong> Usando dados em cache. A conexão será restabelecida automaticamente.
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Total de Usuários</h5>
+                    <div class="number" id="totalUsuarios">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Grupos Únicos</h5>
+                    <div class="number" id="totalGrupos">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Designações</h5>
+                    <div class="number" id="totalDesignacoes">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Última Atualização</h5>
+                    <div class="number" id="ultimaAtt" style="font-size: 18px;">--:--:--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="row">
+            <div class="col-md-6">
+                <h4 style="margin-top: 25px; margin-bottom: 15px;">Usuários por Grupo</h4>
+                <div class="chart-container">
+                    <canvas id="grupoChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4 style="margin-top: 25px; margin-bottom: 15px;">Distribuição por Designação</h4>
+                <div class="chart-container">
+                    <canvas id="designacaoChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Busca -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" class="form-control" placeholder="🔍 Buscar por nome, email, grupo ou designação...">
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <div id="tableSpinner" class="spinner">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            </div>
+            <table class="table table-striped table-hover" id="usuariosTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Nome Completo</th>
+                        <th>E-mail</th>
+                        <th>Grupo</th>
+                        <th>Designação</th>
+                        <th>CPF</th>
+                    </tr>
+                </thead>
+                <tbody id="usuariosTbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="supabase-client.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Configuração
+        const SUPABASE_URL = 'https://fnlgstkkkxzrszmxqwwf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_n_XIoBQwq5efny__r71log_fMjQNvh1';
+
+        let supabaseClient = null;
+        let todosUsuarios = [];
+        let grupoChart = null;
+        let designacaoChart = null;
+
+        // Inicialização
+        async function init() {
+            supabaseClient = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            let tentativas = 0;
+            while (!supabaseClient.isConnected && tentativas < 5) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                tentativas++;
+            }
+            
+            criarGraficos();
+            atualizarStatus();
+            await carregarDados();
+            configurarBuscas();
+        }
+
+        function atualizarStatus() {
+            const statusEl = document.getElementById('syncStatus');
+            if (supabaseClient && supabaseClient.isConnected) {
+                statusEl.className = 'sync-status active connected';
+                statusEl.innerHTML = '✅ <strong>Conectado ao Supabase</strong>';
+                document.getElementById('connectionAlert').style.display = 'none';
+            } else {
+                statusEl.className = 'sync-status active disconnected';
+                statusEl.innerHTML = '❌ <strong>Desconectado</strong><br>Usando cache local';
+                document.getElementById('connectionAlert').style.display = 'block';
+            }
+        }
+
+        async function carregarDados() {
+            try {
+                todosUsuarios = await supabaseClient.getUsuarios();
+                
+                document.getElementById('totalUsuarios').textContent = todosUsuarios.length;
+                
+                const grupos = new Set(todosUsuarios.map(u => u.grupo)).size;
+                document.getElementById('totalGrupos').textContent = grupos;
+                
+                const designacoes = new Set(todosUsuarios.map(u => u.designacao)).size;
+                document.getElementById('totalDesignacoes').textContent = designacoes;
+                
+                const agora = new Date();
+                document.getElementById('ultimaAtt').textContent = agora.toLocaleTimeString('pt-BR');
+                
+                renderizarTabela(todosUsuarios);
+                atualizarGraficos();
+                
+                setInterval(() => {
+                    document.getElementById('ultimaAtt').textContent = new Date().toLocaleTimeString('pt-BR');
+                }, 1000);
+            } catch (e) {
+                console.error('Erro:', e);
+                mostrarErro('Erro ao carregar dados do Supabase');
+            }
+        }
+
+        function renderizarTabela(usuarios) {
+            const tbody = document.getElementById('usuariosTbody');
+            const spinner = document.getElementById('tableSpinner');
+            const table = document.getElementById('usuariosTable');
+            
+            tbody.innerHTML = '';
+            
+            if (usuarios.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum usuário encontrado</td></tr>';
+            } else {
+                usuarios.forEach(usuario => {
+                    const row = `
+                        <tr>
+                            <td><strong>${usuario.nome_completo || '-'}</strong></td>
+                            <td><span class="user-badge">📧 ${usuario.e_mail || '-'}</span></td>
+                            <td><span class="badge badge-info">${usuario.grupo || '-'}</span></td>
+                            <td>${usuario.designacao || '-'}</td>
+                            <td><code>${usuario.cpf || '-'}</code></td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+            
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        function configurarBuscas() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const termo = e.target.value.toLowerCase();
+                const filtrados = todosUsuarios.filter(u => 
+                    (u.nome_completo && u.nome_completo.toLowerCase().includes(termo)) ||
+                    (u.e_mail && u.e_mail.toLowerCase().includes(termo)) ||
+                    (u.grupo && u.grupo.toLowerCase().includes(termo)) ||
+                    (u.designacao && u.designacao.toLowerCase().includes(termo))
+                );
+                renderizarTabela(filtrados);
+            });
+        }
+
+        function criarGraficos() {
+            const ctxGrupo = document.getElementById('grupoChart').getContext('2d');
+            const ctxDes = document.getElementById('designacaoChart').getContext('2d');
+            
+            grupoChart = new Chart(ctxGrupo, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: [],
+                        backgroundColor: '#f5576c',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            designacaoChart = new Chart(ctxDes, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#f5576c', '#f093fb', '#4ecdc4', '#45b7d1', '#ff6b6b'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function atualizarGraficos() {
+            // Grupo
+            const grupos = {};
+            todosUsuarios.forEach(u => {
+                const grupo = u.grupo || 'Desconhecido';
+                grupos[grupo] = (grupos[grupo] || 0) + 1;
+            });
+            
+            grupoChart.data.labels = Object.keys(grupos);
+            grupoChart.data.datasets[0].data = Object.values(grupos);
+            grupoChart.update();
+
+            // Designação
+            const designacoes = {};
+            todosUsuarios.forEach(u => {
+                const des = u.designacao || 'Desconhecido';
+                designacoes[des] = (designacoes[des] || 0) + 1;
+            });
+            
+            designacaoChart.data.labels = Object.keys(designacoes);
+            designacaoChart.data.datasets[0].data = Object.values(designacoes);
+            designacaoChart.update();
+        }
+
+        function mostrarErro(msg) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger alert-dismissible fade show';
+            alert.innerHTML = `${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.querySelector('.container-fluid').prepend(alert);
+        }
+
+        // Inicia quando a página carrega
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

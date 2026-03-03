@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Falhas - Supabase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 3px solid #667eea;
+        }
+
+        .container-fluid {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-bottom: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h5 {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #f0f0f0;
+            margin-bottom: 15px;
+        }
+
+        .sync-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .sync-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            font-size: 14px;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .spinner {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner-border {
+            color: #667eea;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .badge-critical {
+            background: #dc3545;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        .search-bar {
+            margin-bottom: 15px;
+        }
+
+        .search-bar input {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+
+        .search-bar input:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        @media (max-width: 768px) {
+            .stat-card {
+                margin-bottom: 15px;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><strong>📊 Dashboard Falhas - Supabase</strong></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard_menu.html">🏠 Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard_ativos_supabase.html">📦 Ativos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">🔴 Falhas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard_usuarios_supabase.html">👥 Usuários</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid" style="max-width: 1400px;">
+        <!-- Status -->
+        <div id="syncStatus" class="sync-status">
+            ⏳ Conectando...
+        </div>
+        <div id="connectionAlert" class="alert alert-warning" style="display: none;">
+            ⚠️ <strong>Modo offline:</strong> Usando dados em cache. A conexão será restabelecida automaticamente.
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Total de Falhas</h5>
+                    <div class="number" id="totalFalhas">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Devicesos com Falha</h5>
+                    <div class="number" id="dispsComFalha">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Falhas Ativas</h5>
+                    <div class="number" id="falhasAtivas">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h5>Última Atualização</h5>
+                    <div class="number" id="ultimaAtt" style="font-size: 18px;">--:--:--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="row">
+            <div class="col-md-6">
+                <h4 style="margin-top: 25px; margin-bottom: 15px;">Modo de Falha Mais Comum</h4>
+                <div class="chart-container">
+                    <canvas id="modoFalhaChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4 style="margin-top: 25px; margin-bottom: 15px;">Fonte de Falhas</h4>
+                <div class="chart-container">
+                    <canvas id="fonteChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Busca -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" class="form-control" placeholder="🔍 Buscar por dispositivo, descrição ou modo de falha...">
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <div id="tableSpinner" class="spinner">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            </div>
+            <table class="table table-striped table-hover" id="falhasTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Dispositivo</th>
+                        <th>Descrição</th>
+                        <th>Modo de Falha</th>
+                        <th>Fonte</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="falhasTbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="supabase-client.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Configuração
+        const SUPABASE_URL = 'https://fnlgstkkkxzrszmxqwwf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_n_XIoBQwq5efny__r71log_fMjQNvh1';
+
+        let supabaseClient = null;
+        let todasFalhas = [];
+        let modoChart = null;
+        let fonteChart = null;
+
+        // Inicialização
+        async function init() {
+            supabaseClient = initSupabase(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            let tentativas = 0;
+            while (!supabaseClient.isConnected && tentativas < 5) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                tentativas++;
+            }
+            
+            criarGraficos();
+            atualizarStatus();
+            await carregarDados();
+            configurarBuscas();
+        }
+
+        function atualizarStatus() {
+            const statusEl = document.getElementById('syncStatus');
+            if (supabaseClient && supabaseClient.isConnected) {
+                statusEl.className = 'sync-status active connected';
+                statusEl.innerHTML = '✅ <strong>Conectado ao Supabase</strong>';
+                document.getElementById('connectionAlert').style.display = 'none';
+            } else {
+                statusEl.className = 'sync-status active disconnected';
+                statusEl.innerHTML = '❌ <strong>Desconectado</strong><br>Usando cache local';
+                document.getElementById('connectionAlert').style.display = 'block';
+            }
+        }
+
+        async function carregarDados() {
+            try {
+                todasFalhas = await supabaseClient.getFalhas();
+                
+                document.getElementById('totalFalhas').textContent = todasFalhas.length;
+                
+                const disps = new Set(todasFalhas.map(f => f.dispositivo)).size;
+                document.getElementById('dispsComFalha').textContent = disps;
+                
+                const ativas = todasFalhas.filter(f => !f.data_de_extincao_do_defeito).length;
+                document.getElementById('falhasAtivas').textContent = ativas;
+                
+                const agora = new Date();
+                document.getElementById('ultimaAtt').textContent = agora.toLocaleTimeString('pt-BR');
+                
+                renderizarTabela(todasFalhas);
+                atualizarGraficos();
+                
+                setInterval(() => {
+                    document.getElementById('ultimaAtt').textContent = new Date().toLocaleTimeString('pt-BR');
+                }, 1000);
+            } catch (e) {
+                console.error('Erro:', e);
+                mostrarErro('Erro ao carregar dados do Supabase');
+            }
+        }
+
+        function renderizarTabela(falhas) {
+            const tbody = document.getElementById('falhasTbody');
+            const spinner = document.getElementById('tableSpinner');
+            const table = document.getElementById('falhasTable');
+            
+            tbody.innerHTML = '';
+            
+            if (falhas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma falha encontrada</td></tr>';
+            } else {
+                falhas.forEach(falha => {
+                    const dataStr = new Date(falha.data).toLocaleDateString('pt-BR');
+                    const status = falha.data_de_extincao_do_defeito ? '✅ Resolvida' : '🔴 Ativa';
+                    const statusBadge = falha.data_de_extincao_do_defeito ? 
+                        '<span class="badge badge-success">Resolvida</span>' : 
+                        '<span class="badge badge-critical">Ativa</span>';
+                    
+                    const row = `
+                        <tr>
+                            <td><strong>${falha.dispositivo}</strong></td>
+                            <td>${falha.descricao || '-'}</td>
+                            <td><span class="badge badge-warning">${falha.modo_de_falha || '-'}</span></td>
+                            <td>${falha.fonte || '-'}</td>
+                            <td style="font-size: 12px;">${dataStr}</td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+            
+            spinner.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        function configurarBuscas() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const termo = e.target.value.toLowerCase();
+                const filtradas = todasFalhas.filter(f => 
+                    f.dispositivo.toLowerCase().includes(termo) ||
+                    (f.descricao && f.descricao.toLowerCase().includes(termo)) ||
+                    (f.modo_de_falha && f.modo_de_falha.toLowerCase().includes(termo))
+                );
+                renderizarTabela(filtradas);
+            });
+        }
+
+        function criarGraficos() {
+            const ctxModo = document.getElementById('modoFalhaChart').getContext('2d');
+            const ctxFonte = document.getElementById('fonteChart').getContext('2d');
+            
+            modoChart = new Chart(ctxModo, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: [],
+                        backgroundColor: '#667eea',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            fonteChart = new Chart(ctxFonte, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#667eea', '#764ba2', '#ff6b6b', '#4ecdc4', '#45b7d1'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function atualizarGraficos() {
+            // Modo de falha
+            const modos = {};
+            todasFalhas.forEach(f => {
+                const modo = f.modo_de_falha || 'Desconhecido';
+                modos[modo] = (modos[modo] || 0) + 1;
+            });
+            
+            modoChart.data.labels = Object.keys(modos);
+            modoChart.data.datasets[0].data = Object.values(modos);
+            modoChart.update();
+
+            // Fonte
+            const fontes = {};
+            todasFalhas.forEach(f => {
+                const fonte = f.fonte || 'Desconhecido';
+                fontes[fonte] = (fontes[fonte] || 0) + 1;
+            });
+            
+            fonteChart.data.labels = Object.keys(fontes);
+            fonteChart.data.datasets[0].data = Object.values(fontes);
+            fonteChart.update();
+        }
+
+        function mostrarErro(msg) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger alert-dismissible fade show';
+            alert.innerHTML = `${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+            document.querySelector('.container-fluid').prepend(alert);
+        }
+
+        // Inicia quando a página carrega
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

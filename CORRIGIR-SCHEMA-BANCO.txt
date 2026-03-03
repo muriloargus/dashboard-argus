@@ -1,0 +1,63 @@
+📋 CORRIGIR SCHEMA DO BANCO - INSTRUÇÕES RÁPIDAS
+================================================
+
+PROBLEMA ENCONTRADO:
+- Os nomes de colunas do CSV não combinam com os da tabela no Supabase
+- Exemplo: "Ativo até" (com acento) vs "ativo_ate" (sem acento)
+
+SOLUÇÃO:
+Recriar as tabelas com os nomes corretos
+
+⏱️ TEMPO ESTIMADO: 3 minutos
+
+OPÇÃO 1: AUTOMÁTICA (se conseguir)
+==================================
+1. Execute no PowerShell:
+   python fix_database_schema.py
+
+2. Se funcionar, vá para OPÇÃO 3
+
+OPÇÃO 2: MANUAL (RECOMENDADO - mais seguro)
+=============================================
+1. Abra: https://app.supabase.com
+2. Faça login na sua conta
+3. Clique no seu projeto "Argus"
+4. Vá para "SQL Editor" (menu esquerdo)
+5. Clique "+ New Query"
+6. Abra o arquivo: SQL_SETUP_SUPABASE.sql (com editor de texto)
+7. COPIE TODO O CONTEÚDO
+8. COLE no editor SQL do Supabase
+9. Clique "RUN" (ou Ctrl+Enter)
+10. Aguarde "Query executed successfully"
+
+OPÇÃO 3: APÓS CRIAR TABELAS
+=============================
+Volta ao PowerShell e execute:
+   python pipeline.py
+
+Você verá:
+   ✅ Ativos: 1765 registros sincronizados
+   ✅ Falhas: 6534 registros sincronizados
+   ✅ Usuários: 467 registros sincronizados
+
+VERIFICAR DADOS NO SUPABASE
+=============================
+1. Em https://app.supabase.com, clique "Table Editor"
+2. Você verá:
+   - tabelas ativos (1765 linhas)
+   - tabelas falhas (6534 linhas)
+   - tabelas usuarios (467 linhas)
+
+SE DER ERRO:
+============
+Se receber erro tipo "permission denied" ou "role does not exist":
+- Use o SUPABASE_SERVICE_ROLE_KEY ao invés de ANON_KEY
+- Confirme que .env tem SUPABASE_SERVICE_ROLE_KEY preenchido
+
+❓ DÚVIDAS:
+===========
+Se não souber seu SUPABASE_SERVICE_ROLE_KEY:
+1. Abra https://app.supabase.com
+2. Projeto > Settings > API (aba)
+3. Procure "service_role" (chave longa começando com "eyJh...")
+4. Copie e cole em .env na linha SUPABASE_SERVICE_ROLE_KEY

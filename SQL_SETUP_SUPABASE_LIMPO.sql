@@ -1,10 +1,25 @@
 -- ================================================================
--- ARGUS DASHBOARD - SQL SETUP
--- Copie este código inteiro e execute no Supabase SQL Editor
+-- ARGUS DASHBOARD - SQL SETUP (VERSÃO LIMPA)
+-- Mata tudo e recria do zero com nomes corretos
+-- ================================================================
+
+-- 🗑️  LIMPAR TUDO PRIMEIRO (drop com CASCADE)
+DROP POLICY IF EXISTS "usuarios_read_policy" ON usuarios;
+DROP POLICY IF EXISTS "excecoes_read_policy" ON excecoes;
+DROP POLICY IF EXISTS "falhas_read_policy" ON falhas;
+DROP POLICY IF EXISTS "ativos_read_policy" ON ativos;
+
+DROP TABLE IF EXISTS usuarios CASCADE;
+DROP TABLE IF EXISTS excecoes CASCADE;
+DROP TABLE IF EXISTS falhas CASCADE;
+DROP TABLE IF EXISTS ativos CASCADE;
+
+-- ================================================================
+-- ✨ CRIAR TABELAS COM NOMES CORRETOS
 -- ================================================================
 
 -- Criar tabela ATIVOS
-CREATE TABLE IF NOT EXISTS ativos (
+CREATE TABLE ativos (
     id BIGSERIAL PRIMARY KEY,
     dispositivo VARCHAR(50) UNIQUE NOT NULL,
     grupo_de_dispositivo TEXT,
@@ -38,7 +53,7 @@ CREATE TABLE IF NOT EXISTS ativos (
 );
 
 -- Criar tabela FALHAS
-CREATE TABLE IF NOT EXISTS falhas (
+CREATE TABLE falhas (
     id BIGSERIAL PRIMARY KEY,
     dispositivo VARCHAR(50),
     grupo_de_dispositivo TEXT,
@@ -55,7 +70,7 @@ CREATE TABLE IF NOT EXISTS falhas (
 );
 
 -- Criar tabela EXCEÇÕES
-CREATE TABLE IF NOT EXISTS excecoes (
+CREATE TABLE excecoes (
     id BIGSERIAL PRIMARY KEY,
     data_evento TIMESTAMP,
     evento VARCHAR(200),
@@ -69,7 +84,7 @@ CREATE TABLE IF NOT EXISTS excecoes (
 );
 
 -- Criar tabela USUÁRIOS
-CREATE TABLE IF NOT EXISTS usuarios (
+CREATE TABLE usuarios (
     id BIGSERIAL PRIMARY KEY,
     nome_completo VARCHAR(200),
     e_mail VARCHAR(150),
@@ -79,28 +94,38 @@ CREATE TABLE IF NOT EXISTS usuarios (
     criado_em TIMESTAMP DEFAULT NOW(),
     atualizado_em TIMESTAMP DEFAULT NOW()
 );
-);
 
--- Habilitar RLS (Row Level Security) - Padrão Supabase
+-- ================================================================
+-- 🔒 HABILITAR RLS (Row Level Security)
+-- ================================================================
+
 ALTER TABLE ativos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE falhas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE excecoes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
 
--- Criar políticas públicas de leitura
+-- ================================================================
+-- 📖 CRIAR POLÍTICAS DE LEITURA PÚBLICA
+-- ================================================================
+
 CREATE POLICY "ativos_read_policy" ON ativos FOR SELECT USING (true);
 CREATE POLICY "falhas_read_policy" ON falhas FOR SELECT USING (true);
 CREATE POLICY "excecoes_read_policy" ON excecoes FOR SELECT USING (true);
 CREATE POLICY "usuarios_read_policy" ON usuarios FOR SELECT USING (true);
 
--- Criar índices para performance
+-- ================================================================
+-- ⚡ CRIAR ÍNDICES PARA PERFORMANCE
+-- ================================================================
+
 CREATE INDEX idx_ativos_dispositivo ON ativos(dispositivo);
-CREATE INDEX idx_ativos_status ON ativos(status_download);
+CREATE INDEX idx_ativos_status ON ativos(status_do_download);
 CREATE INDEX idx_falhas_dispositivo ON falhas(dispositivo);
-CREATE INDEX idx_falhas_data ON falhas(data_falha);
+CREATE INDEX idx_falhas_data ON falhas(data);
 CREATE INDEX idx_excecoes_dispositivo ON excecoes(dispositivo);
-CREATE INDEX idx_usuarios_email ON usuarios(email);
+CREATE INDEX idx_usuarios_email ON usuarios(e_mail);
 
 -- ================================================================
--- ✅ PRONTO! As tabelas foram criadas com sucesso
+-- ✅ PRONTO!
+-- Agora execute no PowerShell:
+--    python pipeline.py
 -- ================================================================

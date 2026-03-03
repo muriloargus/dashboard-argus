@@ -126,8 +126,13 @@
     <nav class="navbar navbar-dark">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">📦 Dashboard Ativos - Supabase</span>
-            <div id="syncStatus" class="sync-status">
-                <span id="syncMessage">⏳ Conectando...</span>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a href="dashboard_menu.html" class="btn btn-sm btn-light">🏠 Menu</a>
+                <a href="dashboard_falhas_supabase.html" class="btn btn-sm btn-outline-light">🔴 Falhas</a>
+                <a href="dashboard_usuarios_supabase.html" class="btn btn-sm btn-outline-light">👥 Usuários</a>
+                <div id="syncStatus" class="sync-status">
+                    <span id="syncMessage">⏳ Conectando...</span>
+                </div>
             </div>
         </div>
     </nav>

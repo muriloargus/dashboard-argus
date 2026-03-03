@@ -1,0 +1,48 @@
+📋 LIMPEZA E RECRIAÇÃO DE SCHEMA
+================================
+
+PROBLEMA:
+A política "ativos_read_policy" já existe
+→ Significa que as tabelas antiga estão ainda lá com conflitos
+
+SOLUÇÃO:
+Usar SQL_SETUP_SUPABASE_LIMPO.sql que:
+✅ Deleta TUDO (tabelas + políticas)
+✅ Recria do zero com nomes corretos
+✅ Sem conflitos
+
+⏱️ TEMPO: 2 minutos
+
+PASSO 1: Executar SQL Limpo
+============================
+1. Abra: https://app.supabase.com
+2. Vá para "SQL Editor"
+3. Clique "+ New Query"
+4. Abra o arquivo: SQL_SETUP_SUPABASE_LIMPO.sql
+5. COPIE TODO O CONTEÚDO
+6. COLE no editor SQL do Supabase
+7. Clique "RUN"
+8. Aguarde: "Query executed successfully"
+
+Se aparecer erro novamente:
+→ Copie uma seção por vez (first DROP statements, depois CREATE)
+
+PASSO 2: Sincronizar Dados
+===========================
+Volta ao PowerShell e execute:
+   python pipeline.py
+
+Resultado esperado:
+   ✅ Ativos: 1765 registros sincronizados
+   ✅ Falhas: 6534 registros sincronizados
+   ✅ Usuários: 467 registros sincronizados
+   ✅ Pipeline concluído!
+
+PASSO 3: Verificar
+==================
+No Supabase, vá para "Table Editor" e confirme:
+   ✅ ativos (1765 linhas)
+   ✅ falhas (6534 linhas)
+   ✅ usuarios (467 linhas)
+
+PRONTO! 🎉
