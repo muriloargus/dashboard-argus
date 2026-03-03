@@ -1,0 +1,24 @@
+{
+  "data": "2026-03-02",
+  "dashboards_supabase": 3,
+  "dashboards_com_idb": 11,
+  "dashboards_sem_idb": 0,
+  "dashboards_nao_existem": 1,
+  "lista_com_idb": [
+    "dashboard_motoristas v2.html",
+    "dashboard_desempenho_analista.html",
+    "dashboard_comparativo.html",
+    "dashboard_dispositivos.html",
+    "dashboard_falhas.html",
+    "dashboard_excecoes.html",
+    "tv_dashboard.html",
+    "dashboard_risco_colisao.html",
+    "dashboard_temporal_mapas.html",
+    "dashboard_timeline.html",
+    "dashboard_usuarios.html"
+  ],
+  "lista_sem_idb": [],
+  "lista_nao_existem": [
+    "dashboard_status_frota.html"
+  ]
+}
