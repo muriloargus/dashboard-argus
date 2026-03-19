@@ -6,6 +6,7 @@
     <title>Telemetria CCO - Falhas</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -110,6 +111,79 @@
             font-size: 0.85rem;
             width: calc(var(--sidebar-width) - 40px);
         }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
 
         .main-content {
             flex: 1;
@@ -279,20 +353,27 @@
 
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
             margin-bottom: 40px;
         }
 
         .card {
             background: white;
             border-radius: 16px;
-            padding: 25px;
-            min-height: 350px;
+            padding: 35px;
+            min-height: 480px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             border: 1px solid rgba(99, 163, 216, 0.1);
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
         }
 
         .card::before {
@@ -306,10 +387,10 @@
         }
 
         .card h4 {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--primary-color);
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -317,7 +398,22 @@
 
         .chart-wrapper {
             position: relative;
-            height: 300px;
+            height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card:nth-child(2) .chart-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+        }
+        
+        .card:nth-child(2) .chart-wrapper canvas {
+            max-width: 100%;
+            max-height: 280px;
         }
 
         .table-section {
@@ -428,7 +524,7 @@
             cursor: not-allowed;
         }
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1600px) {
             .charts-grid {
                 grid-template-columns: 1fr;
             }
@@ -607,30 +703,33 @@ body.dark .insight-section li {
 </style>
 <body>
     <div class="dashboard-container">
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
                 <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
-                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-                <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
-                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
-                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-                <li><a href="dashboard_falhas.html" class="active"><i class="bi bi-bug"></i> Falhas</a></li>
-                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
-                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
             </ul>
-            <div class="sidebar-footer"><p style="margin:0"></p></div>
+            <div class="sidebar-footer">
+                <p></p>
+            </div>
         </nav>
 
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <div class="logo-ambev">
                 <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
                 <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" style="height: 40px; width: auto; object-fit: contain;">
@@ -680,6 +779,12 @@ body.dark .insight-section li {
                             <div class="kpi-title">Controladores Afetados</div>
                             <div class="kpi-value" id="kpiControladores">0</div>
                             <div class="kpi-description">Módulos com problemas</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon"><i class="bi bi-calendar-event"></i></div>
+                            <div class="kpi-title">Período Analisado</div>
+                            <div class="kpi-value" id="kpiPeriodo">-</div>
+                            <div class="kpi-description">Data dos registros</div>
                         </div>
                     </div>
                 </section>
@@ -763,9 +868,6 @@ body.dark .insight-section li {
         </main>
     </div>
 
-    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
-    <script src="idb-manager.js"></script>
-    <script src="storage-adapter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <script>
         const DEFAULT_COLORS = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600','#63a3d8','#28a745','#e60000','#ffc107'];
@@ -777,12 +879,32 @@ body.dark .insight-section li {
         function parseDateFlexible(value) {
             if (!value || value === '0') return null;
             const str = String(value).trim();
+            
+            // Tentar número Excel (formato antigo)
             const asNum = Number(str.replace(',', '.'));
             if (!isNaN(asNum) && asNum > 1000) {
                 const utc_days = asNum - 25569;
                 const date_info = new Date(utc_days * 86400 * 1000);
                 if (!isNaN(date_info.getTime())) return date_info;
             }
+            
+            // Tentar formato ISO (YYYY-MM-DD)
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                const parsed = new Date(str);
+                if (!isNaN(parsed.getTime())) return parsed;
+            }
+            
+            // Tentar formato brasileiro (DD/MM/YYYY)
+            const brMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (brMatch) {
+                const parsed = new Date(brMatch[3], brMatch[2] - 1, brMatch[1]);
+                if (!isNaN(parsed.getTime())) return parsed;
+            }
+            
+            // Tentar formato genérico
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime())) return parsed;
+            
             return null;
         }
 
@@ -871,9 +993,21 @@ body.dark .insight-section li {
             if (regMatch) regiao = (regMatch[1] || regMatch[2] || '').trim();
 
             const extracted = extractTransportadoraUnidade(grupo);
+            
+            // Converter data para formato YYYY-MM-DD para exibição
+            let dataFormatada = '';
+            const dataMatch = data.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (dataMatch) {
+                // Formato DD/MM/YYYY -> YYYY-MM-DD
+                dataFormatada = `${dataMatch[3]}-${String(dataMatch[2]).padStart(2, '0')}-${String(dataMatch[1]).padStart(2, '0')}`;
+            } else {
+                // Assumir que já está em YYYY-MM-DD ou usar como está
+                dataFormatada = data;
+            }
+            
             return {
                 device, grupo, regiao,
-                rawDate: data, 
+                rawDate: dataFormatada, 
                 date: parseDateFlexible(data),
                 descricao, fonte, controlador,
                 transportadora: extracted.transportadora,
@@ -881,21 +1015,46 @@ body.dark .insight-section li {
             };
         }
 
+        function loadDefaultFalhas() {
+            const sample = [
+                { Dispositivo: 'MG-1547', 'Grupo de dispositivo': 'TRS_LOG20, UNI_BELO, REG REGIÃO MG', Data: '2026-03-02', Descrição: 'Sensor de Velocidade - Defeito', Fonte: 'Sensor', Controlador: 'Engine Control' },
+                { Dispositivo: 'SP-2891', 'Grupo de dispositivo': 'TRS_TRANPLA, UNI_SP_NORTE, REG REGIÃO SP', Data: '2026-03-01', Descrição: 'Comunicação ECU Perdida', Fonte: 'ECU', Controlador: 'BCM' },
+                { Dispositivo: 'GO-3456', 'Grupo de dispositivo': 'TRS_TRANSLOG, CDD GO_CENTRAL, REG REGIÃO GO', Data: '2026-02-28', Descrição: 'Erro de Calibração Sensor ABS', Fonte: 'Sensor', Controlador: 'ABS' },
+                { Dispositivo: 'SP-4821', 'Grupo de dispositivo': 'TRS_TRANPLA, UNI_SP_NORTE, REG REGIÃO SP', Data: '2026-02-27', Descrição: 'Falha no Controlador de Transmissão', Fonte: 'Gateway', Controlador: 'Transmission Control' },
+                { Dispositivo: 'MG-5678', 'Grupo de dispositivo': 'TRS_LOG20, UNI_BELO, REG REGIÃO MG', Data: '2026-02-26', Descrição: 'Comunicação Perdida - CAN BUS', Fonte: 'Gateway', Controlador: 'BCM' },
+                { Dispositivo: 'PR-2105', 'Grupo de dispositivo': 'TRS_TRANSLOG, UNI_CURITIBA, REG REGIÃO PR', Data: '2026-02-25', Descrição: 'Sensor Temperatura com Defeito', Fonte: 'Sensor', Controlador: 'Engine Control' },
+                { Dispositivo: 'SP-9334', 'Grupo de dispositivo': 'TRS_TRANPLA, UNI_SP_NORTE, REG REGIÃO SP', Data: '2026-02-24', Descrição: 'Erro de Controle de Tração', Fonte: 'ECU', Controlador: 'Traction Control' },
+                { Dispositivo: 'MG-7890', 'Grupo de dispositivo': 'TRS_LOG20, UNI_BELO, REG REGIÃO MG', Data: '2026-02-23', Descrição: 'Falha na Comunicação com Gateway', Fonte: 'Gateway', Controlador: 'BCM' },
+                { Dispositivo: 'AM-1234', 'Grupo de dispositivo': 'TRS_LOG20, UNI_MANAUS, REG REGIÃO AM', Data: '2026-02-22', Descrição: 'Sensor de Freio com Defeito', Fonte: 'Sensor', Controlador: 'ABS' },
+                { Dispositivo: 'SP-2891', 'Grupo de dispositivo': 'TRS_TRANPLA, UNI_SP_NORTE, REG REGIÃO SP', Data: '2026-02-21', Descrição: 'Erro na Injeção de Combustível', Fonte: 'ECU', Controlador: 'Engine Control' },
+                { Dispositivo: 'GO-3456', 'Grupo de dispositivo': 'TRS_TRANSLOG, CDD GO_CENTRAL, REG REGIÃO GO', Data: '2026-02-20', Descrição: 'Falha no Sensor de Oxigênio', Fonte: 'Sensor', Controlador: 'Engine Control' },
+                { Dispositivo: 'MG-1547', 'Grupo de dispositivo': 'TRS_LOG20, UNI_BELO, REG REGIÃO MG', Data: '2026-02-19', Descrição: 'Comunicação ECU Instável', Fonte: 'Gateway', Controlador: 'BCM' },
+                { Dispositivo: 'SP-4821', 'Grupo de dispositivo': 'TRS_TRANPLA, UNI_SP_NORTE, REG REGIÃO SP', Data: '2026-02-18', Descrição: 'Erro na Lógica de Freio ABS', Fonte: 'ECU', Controlador: 'ABS' },
+                { Dispositivo: 'PR-2105', 'Grupo de dispositivo': 'TRS_TRANSLOG, UNI_CURITIBA, REG REGIÃO PR', Data: '2026-02-17', Descrição: 'Falha de Comunicação CAN BUS', Fonte: 'Gateway', Controlador: 'Transmission Control' },
+                { Dispositivo: 'SP-9334', 'Grupo de dispositivo': 'TRS_TRANPLA, UNI_SP_NORTE, REG REGIÃO SP', Data: '2026-02-16', Descrição: 'Sensor de Velocidade - Intermitente', Fonte: 'Sensor', Controlador: 'Engine Control' },
+                { Dispositivo: 'AM-1234', 'Grupo de dispositivo': 'TRS_LOG20, UNI_MANAUS, REG REGIÃO AM', Data: '2026-02-15', Descrição: 'Falha no Sistema de Injeção', Fonte: 'ECU', Controlador: 'Engine Control' },
+                { Dispositivo: 'MG-5678', 'Grupo de dispositivo': 'TRS_LOG20, UNI_BELO, REG REGIÃO MG', Data: '2026-02-14', Descrição: 'Erro de Calibração ABS', Fonte: 'Sensor', Controlador: 'ABS' },
+                { Dispositivo: 'GO-3456', 'Grupo de dispositivo': 'TRS_TRANSLOG, CDD GO_CENTRAL, REG REGIÃO GO', Data: '2026-02-13', Descrição: 'Falha na Transmissão Automática', Fonte: 'ECU', Controlador: 'Transmission Control' }
+            ];
+            rawData = sample.map(normalizeRow);
+            populateFilters();
+            buildCharts();
+            console.log('Dados padrão de falhas carregados');
+        }
+
         function populateFilters() {
             const tSet = new Set(), uSet = new Set();
             transportadoraToUnidades = {};
             
             rawData.forEach(r => {
-                if (r.transportadora) {
-                    tSet.add(r.transportadora);
-                    if (!transportadoraToUnidades[r.transportadora]) {
-                        transportadoraToUnidades[r.transportadora] = new Set();
-                    }
-                    if (r.unidade) {
-                        transportadoraToUnidades[r.transportadora].add(r.unidade);
-                    }
+                const transp = r.transportadora || 'Sem cadastro';
+                const unid = r.unidade || 'Sem cadastro';
+                tSet.add(transp);
+                if (!transportadoraToUnidades[transp]) {
+                    transportadoraToUnidades[transp] = new Set();
                 }
-                if (r.unidade) uSet.add(r.unidade);
+                transportadoraToUnidades[transp].add(unid);
+                uSet.add(unid);
             });
             
             const tSel = document.getElementById('transportadoraFilter');
@@ -967,6 +1126,29 @@ body.dark .insight-section li {
             document.getElementById('kpiDevices').textContent = new Set(filtered.map(r => r.device)).size;
             document.getElementById('kpiControladores').textContent = new Set(filtered.map(r => r.controlador).filter(c => c)).size;
 
+            // Período analisado (formato brasileiro)
+            if (filtered.length > 0) {
+                const datas = filtered.map(r => {
+                    if (!r.rawDate) return null;
+                    // r.rawDate está em formato YYYY-MM-DD
+                    if (/^\d{4}-\d{2}-\d{2}/.test(r.rawDate)) {
+                        const parts = r.rawDate.substring(0, 10).split('-');
+                        return { raw: r.rawDate, fmt: `${parts[2]}/${parts[1]}/${parts[0]}` };
+                    }
+                    return null;
+                }).filter(d => d).sort((a, b) => a.raw.localeCompare(b.raw));
+                
+                if (datas.length > 0) {
+                    const dataInicio = datas[0].fmt;
+                    const dataFim = datas[datas.length - 1].fmt;
+                    document.getElementById('kpiPeriodo').textContent = dataInicio + ' até ' + dataFim;
+                } else {
+                    document.getElementById('kpiPeriodo').textContent = '-';
+                }
+            } else {
+                document.getElementById('kpiPeriodo').textContent = '-';
+            }
+
             // Gráficos
             const desc = {}, fonte = {}, controladores = {};
             const devices = {}, unidades = {};
@@ -1010,14 +1192,36 @@ body.dark .insight-section li {
             fonteChart.data.datasets[0].backgroundColor = DEFAULT_COLORS;
             fonteChart.update();
 
-            // Série temporal (últimos 30 dias)
+            // Série temporal (apenas datas do CSV)
             const days = {};
-            const today = new Date(); today.setHours(0,0,0,0);
-            for (let i=29; i>=0; i--) {
-                const d = new Date(today); d.setDate(today.getDate()-i);
-                const k = d.toISOString().slice(0,10);
-                days[k] = 0;
+            let minDate = null, maxDate = null;
+            
+            // Encontrar min e max datas nos dados
+            filtered.forEach(r => {
+                if (r.date) {
+                    if (!minDate || r.date < minDate) minDate = r.date;
+                    if (!maxDate || r.date > maxDate) maxDate = r.date;
+                }
+            });
+            
+            // Se não houver datas, usar período padrão
+            if (!minDate || !maxDate) {
+                const today = new Date(); today.setHours(0,0,0,0);
+                minDate = new Date(today); minDate.setDate(today.getDate()-29);
+                maxDate = today;
             }
+            
+            // Gerar intervalo de datas do CSV
+            const current = new Date(minDate); current.setHours(0,0,0,0);
+            maxDate.setHours(0,0,0,0);
+            
+            while (current <= maxDate) {
+                const k = current.toISOString().slice(0,10);
+                days[k] = 0;
+                current.setDate(current.getDate() + 1);
+            }
+            
+            // Contar falhas por dia
             filtered.forEach(r => {
                 if (r.date) {
                     const d = new Date(r.date); d.setHours(0,0,0,0);
@@ -1025,7 +1229,8 @@ body.dark .insight-section li {
                     if (k in days) days[k]++;
                 }
             });
-            const labels = Object.keys(days);
+            
+            const labels = Object.keys(days).sort();
             const data = labels.map(l => days[l]);
             timeChart.data.labels = labels;
             timeChart.data.datasets[0].data = data;
@@ -1063,32 +1268,39 @@ body.dark .insight-section li {
             document.getElementById('nextBtn').disabled = currentPage >= totalPages;
         }
 
+        // Registrar plugin ChartDataLabels
+        if (window.Chart && window.ChartDataLabels) {
+            try {
+                Chart.register(ChartDataLabels);
+            } catch(e) {
+                console.warn('Erro ao registrar ChartDataLabels:', e);
+            }
+        }
+
         // Inicializa Charts
-        Chart.register(ChartDataLabels);
-        
         const descChart = new Chart(document.getElementById('descChart').getContext('2d'), {
             type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: true, position: 'top' }, datalabels: { display: true, anchor: 'end', align: 'end', font: { weight: 'bold' } } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
         });
         const controladoresChart = new Chart(document.getElementById('controladoresChart').getContext('2d'), {
             type: 'doughnut', data: { labels: [], datasets: [{ data: [], backgroundColor: DEFAULT_COLORS }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, datalabels: { font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } } }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
         });
         const deviceChart = new Chart(document.getElementById('deviceChart').getContext('2d'), {
             type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: true, position: 'top' }, datalabels: { display: true, anchor: 'end', align: 'end', font: { weight: 'bold' } } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
         });
         const fonteChart = new Chart(document.getElementById('fonteChart').getContext('2d'), {
             type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: true, position: 'top' }, datalabels: { display: true, anchor: 'end', align: 'end', font: { weight: 'bold' } } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
         });
         const timeChart = new Chart(document.getElementById('timeChart').getContext('2d'), {
             type: 'line', data: { labels: [], datasets: [{ label: 'Falhas/dia', data: [], borderColor: '#e60000', backgroundColor: 'rgba(230,0,0,0.1)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#e60000' }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: true }, datalabels: { anchor: 'end', align: 'top', font: { size: 10, weight: 'bold' }, color: '#e60000', formatter: (value) => value > 0 ? value : '' } }, scales: { y: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: true }, datalabels: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
         const unidadeChart = new Chart(document.getElementById('unidadeChart').getContext('2d'), {
             type: 'bar', data: { labels: [], datasets: [{ label: 'Ocorrências', data: [], backgroundColor: DEFAULT_COLORS }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', font: { size: 11, weight: 'bold' }, color: '#fff', formatter: (value) => value > 0 ? value : '' } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: true, position: 'top' }, datalabels: { display: true, anchor: 'end', align: 'end', font: { weight: 'bold' } } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
         });
 
         // Eventos
@@ -1113,7 +1325,7 @@ body.dark .insight-section li {
                             return;
                         }
                         rawData = res.data.map(normalizeRow);
-                        window.saveDataSafely('falhasData', rawData);
+                        try { localStorage.setItem('falhasData', JSON.stringify(res.data)); } catch(e) {}
                         currentPage = 1;
                         populateFilters();
                         buildCharts();
@@ -1149,8 +1361,8 @@ body.dark .insight-section li {
                     'Controlador': i%3 ? 'Body controller' : 'Engine controller'
                 });
             }
-            window.saveDataSafely('falhasData', sample);
-            alert('Amostra salva em localStorage/IndexedDB');
+            localStorage.setItem('falhasData', JSON.stringify(sample));
+            alert('Amostra salva em localStorage');
         });
 
         document.getElementById('searchInput').addEventListener('input', function() { currentPage = 1; buildCharts(); });
@@ -1196,6 +1408,7 @@ body.dark .insight-section li {
         
         // Carregar preferência dark mode ao iniciar
         document.addEventListener('DOMContentLoaded', function() {
+            activateCurrentLink();
             const darkMode = localStorage.getItem('darkMode');
             console.log('Carregando dark mode:', darkMode);
             if (darkMode === 'true') {
@@ -1203,22 +1416,50 @@ body.dark .insight-section li {
                 console.log('Dark mode aplicado ao carregar');
             }
 
-            // Carregar dados persistidos
-            const savedData = localStorage.getItem('falhasData');
+            // Carregar dados persistidos (com tratamento para ITP/Privacy)
+            let savedData = null;
+            try {
+                savedData = localStorage.getItem('falhasData');
+            } catch(e) {
+                console.warn('Storage access denied, usando dados padrão');
+            }
+            
             if (savedData) {
-              try {
-                const parsed = JSON.parse(savedData);
-                rawData = parsed.map(normalizeRow);
-                populateFilters();
-                buildCharts();
-                console.log('Dados carregados do localStorage');
-              } catch(e) {
-                console.log('Erro ao carregar dados persistidos');
-              }
+                const parsed = safeParseJSON(savedData);
+                if (parsed && Array.isArray(parsed)) {
+                    rawData = parsed.map(normalizeRow);
+                    populateFilters();
+                    buildCharts();
+                    console.log('✅ Dados carregados do localStorage');
+                } else {
+                    console.warn('⚠️ Dados persistidos inválidos, usando dados padrão');
+                    loadDefaultFalhas();
+                }
+            } else {
+                loadDefaultFalhas();
             }
             
             document.getElementById('toggleDark').addEventListener('click', toggleDark);
         });
+    
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
+        }
     </script>
 </body>
 </html>

@@ -6,13 +6,11 @@
     <title>Dashboard de Exceções - Sistema Argus Ambev</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
-    <script src="idb-manager.js"></script>
-    <script src="storage-adapter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
     <style>
         :root {
@@ -131,13 +129,85 @@
         .sidebar-footer {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
             font-size: 0.85rem;
             text-align: center;
             position: absolute;
             bottom: 20px;
             width: calc(var(--sidebar-width) - 40px);
         }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
         
         .main-content {
             flex: 1;
@@ -244,6 +314,13 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             border: 1px solid rgba(99, 163, 216, 0.1);
             position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
         }
         
         .chart-card::before {
@@ -271,9 +348,17 @@
             position: relative;
             height: 300px;
         }
-
-        .chart-card.full-width .chart-wrapper {
-            height: 600px !important;
+        
+        #map {
+            height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 10;
+            margin-top: 10px;
+        }
+        
+        body.dark #map {
+            filter: invert(0.93) hue-rotate(200deg);
         }
         
         .chart-card.full-width {
@@ -531,73 +616,31 @@
             background: rgba(255,255,255,0.05);
             color: rgba(255,255,255,0.85);
         }
-
-        /* Map Container */
-        #mapContainer {
-            width: 100%;
-            height: 500px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            overflow: hidden;
-            margin-bottom: 30px;
-        }
-
-        .map-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
-
-        .map-card h3 {
-            margin: 0 0 15px 0;
-            color: var(--primary-color);
-            font-weight: 700;
-        }
-
-        body.dark #mapContainer,
-        body.dark .map-card {
-            background: #081226;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-
-        body.dark .map-card h3 {
-            color: #63a3d8;
-        }
-
-        .leaflet-popup-content-wrapper {
-            border-radius: 8px;
-        }
-
-        .leaflet-popup-content {
-            font-size: 12px;
-            line-height: 1.4;
-        }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
                 <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
-                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-                <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
-                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
-                <li><a href="dashboard_excecoes.html" class="active"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
-                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
             </ul>
             <div class="sidebar-footer">
                 <p></p>
@@ -605,7 +648,7 @@
         </nav>
         
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <!-- Logos -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 40px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
@@ -654,6 +697,12 @@
                     <div class="icon"><i class="bi bi-shield-exclamation"></i></div>
                     <div class="label">Tipo de Exceção Mais Comum</div>
                     <div class="value" id="excecaoComum" style="font-size: 1.1rem;">-</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="icon"><i class="bi bi-calendar-event"></i></div>
+                    <div class="label">Período Analisado</div>
+                    <div class="value" id="periodoAnalizado">-</div>
                 </div>
             </div>
             
@@ -760,18 +809,16 @@
                     <div class="chart-title">
                         <i class="bi bi-geo-alt"></i> Top 20 Endereços com Mais Eventos
                     </div>
-                    <div class="chart-wrapper">
+                    <div class="chart-wrapper" style="height: 400px;">
                         <canvas id="placasEventosChart"></canvas>
                     </div>
                 </div>
-            </div>
-
-            <!-- Map -->
-            <div class="map-card">
-                <h3>
-                    <i class="bi bi-map"></i> Mapa de Localização dos Top 20 Endereços
-                </h3>
-                <div id="mapContainer"></div>
+                <div class="chart-card full-width">
+                    <div class="chart-title">
+                        <i class="bi bi-geo-alt"></i> Mapa de Localizações
+                    </div>
+                    <div id="map"></div>
+                </div>
             </div>
             
             <!-- Filters and Table -->
@@ -857,6 +904,43 @@
         // Registrar plugin de datalabels
         Chart.register(ChartDataLabels);
 
+        // ===== CARREGAR DADOS PADRÃO =====
+        function loadDefaultExcecoes() {
+            const excecoesAmostra = [
+                { 'Regra': 'Excesso de Velocidade', 'Nome': 'Rodrigo Silva', 'Dispositivo': 'MG-1547', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_MG', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Freio Brusco', 'Nome': 'Carlos Santos', 'Dispositivo': 'SP-2891', 'TRANSPORTADORA': 'TRS_TRANPLA', 'REGIAO': 'REG_SP', 'UNIDADE': 'UNI_OSASCO' },
+                { 'Regra': 'Desvio de Rota', 'Nome': 'Marina Costa', 'Dispositivo': 'GO-3456', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_GO', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Excesso de Velocidade', 'Nome': 'Rodrigo Silva', 'Dispositivo': 'MG-1547', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_MG', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Aceleração Brusca', 'Nome': 'João Paulo', 'Dispositivo': 'SP-4821', 'TRANSPORTADORA': 'TRS_TRANSLOG', 'REGIAO': 'REG_SP', 'UNIDADE': 'UNI_SAO PAULO' },
+                { 'Regra': 'Freio Brusco', 'Nome': 'Marcos Oliveira', 'Dispositivo': 'MG-5678', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_MG', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Excesso de Velocidade', 'Nome': 'Fernanda Lima', 'Dispositivo': 'PR-2105', 'TRANSPORTADORA': 'TRS_TRANPLA', 'REGIAO': 'REG_PR', 'UNIDADE': 'UNI_OSASCO' },
+                { 'Regra': 'Desvio de Rota', 'Nome': 'Carlos Santos', 'Dispositivo': 'SP-2891', 'TRANSPORTADORA': 'TRS_TRANPLA', 'REGIAO': 'REG_SP', 'UNIDADE': 'UNI_OSASCO' },
+                { 'Regra': 'Freio Brusco', 'Nome': 'Rodrigo Silva', 'Dispositivo': 'MG-1547', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_MG', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Aceleração Brusca', 'Nome': 'Marina Costa', 'Dispositivo': 'GO-3456', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_GO', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Excesso de Velocidade', 'Nome': 'Carlos Santos', 'Dispositivo': 'SP-2891', 'TRANSPORTADORA': 'TRS_TRANPLA', 'REGIAO': 'REG_SP', 'UNIDADE': 'UNI_OSASCO' },
+                { 'Regra': 'Sem Cinto de Segurança', 'Nome': 'João Paulo', 'Dispositivo': 'SP-4821', 'TRANSPORTADORA': 'TRS_TRANSLOG', 'REGIAO': 'REG_SP', 'UNIDADE': 'UNI_SAO PAULO' },
+                { 'Regra': 'Desvio de Rota', 'Nome': 'Marcos Oliveira', 'Dispositivo': 'MG-5678', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_MG', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Freio Brusco', 'Nome': 'Fernanda Lima', 'Dispositivo': 'PR-2105', 'TRANSPORTADORA': 'TRS_TRANPLA', 'REGIAO': 'REG_PR', 'UNIDADE': 'UNI_OSASCO' },
+                { 'Regra': 'Aceleração Brusca', 'Nome': 'Rodrigo Silva', 'Dispositivo': 'MG-1547', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_MG', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Excesso de Velocidade', 'Nome': 'Marina Costa', 'Dispositivo': 'GO-3456', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_GO', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Desvio de Rota', 'Nome': 'João Paulo', 'Dispositivo': 'SP-4821', 'TRANSPORTADORA': 'TRS_TRANSLOG', 'REGIAO': 'REG_SP', 'UNIDADE': 'UNI_SAO PAULO' },
+                { 'Regra': 'Freio Brusco', 'Nome': 'Carlos Santos', 'Dispositivo': 'SP-2891', 'TRANSPORTADORA': 'TRS_TRANPLA', 'REGIAO': 'REG_SP', 'UNIDADE': 'UNI_OSASCO' },
+                { 'Regra': 'Sem Cinto de Segurança', 'Nome': 'Marcos Oliveira', 'Dispositivo': 'MG-5678', 'TRANSPORTADORA': 'TRS_LOG20', 'REGIAO': 'REG_MG', 'UNIDADE': 'UNI_GOIANIA' },
+                { 'Regra': 'Aceleração Brusca', 'Nome': 'Fernanda Lima', 'Dispositivo': 'PR-2105', 'TRANSPORTADORA': 'TRS_TRANPLA', 'REGIAO': 'REG_PR', 'UNIDADE': 'UNI_OSASCO' }
+            ];
+            
+            rawData = excecoesAmostra.map(normalizeRow);
+            filteredData = [...rawData];
+            initCharts();
+            populateFilters();
+            filterTable();
+            updateKPIs();
+            generateInsightsExcecoes(filteredData);
+            setTimeout(() => plotarNoMapaExcecoes(), 100);
+            document.getElementById('insightsContainer').style.display = 'block';
+            console.log('Dados padrão carregados (20 exceções)');
+        }
+
         // ===== INICIALIZAÇÃO =====
         function toggleDark() {
             const isDark = document.body.classList.toggle('dark');
@@ -872,32 +956,44 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            const darkMode = localStorage.getItem('darkMode');
-            const btn = document.querySelector('.btn-toggle');
-            console.log('Carregando dark mode:', darkMode);
-            if (darkMode === 'true') {
-                document.body.classList.add('dark');
-                if (btn) btn.textContent = '☀️';
-                console.log('Dark mode aplicado ao carregar');
-            }
+            activateCurrentLink();
+            // Inicializar dark mode sync GLOBAL
+            initDarkModeSync();
+            
+            // Remover classe 'dark' se localStorage for false
+            try {
+                if (localStorage.getItem('darkMode') === 'false') {
+                    document.body.classList.remove('dark');
+                }
+            } catch(e) {}
 
-            // Carregar dados persistidos
-            const savedData = localStorage.getItem('excecoesData');
+            // Carregar dados persistidos (com tratamento ITP)
+            let savedData = null;
+            try {
+                savedData = localStorage.getItem('excecoesData');
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
+            
             if (savedData) {
-              try {
-                rawData = JSON.parse(savedData);
-                filteredData = [...rawData];
-                initCharts();
-                populateFilters();
-                filterTable();
-                updateKPIs();
-                renderMap();
-                generateInsightsExcecoes(filteredData);
-                document.getElementById('insightsContainer').style.display = 'block';
-                console.log('Dados carregados do localStorage');
-              } catch(e) {
-                console.log('Erro ao carregar dados persistidos');
-              }
+                const rawData_loaded = safeParseJSON(savedData);
+                if (rawData_loaded && Array.isArray(rawData_loaded)) {
+                    rawData = rawData_loaded;
+                    filteredData = [...rawData];
+                    initCharts();
+                    populateFilters();
+                    filterTable();
+                    updateKPIs();
+                    generateInsightsExcecoes(filteredData);
+                    setTimeout(() => plotarNoMapaExcecoes(), 100);
+                    document.getElementById('insightsContainer').style.display = 'block';
+                    console.log('✅ Dados carregados do localStorage');
+                } else {
+                    console.warn('⚠️ Dados persistidos inválidos');
+                    loadDefaultExcecoes();
+                }
+            } else {
+              loadDefaultExcecoes();
             }
 
             // ===== PARSE CSV =====
@@ -916,9 +1012,12 @@
                         rawData = (results.data || []).map(normalizeRow);
                         console.log('Após normalizeRow:', rawData.length, 'primeiro:', rawData[0]);
                         filteredData = [...rawData];
-                        
-                        // Salva com fallback para IndexedDB
-                        window.saveDataSafely('excecoesData', rawData);
+                        try {
+                          localStorage.setItem('excecoesData', JSON.stringify(rawData));
+                          console.log('Dados salvos no localStorage');
+                        } catch(e) {
+                          console.log('Não foi possível salvar no localStorage (arquivo muito grande)');
+                        }
                         
                         console.log('Criando gráficos...');
                         initCharts();
@@ -929,9 +1028,8 @@
                         console.log('Tabela filtrada');
                         updateKPIs();
                         console.log('KPIs atualizados');
-                        renderMap();
-                        console.log('Mapa renderizado');
                         generateInsightsExcecoes(filteredData);
+                        setTimeout(() => { plotarNoMapaExcecoes().catch(console.error); }, 100);
                         document.getElementById('insightsContainer').style.display = filteredData.length > 0 ? 'block' : 'none';
                         
                         alert(`✅ ${rawData.length} exceções carregadas com sucesso!`);
@@ -955,6 +1053,12 @@
                 normalized[k] = typeof row[k] === 'string' ? row[k].trim() : row[k];
             });
 
+            // garantir que qualquer variação de nome da coluna "Localização" seja unificada
+            const locKey = Object.keys(normalized).find(k => k.toLowerCase().includes('localiza'));
+            if (locKey && locKey !== 'Localização') {
+                normalized['Localização'] = normalized[locKey];
+            }
+
             const grupo = normalized['Grupo de dispositivo'] || '';
             
             // Extrair padrões
@@ -965,6 +1069,25 @@
             normalized.TRANSPORTADORA = trs ? trs[0].trim() : 'SEM CADASTRO';
             normalized.UNIDADE = uni ? uni[0].trim() : 'SEM CADASTRO';
             normalized.REGIAO = reg ? reg[0].trim() : 'SEM CADASTRO';
+            
+            // Adicionar campo de data normalizado
+            let dataFormatada = '';
+            if (normalized.Data) {
+                // Se estiver em formato DD/MM/YYYY, converter para YYYY-MM-DD
+                const dataMatch = normalized.Data.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (dataMatch) {
+                    const dia = String(dataMatch[1]).padStart(2, '0');
+                    const mes = String(dataMatch[2]).padStart(2, '0');
+                    const ano = dataMatch[3];
+                    dataFormatada = `${ano}-${mes}-${dia}`;
+                } else {
+                    // Tentar usar como está (assumindo que já está em YYYY-MM-DD)
+                    dataFormatada = normalized.Data;
+                }
+            } else {
+                dataFormatada = new Date().toISOString().split('T')[0];
+            }
+            normalized.rawDate = dataFormatada;
 
             return normalized;
         }
@@ -1038,52 +1161,27 @@
         function createChart(canvasId, type) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return null;
-            
-            // Para gráfico de endereços, usar barra horizontal
-            const isPlacas = canvasId === 'placasEventosChart';
-            
             return new Chart(canvas.getContext('2d'), {
                 type: type,
-                data: { 
-                    labels: [], 
-                    datasets: [{ 
-                        label: 'Quantidade', 
-                        data: [], 
-                        backgroundColor: '#63a3d8', 
-                        borderColor: '#63a3d8',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }] 
-                },
+                data: { labels: [], datasets: [{ label: 'Quantidade', data: [], backgroundColor: '#63a3d8', borderColor: '#fff', borderWidth: 2 }] },
                 options: {
-                    indexAxis: isPlacas ? 'y' : 'x',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
-                        legend: { 
-                            position: 'bottom',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 15
-                            }
-                        },
+                        legend: { position: 'bottom' },
                         datalabels: {
                             display: true,
-                            anchor: isPlacas ? 'end' : 'end',
-                            align: isPlacas ? 'end' : 'top',
+                            anchor: 'end',
+                            align: 'top',
                             font: { size: 11, weight: 'bold' },
-                            color: '#fff',
-                            formatter: function(value) { return value > 0 ? value : ''; }
+                            color: '#333',
+                            formatter: function(value) { return value; }
                         }
                     },
-                    scales: { 
-                        y: { beginAtZero: true },
-                        x: { beginAtZero: true }
-                    }
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         }
-
 
         // ===== ATUALIZAR GRÁFICOS =====
         function updateCharts() {
@@ -1174,130 +1272,18 @@
                 '#87CEEB', '#F06292', '#00BCD4', '#8BC34A', '#FF9800'
             ];
             updateChart(charts['placas'], topEnderecos.map(x => x[0].substring(0, 45)), topEnderecos.map(x => x[1]), cores);
+            
+            // Atualizar mapa
+            setTimeout(() => { plotarNoMapaExcecoes().catch(console.error); }, 50);
         }
 
         function updateChart(chart, labels, data, colors) {
             if (!chart) return;
-            
             chart.data.labels = labels;
             chart.data.datasets[0].data = data;
-            
-            if (Array.isArray(colors)) {
-                chart.data.datasets[0].backgroundColor = colors;
-            } else {
-                chart.data.datasets[0].backgroundColor = colors;
-            }
-            
-            // Para gráfico de placas (endereços), ajustar legenda dinamicamente
-            if (chart.canvas.id === 'placasEventosChart') {
-                const maxValor = Math.max(...data);
-                const legendaPosicao = maxValor > 50 ? 'chartArea' : 'top';
-                chart.options.plugins.legend.position = legendaPosicao;
-            }
-            
+            if (Array.isArray(colors)) chart.data.datasets[0].backgroundColor = colors;
+            else chart.data.datasets[0].backgroundColor = colors;
             chart.update();
-        }
-
-        // ===== RENDERIZAR MAPA COM MARCADORES =====
-        let mapInstance = null;
-        const mapMarkers = [];
-
-        function renderMap() {
-            const source = filteredData.length > 0 ? filteredData : rawData;
-            if (source.length === 0) return;
-
-            const enderecos = {};
-            source.forEach(e => {
-                const end = e['Localização'] || 'N/A';
-                enderecos[end] = (enderecos[end] || 0) + 1;
-            });
-            
-            const topEnderecos = Object.entries(enderecos).sort((a, b) => b[1] - a[1]).slice(0, 20);
-            
-            const cores = [
-                '#63a3d8', '#e60000', '#FFD700', '#28a745', '#9B59B6',
-                '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-                '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#AED6F1',
-                '#87CEEB', '#F06292', '#00BCD4', '#8BC34A', '#FF9800'
-            ];
-
-            // Inicializar mapa
-            if (!mapInstance) {
-                mapInstance = L.map('mapContainer').setView([-15.8, -52.0], 4); // Centro do Brasil
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19,
-                    minZoom: 3
-                }).addTo(mapInstance);
-            } else {
-                // Limpar marcadores antigos
-                mapMarkers.forEach(marker => mapInstance.removeLayer(marker));
-                mapMarkers.length = 0;
-            }
-
-            // Pseudo-coordenadas para cidades brasileiras comuns
-            const localidadeCoord = {
-                'SP': [-23.55, -46.63], 'São Paulo': [-23.55, -46.63],
-                'RJ': [-22.9, -43.1], 'Rio de Janeiro': [-22.9, -43.1],
-                'BH': [-19.92, -43.94], 'Belo Horizonte': [-19.92, -43.94],
-                'MG': [-19.92, -43.94], 'Minas Gerais': [-19.92, -43.94],
-                'RS': [-30.0, -51.2], 'Rio Grande do Sul': [-30.0, -51.2],
-                'BA': [-13.0, -39.0], 'Bahia': [-13.0, -39.0],
-                'PE': [-8.0, -35.0], 'Pernambuco': [-8.0, -35.0],
-                'CE': [-3.73, -38.54], 'Ceará': [-3.73, -38.54],
-                'SC': [-27.0, -48.88], 'Santa Catarina': [-27.0, -48.88],
-                'PR': [-25.5, -51.5], 'Paraná': [-25.5, -51.5],
-                'DF': [-15.8, -48.0], 'Brasília': [-15.8, -48.0],
-                'GO': [-15.89, -48.04], 'Goiás': [-15.89, -48.04],
-                'MT': [-15.6, -56.1], 'Mato Grosso': [-15.6, -56.1],
-                'MS': [-20.0, -55.0], 'Mato Grosso do Sul': [-20.0, -55.0],
-                'ES': [-20.3, -40.3], 'Espírito Santo': [-20.3, -40.3],
-                'PA': [-1.5, -48.5], 'Pará': [-1.5, -48.5],
-                'AM': [-3.1, -60.0], 'Amazonas': [-3.1, -60.0]
-            };
-
-            // Criar marcadores
-            topEnderecos.forEach((item, index) => {
-                const endereco = item[0];
-                const quantidade = item[1];
-                const cor = cores[index % cores.length];
-                
-                // Tentar extrair localidade do endereço ou usar coordenada aleatória próxima ao Brasil
-                let lat = -15.8 + (Math.random() - 0.5) * 10;
-                let lng = -52 + (Math.random() - 0.5) * 15;
-
-                for (const [cidade, coord] of Object.entries(localidadeCoord)) {
-                    if (endereco.toUpperCase().includes(cidade.toUpperCase())) {
-                        lat = coord[0] + (Math.random() - 0.5) * 0.5;
-                        lng = coord[1] + (Math.random() - 0.5) * 0.5;
-                        break;
-                    }
-                }
-
-                const marker = L.circleMarker([lat, lng], {
-                    radius: 8 + (quantidade / Math.max(...topEnderecos.map(x => x[1]))) * 5,
-                    fillColor: cor,
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(mapInstance);
-
-                marker.bindPopup(`
-                    <div style="font-weight: bold; color: ${cor};">● ${endereco.substring(0, 40)}</div>
-                    <div style="margin-top: 5px; font-size: 12px;">
-                        <strong>Eventos:</strong> ${quantidade}
-                    </div>
-                `);
-
-                mapMarkers.push(marker);
-            });
-
-            // Ajustar zoom para mostrar todos os marcadores
-            if (mapMarkers.length > 0) {
-                const group = new L.featureGroup(mapMarkers);
-                mapInstance.fitBounds(group.getBounds().pad(0.1));
-            }
         }
 
         // ===== KPIs =====
@@ -1320,12 +1306,36 @@
             document.getElementById('motoristasComExcecao').textContent = motoristas;
             document.getElementById('veiculosEnvolvidos').textContent = veiculos;
             document.getElementById('excecaoComum').textContent = comum;
+            
+            // Período analisado (formato brasileiro)
+            if (source.length > 0) {
+                const datas = source.map(r => {
+                    if (!r.rawDate) return null;
+                    // r.rawDate está em formato YYYY-MM-DD
+                    if (/^\d{4}-\d{2}-\d{2}/.test(r.rawDate)) {
+                        const parts = r.rawDate.substring(0, 10).split('-');
+                        return { raw: r.rawDate, fmt: `${parts[2]}/${parts[1]}/${parts[0]}` };
+                    }
+                    return null;
+                }).filter(d => d).sort((a, b) => a.raw.localeCompare(b.raw));
+                
+                if (datas.length > 0) {
+                    const dataInicio = datas[0].fmt;
+                    const dataFim = datas[datas.length - 1].fmt;
+                    document.getElementById('periodoAnalizado').textContent = dataInicio + ' até ' + dataFim;
+                } else {
+                    document.getElementById('periodoAnalizado').textContent = '-';
+                }
+            } else {
+                document.getElementById('periodoAnalizado').textContent = '-';
+            }
+            
             generateInsightsExcecoes(source);
         }
 
         // ===== FILTROS =====
         function populateFilters() {
-            const trs = new Set(rawData.map(x => x.TRANSPORTADORA).filter(x => x && x !== 'SEM CADASTRO'));
+            const trs = new Set(rawData.map(x => x.TRANSPORTADORA));
             const sel = document.getElementById('transportadoraFilter');
             sel.innerHTML = '<option value="">Todas</option>';
             Array.from(trs).sort().forEach(t => {
@@ -1333,6 +1343,17 @@
                 opt.value = t;
                 opt.textContent = t;
                 sel.appendChild(opt);
+            });
+            
+            // Preencher unidades inicialmente (todas)
+            const unis = new Set(rawData.map(x => x.UNIDADE));
+            const selUni = document.getElementById('unidadeFilter');
+            selUni.innerHTML = '<option value="">Todas</option>';
+            Array.from(unis).sort().forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u;
+                opt.textContent = u;
+                selUni.appendChild(opt);
             });
         }
 
@@ -1373,7 +1394,6 @@
             renderTable();
             updateCharts();
             updateKPIs();
-            renderMap();
         }
 
         // ===== TABELA =====
@@ -1421,6 +1441,225 @@
             if (currentPage > 1) {
                 currentPage--;
                 renderTable();
+            }
+        }
+        
+        // ============ MAPA COM LEAFLET (EXCEÇÕES) ============
+        let map = null;
+        let mapMarkers = [];
+        
+        function initializeMap() {
+            if (map) return;
+            console.log('🗺️ Criando novo mapa Leaflet...');
+            map = L.map('map').setView([-14.2350, -51.9253], 4);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18,
+            }).addTo(map);
+            console.log('✅ Mapa inicializado');
+        }
+        
+        // cache simples para evitar muitas chamadas à API de geocoding
+        const geocodeCache = {};
+        async function geocodeAddress(endereco) {
+            if (!endereco) return [-15.79, -47.88];
+            if (geocodeCache[endereco]) return geocodeCache[endereco];
+            try {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`);
+                const data = await resp.json();
+                if (data && data.length) {
+                    const c = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                    geocodeCache[endereco] = c;
+                    return c;
+                }
+            } catch(e) {
+                console.warn('Geocode error for', endereco, e);
+            }
+            // fallback para método antigo
+            const fallback = extrairCoordenadaDoEndereco(endereco);
+            geocodeCache[endereco] = fallback;
+            return fallback;
+        }
+
+        function extrairCoordenadaDoEndereco(endereco) {
+            if (!endereco) return [-15.79, -47.88];
+            
+            // Dicionário de cidades específicas com coordenadas
+            const cidadesCoords = {
+                'São Paulo': [-23.5505, -46.6333],
+                'Rio de Janeiro': [-22.9068, -43.1729],
+                'Belo Horizonte': [-19.8716, -43.9477],
+                'Salvador': [-12.9714, -38.5014],
+                'Florianópolis': [-27.5921, -49.6129],
+                'Curitiba': [-25.4196, -49.2646],
+                'Porto Alegre': [-29.7673, -95.7344],
+                'Vitória': [-20.2976, -40.2958],
+                'Recife': [-8.0476, -34.8770],
+                'Goiânia': [-15.7942, -48.2676],
+                'Brasília': [-15.8267, -47.8711],
+                'Fortaleza': [-3.1190, -60.0217],
+                'Belém': [-1.3521, -48.5104],
+                'Teresina': [-5.0920, -42.7404],
+                'São Luís': [-3.1526, -60.6992],
+                'Maceió': [-9.5141, -36.7718],
+                'Natal': [-5.1762, -37.3477],
+                'Porto Velho': [-8.7619, -63.9039],
+                'Rio Branco': [-9.9757, -67.8243],
+                'Manaus': [-3.1190, -60.0217],
+                'Macapá': [0.0349, -51.0494],
+                'Palmas': [-10.1753, -48.2982],
+                'Cuiabá': [-15.5527, -56.2393],
+                'João Pessoa': [-7.1195, -34.8450],
+                'São José dos Campos': [-23.18, -45.88],
+                'Sorocaba': [-23.50, -47.46],
+                'Campinas': [-22.89, -47.06],
+                'Santos': [-23.96, -46.33],
+                'Guarulhos': [-23.46, -46.49],
+            };
+            
+            // Procurar por cidades específicas
+            for (const [cidade, coords] of Object.entries(cidadesCoords)) {
+                if (endereco.includes(cidade)) {
+                    return coords;
+                }
+            }
+            
+            // Tentar extrair UF do formato " - UF" ou "-UF"
+            const ufMatch = endereco.match(/[-\s]+([A-Z]{2})(?:[,\s]|$)/);
+            const uf = ufMatch ? ufMatch[1] : null;
+            
+            if (!uf) return [-15.79, -47.88];
+            
+            const ufCoords = {
+                'SP': [-23.5505, -46.6333], 'RJ': [-22.9068, -43.1729], 'MG': [-19.8716, -43.9477],
+                'BA': [-12.9714, -38.5014], 'SC': [-27.5921, -49.6129], 'PR': [-25.4196, -49.2646],
+                'RS': [-30.0346, -51.2177], 'ES': [-20.2976, -40.2958], 'PE': [-8.0476, -34.8770],
+                'GO': [-15.7942, -48.2676], 'DF': [-15.8267, -47.8711], 'CE': [-3.7319, -38.5267],
+                'PA': [-1.3521, -48.5104], 'PI': [-5.0920, -42.7404], 'MA': [-3.1526, -60.6992],
+                'AL': [-9.5141, -36.7718], 'RN': [-5.1762, -37.3477], 'RO': [-8.7619, -63.9039],
+                'AC': [-9.9757, -67.8243], 'AM': [-3.1190, -60.0217], 'AP': [0.0349, -51.0494],
+                'TO': [-10.1753, -48.2982], 'MT': [-15.5527, -56.2393], 'PB': [-7.1195, -34.8450],
+            };
+            
+            return ufCoords[uf] || [-15.79, -47.88];
+        }
+        
+        async function plotarNoMapaExcecoes() {
+            if (!map) {
+                console.log('🗺️ Inicializando mapa...');
+                initializeMap();
+            }
+
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+
+            const excecoesPorEndereco = {};
+
+            console.log(`📊 Dados para processar: ${filteredData ? filteredData.length : 0} registros filtrados`);
+
+            if (!filteredData || filteredData.length === 0) {
+                console.log('⚠️ Sem dados para plotar no mapa');
+                return;
+            }
+
+            // Contar exceções por endereço
+            let enderecoEncontrado = 0;
+            filteredData.forEach(exc => {
+                const endereco = exc['Localização'] || exc['Localizaç\u00e3o'] || 'N/A';
+                if (endereco === 'N/A') return;
+
+                enderecoEncontrado++;
+                if (!excecoesPorEndereco[endereco]) {
+                    excecoesPorEndereco[endereco] = [];
+                }
+                excecoesPorEndereco[endereco].push(exc);
+            });
+
+            console.log(`✅ Endereços encontrados: ${enderecoEncontrado} (únicos: ${Object.keys(excecoesPorEndereco).length})`);
+
+            // Ordenar por frequência e (se quiser) limitar ao top20
+            const entries = Object.entries(excecoesPorEndereco).sort((a, b) => b[1].length - a[1].length);
+            const toPlot = entries.slice(0, 20); // mantém top20, mas agora cada terá posição própria
+
+            const seenCoords = {};
+
+            for (const [endereco, excecoes] of toPlot) {
+                const severidades = {};
+                let criticalCount = 0;
+                excecoes.forEach(e => {
+                    const sev = e['Severidade'] || 'Normal';
+                    severidades[sev] = (severidades[sev] || 0) + 1;
+                    if (sev.toLowerCase().includes('crítica')) criticalCount++;
+                });
+
+                // Cor por severidade: vermelha se tiver crítica, laranja se avisos
+                let cor = '#ffc107';
+                if (criticalCount > 0) cor = '#dc3545';
+                else if (excecoes.some(e => (e['Severidade'] || '').toLowerCase().includes('aviso'))) cor = '#ff9800';
+
+                const raio = Math.max(8, Math.min(20, 8 + Math.log(excecoes.length) * 2));
+                let coords = await geocodeAddress(endereco);
+
+                // se já houver um marcador naquela posição, aplica um pequeno jitter
+                const key = coords.join(',');
+                if (seenCoords[key]) {
+                    coords = [coords[0] + (Math.random() - 0.5) * 0.0005, coords[1] + (Math.random() - 0.5) * 0.0005];
+                }
+                seenCoords[key] = true;
+
+                console.log(`📍 Plotando: ${endereco.substring(0, 40)} -> [${coords[0]}, ${coords[1]}] (raio: ${raio})`);
+
+                const marker = L.circleMarker(coords, {
+                    radius: raio,
+                    fillColor: cor,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.85
+                }).addTo(map);
+
+                const excHtml = excecoes.slice(0, 10).map(e => {
+                    const tipoEmoji = {'Crítica': '🔴', 'Aviso': '🟠', 'Normal': '🟡'}[e['Severidade']] || '⚪';
+                    return `<li style="font-size: 0.85rem;">${tipoEmoji} <strong>${e['Tipo de Exceção'] || 'Desconhecido'}</strong></li>`;
+                }).join('');
+
+                const popup = `
+                    <div style="font-size: 0.85rem; min-width: 250px;">
+                        <div style="border-bottom: 2px solid #e60000; margin-bottom: 8px; padding-bottom: 8px;">
+                            <strong>📍 ${endereco}</strong>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>Total: ${excecoes.length} exceções</strong>
+                        </div>
+                        ${criticalCount > 0 ? `<div style="color: #dc3545; font-weight: bold;">🔴 ${criticalCount} CRÍTICAS</div>` : ''}
+                        <strong style="margin-top: 8px; display: block;">Tipos:</strong>
+                        <ul style="margin: 6px 0; padding-left: 20px;">${excHtml}</ul>
+                    </div>
+                `;
+
+                marker.bindPopup(popup);
+                mapMarkers.push(marker);
+            }
+
+            console.log(`✅ ${mapMarkers.length} locais (top 20) de exceção plotados no mapa`);
+        }
+  
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
             }
         }
     </script>

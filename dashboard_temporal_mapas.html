@@ -7,11 +7,9 @@
     
     <!-- LIBS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
-    <script src="idb-manager.js"></script>
-    <script src="storage-adapter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     
     <!-- LEAFLET PARA MAPA -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" />
@@ -167,13 +165,85 @@
         .sidebar-footer {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
             font-size: 0.85rem;
             text-align: center;
             position: absolute;
             bottom: 20px;
             width: calc(var(--sidebar-width) - 40px);
         }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
         
         /* MAIN LAYOUT */
         .dashboard-container {
@@ -262,6 +332,56 @@
         
         body.dark .filters-section label {
             color: #63a3d8;
+        }
+        
+        /* Inputs de arquivo - discreto */
+        #frota-file,
+        #usuarios-driver-file {
+            display: none;
+        }
+        
+        label[for="frota-file"],
+        label[for="usuarios-driver-file"] {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #f0f4f8;
+            border: 2px solid #e0e8f0;
+            font-weight: 500;
+            color: #333;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        label[for="usuarios-driver-file"] {
+            margin-left: 12px;
+        }
+        
+        label[for="frota-file"]:hover,
+        label[for="usuarios-driver-file"]:hover {
+            background: #e0ecf7;
+            border-color: #63a3d8;
+            color: #1e5a8e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(99, 163, 216, 0.2);
+        }
+        
+        body.dark label[for="frota-file"],
+        body.dark label[for="usuarios-driver-file"] {
+            background: #1a3a52;
+            border-color: #334155;
+            color: #63a3d8;
+        }
+        
+        body.dark label[for="frota-file"]:hover,
+        body.dark label[for="usuarios-driver-file"]:hover {
+            background: #0f2840;
+            border-color: #63a3d8;
+            color: #a3d5ff;
+            box-shadow: 0 4px 8px rgba(99, 163, 216, 0.3);
         }
         
         .filters-section input,
@@ -399,12 +519,149 @@
         }
         
         .change.positive {
-            color: var(--success-color);
+            color: #888888;
         }
         
         .change.negative {
             color: var(--danger-color);
         }
+
+        /* ===== ESTILO FAROL PARA KPI NFC ===== */
+        .kpi-card.farol {
+            border-top-width: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card.farol.red {
+            border-top-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+        }
+        
+        .kpi-card.farol.red .value {
+            color: #dc3545;
+        }
+        
+        .kpi-card.farol.yellow {
+            border-top-color: #ffc107;
+            background: linear-gradient(135deg, #fffbf0 0%, #fff9e6 100%);
+        }
+        
+        .kpi-card.farol.yellow .value {
+            color: #ff9800;
+        }
+        
+        .kpi-card.farol.green {
+            border-top-color: #28a745;
+            background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+        }
+        
+        .kpi-card.farol.green .value {
+            color: #28a745;
+        }
+        
+        body.dark .kpi-card.farol.red {
+            background: linear-gradient(135deg, #2d1517 0%, #3d1f1f 100%);
+        }
+        
+        body.dark .kpi-card.farol.yellow {
+            background: linear-gradient(135deg, #3a3119 0%, #4a3f1f 100%);
+        }
+        
+        body.dark .kpi-card.farol.green {
+            background: linear-gradient(135deg, #1a2e1f 0%, #1f3a24 100%);
+        }
+        
+        
+        /* STORYTELLING SECTION */
+        .storytelling-section {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+        }
+        
+        body.dark .storytelling-section {
+            background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+            box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+        }
+        
+        .storytelling-card h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+        
+        body.dark .storytelling-card h2 {
+            color: #63a3d8;
+        }
+        
+        .storytelling-section p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        body.dark .storytelling-section p {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .storytelling-section strong {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        body.dark .storytelling-section strong {
+            color: #63a3d8;
+        }
+        
+        .insight-section {
+            margin-bottom: 20px;
+        }
+        
+        .insight-section h3 {
+            color: #333;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            gap: 8px;
+        }
+        
+        body.dark .insight-section h3 {
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .insight-section ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style: none;
+        }
+        
+        .insight-section li {
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        body.dark .insight-section li {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .insight-section li strong {
+            color: var(--primary-color);
+        }
+        
+        body.dark .insight-section li strong {
+            color: #63a3d8;
+        }
+        
         
         /* GRÁFICOS */
         .charts-grid {
@@ -423,6 +680,13 @@
             min-height: 550px;
             display: flex;
             flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
         }
         
         body.dark .chart-card {
@@ -644,50 +908,52 @@
 </head>
 <body>
     <!-- SIDEBAR -->
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
-        </div>
-        <ul class="sidebar-menu">
-            <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-            <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-            <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
-            <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-            <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
-            <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-            <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-            <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-            <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-            <li><a href="dashboard_temporal_mapas.html" class="active"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-            <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
-        </ul>
-        <div class="sidebar-footer">
-            <p>Temporal & Geográfico</p>
-        </div>
-    </nav>
+    <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <p></p>
+            </div>
+        </nav>
     
     <!-- MAIN CONTENT -->
     <div class="dashboard-container">
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <!-- HEADER -->
             <div class="header">
                 <div>
                     <h1>📅 Análise Temporal & 🗺️ Geográfica</h1>
-                    <p style="margin: 5px 0 0 0; font-size: 0.95rem; opacity: 0.9;">Comparação semana x semana, mês x mês com alertas automáticos</p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.95rem; opacity: 0.9;">Comparação semana x semana, mês x mês com storytelling de dados</p>
                 </div>
                 <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
             </div>
             
             <!-- FILTROS -->
             <div class="filters-section">
-                <label>
-                    📁 Carregar CSV (Status Frota)
-                    <input type="file" id="frota-file" accept=".csv">
-                </label>
-                <label>
-                    📁 Carregar CSV (Motoristas)
-                    <input type="file" id="motoristas-file" accept=".csv">
-                </label>
+<label for="frota-file">📋 CSV Frota</label>
+        <input type="file" id="frota-file" accept=".csv">
+        
+        <label for="usuarios-driver-file">👤 CSV Motoristas</label>
+        <input type="file" id="usuarios-driver-file" accept=".csv">
+                
                 <label>
                     📅 Período Comparação
                     <select id="comparison-period">
@@ -714,37 +980,43 @@
                         <option value="">Todas Unidades</option>
                     </select>
                 </label>
-            </div>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; color: var(--primary-color); padding: 8px 12px; background: rgba(99, 163, 216, 0.08); border-radius: 6px; border: 2px solid var(--accent-color);">
+                    <input type="checkbox" id="filtrarSemCadastroTemporal" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color);">
+                    <span>🗑️ Remover "Sem cadastro"</span>
+                </label>
+                </div>
             
-            <!-- ALERTAS AUTOMÁTICOS -->
-            <div class="alerts-section" id="alerts-container">
-                <h2><i class="bi bi-exclamation-circle"></i> 🚨 Alertas Automáticos</h2>
-                <div id="alerts-list">
-                    <p style="color: #999; font-style: italic;">Carregue dados para gerar alertas...</p>
+            <!-- STORYTELLING DE DADOS -->
+            <div class="storytelling-section" id="storytelling-container">
+                <div class="storytelling-card">
+                    <h2><i class="bi bi-graph-up"></i> 📈 Visão Estratégica da Frota</h2>
+                    <div id="storytelling-content">
+                        <p style="color: #999; font-style: italic;">Carregue dados para gerar análise completa...</p>
+                    </div>
                 </div>
             </div>
             
             <!-- KPI CARDS -->
             <div class="kpi-grid" id="kpi-grid">
                 <div class="kpi-card">
-                    <h3>Total de Veículos</h3>
+                    <h3>📊 Total de Veículos</h3>
                     <div class="value" id="kpi-total">0</div>
-                    <div class="change positive">Frota Ativa</div>
+                    <div class="change positive">Frota Filtrada</div>
                 </div>
                 <div class="kpi-card">
-                    <h3>Veículos Online</h3>
-                    <div class="value" id="kpi-online">0</div>
-                    <div class="change positive">↑ 5% vs semana passada</div>
+                    <h3>🚗 Motoristas com Vínculo</h3>
+                    <div class="value" id="kpi-motoristas-vinculo">0</div>
+                    <div class="change positive">TRS + UNI</div>
                 </div>
                 <div class="kpi-card">
-                    <h3>Motoristas c/ NFC</h3>
-                    <div class="value" id="kpi-nfc">0</div>
-                    <div class="change positive">↑ 3% vs semana passada</div>
+                    <h3>👤 Motoristas com NFC</h3>
+                    <div class="value" id="kpi-motoristas-nfc">0</div>
+                    <div class="change positive">De usuários driver</div>
                 </div>
-                <div class="kpi-card">
-                    <h3>Frota Offline</h3>
-                    <div class="value" id="kpi-offline">0</div>
-                    <div class="change negative">Sem Comunicação</div>
+                <div class="kpi-card farol" id="kpi-nfc-card">
+                    <h3>📈 Porcentagem com NFC</h3>
+                    <div class="value" id="kpi-nfc-porcentagem">0%</div>
+                    <div class="change positive">Do total de motoristas</div>
                 </div>
             </div>
             
@@ -755,8 +1027,8 @@
                     <canvas id="chart-temporal"></canvas>
                 </div>
                 <div class="chart-card">
-                    <h3>📈 Disponibilidade vs Indisponibilidade (últimos 7 dias)</h3>
-                    <canvas id="chart-trend"></canvas>
+                    <h3>🟢 Status Online/Offline</h3>
+                    <canvas id="chart-status"></canvas>
                 </div>
                 <div class="chart-card">
                     <h3>👤 NFC Status por Transportadora</h3>
@@ -771,16 +1043,8 @@
                     <canvas id="chart-frota-unidade"></canvas>
                 </div>
                 <div class="chart-card">
-                    <h3>🟢 Status Online/Offline</h3>
-                    <canvas id="chart-status"></canvas>
-                </div>
-                <div class="chart-card">
                     <h3>⏱️ Tempo desde Última Comunicação</h3>
                     <canvas id="chart-comunicacao"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>🏢 Top 10 Unidades por Frota</h3>
-                    <canvas id="chart-top-unidades"></canvas>
                 </div>
             </div>
             
@@ -796,36 +1060,33 @@
                         <span>Online & Movimento</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-dot" style="background: #ffc107;"></div>
-                        <span>Online & Parado</span>
-                    </div>
-                    <div class="legend-item">
                         <div class="legend-dot" style="background: #dc3545;"></div>
                         <span>Offline</span>
                     </div>
                 </div>
             </div>
             
-            <!-- TABELA DETALHAMENTO POR UNIDADE -->
+            <!-- TABELA COMPARATIVA POR TRANSPORTADORA -->
             <div class="data-table-container">
                 <div class="table-header">
                     <i class="bi bi-table"></i> Detalhamento por Unidade
                 </div>
                 <div style="overflow-x: auto;">
-                    <table class="data-table" id="unidade-table">
+                    <table class="data-table" id="transportadora-table">
                         <thead>
                             <tr>
                                 <th>Unidade</th>
-                                <th>Transportadora</th>
+                                <th>Placas (Veículos)</th>
                                 <th>Total Veículos</th>
                                 <th>Online</th>
                                 <th>Offline</th>
-                                <th>Em Movimento</th>
-                                <th>Placas dos Veículos</th>
+                                <th>Total Motoristas</th>
+                                <th>Motoristas com NFC</th>
+                                <th>Taxa Disponibilidade</th>
                             </tr>
                         </thead>
-                        <tbody id="unidade-tbody">
-                            <tr><td colspan="7">Carregando dados...</td></tr>
+                        <tbody id="transportadora-tbody">
+                            <tr><td colspan="8">Carregando dados...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -839,162 +1100,219 @@
         // ============ DARK MODE ============
         function toggleDark() {
             document.body.classList.toggle('dark');
-            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+            try {
+                const isDark = document.body.classList.contains('dark');
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
+            // trocar tema do mapa
+            if (map && baseLayer) {
+                map.removeLayer(baseLayer);
+                baseLayer = L.tileLayer(getTileUrl(), {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18,
+                }).addTo(map);
+            }
             setTimeout(() => {
                 if (chartTemporal) chartTemporal.update();
-                if (chartTrend) chartTrend.update();
                 if (chartNfc) chartNfc.update();
                 if (chartRegion) chartRegion.update();
             }, 50);
         }
         
         document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.body.classList.add('dark');
+            try {
+                if (localStorage.getItem('darkMode') === 'true') {
+                    document.body.classList.add('dark');
+                } else {
+                    document.body.classList.remove('dark');
+                }
+            } catch(e) {
+                console.warn('Storage access denied');
             }
+            initDarkModeSync();
         });
         
         // ============ DADOS GLOBAIS ============
         let frotaData = [];
         let motoristasData = [];
-        let chartTemporal, chartTrend, chartNfc, chartRegion, chartStatus, chartComunicacao, chartUnidade;
+        let usuariosDriverData = [];
+        let chartTemporal, chartNfc, chartRegion, chartStatus, chartComunicacao, chartUnidade;
         let map;
-        let markers = [];
+        let baseLayer;
+        let markers = []; // marcarem posições no mapa
+
+        function getTileUrl() {
+            return document.body.classList.contains('dark')
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        }
         let transportadoras = new Set();
         let unidades = new Set();
         
-        // Coordenadas por UF (simples e eficiente)
-        const UF_COORDS = {
-            'SP': [-23.5505, -46.6333],
-            'RJ': [-22.9068, -43.1729],
-            'MG': [-19.9191, -43.9386],
-            'PR': [-25.4284, -49.2733],
-            'BA': [-12.9714, -38.5014],
-            'DF': [-15.7975, -47.8919],
-            'CE': [-3.7319, -38.5267],
-            'PE': [-8.0476, -34.8771],
-            'RS': [-30.0277, -51.5805],
-            'SC': [-27.5954, -48.5482],
-            'GO': [-15.7942, -48.2694],
-            'MS': [-20.4697, -54.6201],
-            'PA': [-1.4554, -48.4915],
-            'AM': [-3.1190, -60.0217],
-            'ES': [-20.3155, -40.3128],
-            'AC': [-9.9747, -67.8247],
-            'AL': [-9.5141, -36.7820],
-            'AP': [1.4142, -51.7753],
-            'MT': [-15.5921, -56.0979],
-            'RO': [-8.7611, -63.9005],
-            'RR': [2.8235, -60.6762],
-            'SE': [-10.5141, -37.0639],
-            'TO': [-10.1726, -48.3237]
-        };
-        
-        // Base de dados de cidades brasileiras principais (para melhor precisão)
-        const CIDADES_BRASILEIRAS = {
+        // Coordenadas das cidades brasileiras
+        const CIDADES_COORDS = {
+            'São José dos Campos': [-23.1790, -45.8888],
+            'São José dos Pinhais': [-25.5384, -49.1905],
+            'Brasília': [-15.7975, -47.8919],
+            'Uberlândia': [-18.9234, -48.2703],
+            'Contagem': [-19.9294, -44.0538],
+            'Belo Horizonte': [-19.9191, -43.9386],
+            'Salvador': [-12.9714, -38.5014],
+            'Recife': [-8.0476, -34.8771],
+            'Fortaleza': [-3.7319, -38.5267],
             'São Paulo': [-23.5505, -46.6333],
             'Rio de Janeiro': [-22.9068, -43.1729],
-            'Belo Horizonte': [-19.9191, -43.9386],
             'Curitiba': [-25.4284, -49.2733],
-            'Porto Alegre': [-30.0277, -51.5805],
-            'Salvador': [-12.9714, -38.5014],
-            'Brasília': [-15.7975, -47.8919],
-            'Fortaleza': [-3.7319, -38.5267],
-            'Manaus': [-3.1190, -60.0217],
-            'Recife': [-8.0476, -34.8771],
-            'Goiânia': [-15.7942, -48.2694],
-            'Belém': [-1.4554, -48.4915],
-            'Guardá': [-25.5434, -49.1939],
-            'São José dos Campos': [-23.1790, -45.8888],
-            'Campinas': [-22.8952, -47.0646],
+            'Votuporanga': [-20.4254, -49.7746],
+            'Plano Piloto': [-15.7975, -47.8919],
+            'Nossa Sra. do Socorro': [-10.2667, -36.6667],
+            'Jacareí': [-23.2969, -45.9667],
             'Santos': [-23.9608, -46.3339],
-            'São Bernardo do Campo': [-23.6955, -46.5628],
-            'Santo André': [-23.6628, -46.5375],
-            'Osasco': [-23.5302, -46.7916],
+            'Quissisana': [-25.5434, -49.1939],
+            'Parque dos Príncipes': [-23.3111, -45.8833],
+            'Urbanova': [-23.1822, -45.8644],
+            'Campinas': [-22.8952, -47.0646],
+            'Jundiaí': [-23.1883, -46.8883],
+            'Mogi Cruzes': [-23.5097, -46.1905],
             'Sorocaba': [-23.4957, -47.4573],
             'Piracicaba': [-22.7253, -47.6486],
-            'Jundiaí': [-23.1883, -46.8883],
-            'Ribeirão Preto': [-21.1753, -47.8109],
-            'Araraquara': [-21.7947, -48.1759],
-            'Contagem': [-19.9294, -44.0538],
-            'Uberlândia': [-18.9234, -48.2703],
-            'Juiz de Fora': [-21.7643, -43.3569],
-            'Joinville': [-26.3044, -48.8458],
-            'Blumenau': [-26.9196, -49.0632],
-            'Florianópolis': [-27.5954, -48.5482],
-            'Itajaí': [-26.9136, -48.6573],
-            'Londrina': [-23.3100, -51.1628],
-            'Maringá': [-23.4250, -51.4390],
-            'Cascavel': [-24.9525, -53.4547],
-            'Paraná': [-25.4295, -49.1666],
-            'Duque de Caxias': [-22.7859, -43.3084],
-            'São Gonçalo': [-22.8373, -43.0520],
-            'Niterói': [-22.8835, -43.1071],
-            'Volta Redonda': [-22.5066, -44.0997],
-            'Campos dos Goytacazes': [-21.3264, -41.3311],
-            'Vitória': [-20.3155, -40.3128],
-            'Vila Velha': [-20.3297, -40.2925],
-            'Serra': [-20.1297, -40.2925],
-            'Cariacica': [-20.2633, -40.4168],
-            'Natal': [-5.7942, -35.2084],
-            'Parnamirim': [-5.9025, -35.2622],
-            'Mossoró': [-5.1884, -37.3439],
-            'Caruaru': [-8.2828, -35.9761],
-            'Petrolina': [-9.3949, -40.5031],
-            'Salvador': [-12.9714, -38.5014],
-            'Feira de Santana': [-12.2669, -38.9619],
-            'Vitória da Conquista': [-14.8638, -41.8060],
-            'Ilhéus': [-14.7863, -39.0379],
-            'Teresina': [-5.0892, -42.8019],
-            'Parnaíba': [-2.9033, -41.7608],
-            'São Luís': [-2.5351, -44.3054],
-            'Imperatriz': [-5.5317, -47.4749],
-            'Palmas': [-10.1726, -48.3237],
-            'Porto Velho': [-8.7611, -63.9005],
+            'Porto Alegre': [-30.0277, -51.5805],
+            'Goiânia': [-15.7942, -48.2694],
             'Manaus': [-3.1190, -60.0217],
-            'Boa Vista': [2.8235, -60.6762],
-            'Macapá': [0.3500, -51.1159],
-            'Cuiabá': [-15.5921, -56.0979],
-            'Rondonópolis': [-16.4761, -54.5786],
-            'Campo Grande': [-20.4697, -54.6201],
-            'Dourados': [-22.2237, -54.8045]
+            'Belém': [-1.4554, -48.4915],
         };
         
-        // Extrair coordenadas inteligentemente: cidade > UF com jitter pequeno
-        function getCoordsByEndereco(endereco) {
-            if (!endereco) return [-15.79, -47.88];
+        // Função para extrair coordenadas do endereço
+        function extrairCoordenadaDoEndereco(endereco) {
+            if (!endereco) return null;
             
-            // Tentar encontrar a cidade no endereço
-            for (const [cidade, coords] of Object.entries(CIDADES_BRASILEIRAS)) {
-                if (endereco.toUpperCase().includes(cidade.toUpperCase())) {
-                    // Usar coordenadas da cidade + jitter pequeno
-                    const latJitter = (Math.random() - 0.5) * 0.25; // ±0.125 graus
-                    const lonJitter = (Math.random() - 0.5) * 0.25;
-                    const newLat = Math.max(-33.7, Math.min(5.3, coords[0] + latJitter));
-                    const newLon = Math.max(-73.9, Math.min(-34.8, coords[1] + lonJitter));
-                    return [newLat, newLon];
+            // Procurar por qualquer cidade conhecida no endereço
+            for (const [cidade, coords] of Object.entries(CIDADES_COORDS)) {
+                if (endereco.includes(cidade)) {
+                    return coords;
                 }
             }
             
-            // Se não encontrou cidade, usar UF
-            const ufMatch = endereco.match(/,\s*([A-Z]{2})\s*,/);
-            if (ufMatch && ufMatch[1] in UF_COORDS) {
-                const [lat, lon] = UF_COORDS[ufMatch[1]];
-                const latJitter = (Math.random() - 0.5) * 0.5; // ±0.25 graus
-                const lonJitter = (Math.random() - 0.5) * 0.5;
-                const newLat = Math.max(-33.7, Math.min(5.3, lat + latJitter));
-                const newLon = Math.max(-73.9, Math.min(-34.8, lon + lonJitter));
-                return [newLat, newLon];
+            // Fallback: tentar extrair por UF (estado) - associar a uma cidade principal
+            const ufMatch = endereco.match(/,?\s*([A-Z]{2})(?:\s|,|$)/);
+            if (ufMatch) {
+                const uf = ufMatch[1];
+                const ufCoords = {
+                    'SP': [-23.5505, -46.6333],  // São Paulo
+                    'RJ': [-22.9068, -43.1729], // Rio
+                    'MG': [-19.9191, -43.9386], // BH
+                    'PR': [-25.4284, -49.2733], // Curitiba
+                    'BA': [-12.9714, -38.5014], // Salvador
+                    'DF': [-15.7975, -47.8919], // Brasília
+                    'CE': [-3.7319, -38.5267],  // Fortaleza
+                    'PE': [-8.0476, -34.8771],  // Recife
+                    'RS': [-30.0277, -51.5805], // Porto Alegre
+                    'SC': [-27.5954, -48.5482], // Florianópolis
+                    'GO': [-15.7942, -48.2694], // Goiânia
+                    'MS': [-20.4697, -54.6201], // Campo Grande
+                    'ES': [-20.3155, -40.2558], // Vitória
+                    'PA': [-1.4554, -48.4915],  // Belém
+                    'MA': [-2.8883, -44.2395],  // São Luís
+                    'PI': [-5.0892, -42.8045],  // Teresina
+                    'RN': [-5.7945, -35.2110],  // Natal
+                    'AL': [-9.6498, -35.7351],  // Maceió
+                    'SE': [-10.5105, -37.0735], // Aracaju
+                    'RO': [-8.7619, -63.9039],  // Porto Velho
+                    'AC': [-9.9757, -67.8243],  // Rio Branco
+                    'AM': [-3.1190, -60.0217],  // Manaus
+                    'AP': [0.0349, -51.0494],   // Macapá
+                    'TO': [-10.1753, -48.2982], // Palmas
+                    'MT': [-15.5527, -56.2393], // Cuiabá
+                    'PB': [-7.1195, -34.8450],  // João Pessoa
+                    'MV': [-17.8672, -51.4986], // Especial - Mato Grosso do Sul (SE e MS)
+                };
+                return ufCoords[uf] || [-14.235, -51.925]; // Coordenada central do Brasil como fallback
             }
             
-            return [-15.79, -47.88];
+            // Se nada funcionar, usar centro do Brasil
+            return [-14.235, -51.925];
         }
         
+        function loadDefaultTemporalMapas() {
+            console.log('🔧 loadDefaultTemporalMapas() iniciado');
+            
+            // Limpar dados grandes desnecessários para liberar espaço
+            const keysToClean = ['userData', 'ativosData', 'motoristasData', 'statusFrotaData'];
+            keysToClean.forEach(key => {
+                try {
+                    const item = localStorage.getItem(key);
+                    if (item) {
+                        localStorage.removeItem(key);
+                        console.log(`🗑️ Limpou ${key}`);
+                    }
+                } catch (e) {
+                    console.warn(`Não conseguiu limpar ${key}:`, e);
+                }
+            });
+            
+            // Carregar dados de frota do localStorage
+            const savedFleetData = localStorage.getItem('fleetData');
+            
+            if (savedFleetData && savedFleetData !== '[]') {
+                try {
+                    frotaData = JSON.parse(savedFleetData);
+                    console.log('✅ Dados de frota carregados do localStorage:', frotaData.length, 'registros');
+                } catch (e) {
+                    console.error('❌ Erro ao parsear fleetData:', e);
+                    frotaData = [];
+                }
+            } else {
+                frotaData = [];
+            }
+            
+            // usuariosDriverData não é carregado do localStorage - será carregado manualmente pelo upload
+            usuariosDriverData = [];
+            
+            console.log('✅ Dados carregados');
+            console.log('frotaData:', frotaData.length, 'veículos');
+            console.log('usuariosDriverData: 0 (carregar via upload)');
+            
+            extrarTransportadorasUnidades();
+            atualizarFiltros();
+            console.log('✅ Filtros atualizados');
+            atualizarGraficos();
+            gerarStorytelling();
+            plotarNoMapa();
+            console.log('✅ loadDefaultTemporalMapas() concluído');
+        }
+
         // ============ INICIALIZAR MAPA ============
         window.addEventListener('load', () => {
+            console.log('✅ Window load event disparado');
             initializeMap();
-            document.getElementById('frota-file').addEventListener('change', (e) => handleFrotaFile(e));
-            document.getElementById('motoristas-file').addEventListener('change', (e) => handleMotoristasFile(e));
+            loadDefaultTemporalMapas();
+            
+            // Adicionar event listeners para upload de arquivos
+            const frotaInput = document.getElementById('frota-file');
+            const usuariosInput = document.getElementById('usuarios-driver-file');
+            
+            if (frotaInput) {
+                frotaInput.addEventListener('change', (e) => {
+                    console.log('📂 Mudança detectada em frota-file');
+                    handleFrotaFile(e);
+                });
+                console.log('✅ Event listener adicionado a frota-file');
+            } else {
+                console.error('❌ Elemento frota-file não encontrado!');
+            }
+            
+            if (usuariosInput) {
+                usuariosInput.addEventListener('change', (e) => {
+                    console.log('👤 Mudança detectada em usuarios-driver-file');
+                    handleUsuariosDriverFile(e);
+                });
+                console.log('✅ Event listener adicionado a usuarios-driver-file');
+            } else {
+                console.error('❌ Elemento usuarios-driver-file não encontrado!');
+            }
+            
             document.getElementById('comparison-period').addEventListener('change', () => atualizarGraficos());
             document.getElementById('region-filter').addEventListener('change', () => atualizarGraficos());
             document.getElementById('transportadora-filter').addEventListener('change', () => {
@@ -1006,101 +1324,218 @@
                 atualizarGraficos();
                 plotarNoMapa();
             });
+            
+            // Restaurar estado do checkbox de filtro "Sem cadastro"
+            const checkboxFiltro = document.getElementById('filtrarSemCadastroTemporal');
+            const savedFiltroState = localStorage.getItem('temporalFiltroSemCadastro');
+            if (savedFiltroState === 'true') {
+                checkboxFiltro.checked = true;
+            }
+            
+            // Listener para o checkbox
+            checkboxFiltro.addEventListener('change', function() {
+                localStorage.setItem('temporalFiltroSemCadastro', this.checked ? 'true' : 'false');
+                atualizarGraficos();
+                plotarNoMapa();
+            });
+            console.log('✅ Todos os event listeners inicializados');
         });
         
         function initializeMap() {
             map = L.map('map').setView([-15.79, -47.88], 4); // Centro Brasil
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            baseLayer = L.tileLayer(getTileUrl(), {
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 18,
             }).addTo(map);
+            
+            // Listener de zoom para recalcular posições dos markers
+            let ultimoZoom = map.getZoom();
+            map.on('zoomend', () => {
+                const novoZoom = map.getZoom();
+                // Recalcular se zoom mudou significativamente
+                if (Math.abs(novoZoom - ultimoZoom) >= 1 && frotaData.length > 0) {
+                    ultimoZoom = novoZoom;
+                    console.log('Zoom mudou para:', novoZoom);
+                    setTimeout(() => plotarNoMapa(), 50);
+                }
+            });
         }
         
         // ============ CARREGAR ARQUIVO FROTA ============
         function handleFrotaFile(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            console.log('📂 Arquivo selecionado:', file?.name);
+            if (!file) {
+                console.error('❌ Nenhum arquivo selecionado');
+                return;
+            }
             
+            console.log('🔄 Iniciando parse do arquivo:', file.name);
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
-                delimiter: ";",
                 complete: (results) => {
-                    frotaData = results.data.map(row => ({
-                        veiculo: row['Veículo'] || row['veiculo'] || '',
-                        status: row['Status'] || row['status'] || 'OK',
-                        movimento: row['Movimento do dispositivo'] || row['movimento'] || 'NO',
-                        endereco: row['Último endereço conhecido'] || row['endereco'] || '',
-                        coordenadas: row['Coordenadas'] || row['coordenadas'] || '',
-                        comunicacao: row['Última data de comunicação'] || row['comunicacao'] || '',
-                        grupo: row['Grupo'] || row['grupo'] || '',
-                        regiao: row['Região'] || row['regiao'] || row['REG'] || extrairRegiao(row['Grupo'] || ''),
-                    })).filter(r => r.veiculo);
+                    console.log('✅ Parse concluído! Registros:', results.data.length);
+                    
+                    // Debug: ver as colunas e primeiros dados
+                    if (results.data.length > 0) {
+                        console.log('Colunas do CSV:', Object.keys(results.data[0]));
+                        console.log('Primeiros 5 registros completos:');
+                        results.data.slice(0, 5).forEach((row, idx) => {
+                            console.log(`  Row ${idx}:`, row);
+                        });
+                    }
+                    
+                    if (results.data.length === 0) {
+                        alert('❌ Nenhum dado encontrado no arquivo CSV');
+                        return;
+                    }
+                    
+                    // Debug: ver quais status estão sendo encontrados
+                    const statusValoresUnicos = new Set();
+                    
+                    frotaData = results.data.map(row => {
+                        // Registrar os valores de status encontrados
+                        const statusBruto = row['Status'] || row['status'] || '';
+                        statusValoresUnicos.add(statusBruto);
+                        
+                        // Mapear usando a MESMA LÓGICA de status_frota.html
+                        let statusMapeado = 'Online'; // default
+                        
+                        // PRIORIDADE 1: Tratar "Off-line" primeiro (com ou sem hífen)
+                        if (statusBruto.includes('Off-line') || statusBruto.toLowerCase().includes('offline')) {
+                            statusMapeado = 'Offline';
+                        }
+                        // PRIORIDADE 2: Tratar "Não Ativo" ou "Untracked Asset"
+                        else if (statusBruto.toLowerCase().includes('não ativo') || 
+                                 statusBruto.toLowerCase().includes('inativo') ||
+                                 statusBruto.toLowerCase().includes('untracked')) {
+                            statusMapeado = 'Não Ativo';
+                        }
+                        // PRIORIDADE 3: Tratar "OK" e "OK (Parado)" como Online
+                        else if (statusBruto.includes('OK') || statusBruto.toUpperCase() === 'OK') {
+                            statusMapeado = 'Online';
+                        }
+                        
+                        return {
+                            veiculo: row['Veículo'] || row['veiculo'] || row['Placa'] || '',
+                            status: statusMapeado,
+                            movimento: row['Movimento do dispositivo'] || row['movimento'] || 'NO',
+                            endereco: row['Último endereço conhecido'] || row['Endereço'] || row['endereco'] || '',
+                            coordenadas: row['Coordenadas'] || row['coordenadas'] || '',
+                            comunicacao: row['Última data de comunicação'] || row['comunicacao'] || '',
+                            grupo: row['Grupo'] || row['grupo'] || '',
+                            regiao: row['Região'] || row['regiao'] || row['REG'] || extrairRegiao(row['Grupo'] || ''),
+                        };
+                    }).filter(r => r.veiculo);
+                    
+                    console.log('📍 Valores de STATUS encontrados no CSV:', Array.from(statusValoresUnicos));
+                    
+                    // Contar os status
+                    const online = frotaData.filter(v => v.status === 'Online').length;
+                    const naoAtivo = frotaData.filter(v => v.status === 'Não Ativo' || v.status === 'Parado').length;
+                    const offline = frotaData.filter(v => v.status === 'Offline').length;
+                    
+                    // Debug: contar quantas vezes cada status bruto aparece
+                    const statusBrutoContagem = {};
+                    results.data.forEach(row => {
+                        const sb = row['Status'] || row['status'] || '(vazio)';
+                        statusBrutoContagem[sb] = (statusBrutoContagem[sb] || 0) + 1;
+                    });
+                    
+                    console.log('📊 Status BRUTO (CSV) com contagem:');
+                    Object.entries(statusBrutoContagem).forEach(([status, count]) => {
+                        console.log(`  "${status}": ${count}`);
+                    });
+                    
+                    console.log('📊 Veículos válidos:', frotaData.length);
+                    console.log('📊 Status contagem MAPEADO:', { online, naoAtivo, offline, total: online + naoAtivo + offline });
+                    console.log('Exemplos de status processados:', frotaData.slice(0, 10).map(v => ({ veiculo: v.veiculo, status: v.status })));
                     
                     // Salvar no localStorage
-                    try {
-                        localStorage.setItem('temporalMapasData', JSON.stringify(frotaData));
-                        console.log('Dados salvos em localStorage (temporalMapasData)');
-                    } catch(e) {
-                        console.log('Aviso: Não foi possível salvar em localStorage', e);
-                    }
+                    localStorage.setItem('fleetData', JSON.stringify(frotaData));
+                    console.log('✅ Frota salva no localStorage');
                     
                     extrarTransportadorasUnidades();
                     atualizarFiltros();
                     atualizarGraficos();
-                    gerarAlertas();
+                    gerarStorytelling();
                     plotarNoMapa();
-                    alert(`✅ ${frotaData.length} veículos carregados!`);
+                    alert(`✅ ${frotaData.length} veículos carregados!\n\n📊 Status:\n✅ Online: ${online}\n⏸️ Não Ativo: ${naoAtivo}\n❌ Offline: ${offline}\n\n📍 Status únicos no CSV: ${Array.from(statusValoresUnicos).join(', ')}`);
                 },
-                error: (err) => alert('❌ Erro ao carregar CSV: ' + err.message)
+                error: (err) => {
+                    console.error('❌ Erro Papa.parse:', err);
+                    alert('❌ Erro ao carregar CSV: ' + err.message);
+                }
             });
         }
         
-        // ============ CARREGAR ARQUIVO MOTORISTAS ============
-        function handleMotoristasFile(event) {
+        // ============ CARREGAR ARQUIVO USUARIOS DRIVER ============
+        function handleUsuariosDriverFile(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            console.log('👤 Arquivo de usuários selecionado:', file?.name);
+            if (!file) {
+                console.error('❌ Nenhum arquivo de usuários selecionado');
+                return;
+            }
             
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
-                delimiter: ";",
                 complete: (results) => {
-                    motoristasData = results.data.map(row => ({
-                        nome: row['NOME COMPLETO'] || row['nome completo'] || '',
-                        nfc: row['NFC'] || row['nfc'] || '',
-                        grupo: row['Grupo'] || row['grupo'] || '',
-                        transportadora: extrairTransportadora(row['Grupo'] || ''),
-                    })).filter(r => r.nome);
+                    console.log('✅ Parse de usuários concluído! Registros:', results.data.length);
                     
-                    // Salvar no localStorage
-                    try {
-                        localStorage.setItem('motoristasData', JSON.stringify(motoristasData));
-                        console.log('Dados salvos em localStorage (motoristasData)');
-                    } catch(e) {
-                        console.log('Aviso: Não foi possível salvar em localStorage', e);
+                    if (results.data.length === 0) {
+                        alert('❌ Nenhum dado encontrado no arquivo CSV');
+                        return;
                     }
                     
+                    usuariosDriverData = results.data.map((row, idx) => {
+                        const nome = row['NOME COMPLETO'] || row['Nome Completo'] || row['nome completo'] || row['Nome'] || row['NOME'] || '';
+                        const cpf = row['CPF'] || row['cpf'] || row['CPF_CONDUCT'] || '';
+                        const nfc = row['NFC'] || row['nfc'] || row['BADGE'] || row['badge'] || '';
+                        const grupo = row['Grupo'] || row['grupo'] || row['GRUPO'] || '';
+                        
+                        return {
+                            nome: nome,
+                            cpf: cpf,
+                            nfc: nfc,
+                            grupo: grupo,
+                            transportadora: extrairTransportadora(grupo),
+                            unidade: extrairUnidade(grupo)
+                        };
+                    }).filter(r => r.nome && r.nome.trim() !== '');
+                    
+                    console.log('📊 Usuários válidos carregados em memória:', usuariosDriverData.length);
+                    
+                    if (usuariosDriverData.length === 0) {
+                        alert('❌ Nenhum usuário com NOME válido encontrado.');
+                        return;
+                    }
+                    
+                    // NÃO salvar no localStorage para evitar QuotaExceededError
+                    // Os dados permanecem em memória enquanto a página está aberta
+                    console.log('✅ Dados mantidos em memória (não persistem no localStorage)');
+                    
                     atualizarFiltros();
-                    gerarAlertas();
                     atualizarGraficos();
-                    alert(`✅ ${motoristasData.length} motoristas carregados!`);
+                    gerarStorytelling();
+                    alert(`✅ ${usuariosDriverData.length} usuários driver carregados em memória!`);
                 },
-                error: (err) => alert('❌ Erro ao carregar CSV: ' + err.message)
+                error: (err) => {
+                    console.error('❌ Erro Papa.parse usuários:', err);
+                    alert('❌ Erro ao carregar CSV: ' + err.message);
+                }
             });
         }
         
         // ============ EXTRAIR INFORMAÇÕES ============
         function extrairRegiao(grupo) {
-            // Tentar extrair nomes completos primeiro
-            const macroMatch = grupo.match(/REG_MACRO\s+REGIÃO\s+([^,]+?)(?:,|$)/);
-            if (macroMatch && macroMatch[1]) {
-                return macroMatch[1].trim();
-            }
-            
-            const supplyMatch = grupo.match(/REG_SUPPLY\s+([^,]+?)(?:,|$)/);
-            if (supplyMatch && supplyMatch[1]) {
-                return supplyMatch[1].trim();
+            // Extrair todo o padrão que começa com REG_ ou REG (espaço) até a próxima vírgula ou fim da string
+            // Exemplos: REG_MACRO REGIÃO SP, REG_SUPPLY SUL, REG_SUPPLY COMG, REG REGIÃO XX, etc.
+            const regMatch = grupo.match(/REG[_\s][^,]+/);
+            if (regMatch) {
+                return regMatch[0].trim();
             }
             
             return 'Outros';
@@ -1147,34 +1582,53 @@
         
         // ============ ATUALIZAR UNIDADES ============
         function atualizarUnidades() {
+            console.log('🔍 atualizarUnidades() chamado');
+            
             const transSelected = document.getElementById('transportadora-filter').value;
             const selectU = document.getElementById('unidade-filter');
             selectU.innerHTML = '<option value="">Todas Unidades</option>';
             
-            let unisFiltradas = new Set();
-            if (transSelected) {
-                frotaData.forEach(v => {
-                    const trans = extrairTransportadora(v.grupo);
-                    const filterMatch = transSelected === 'Sem transporte' 
-                        ? trans === 'Sem transportadora'
-                        : trans === transSelected;
-                    
-                    if (filterMatch) {
-                        const uni = extrairUnidade(v.grupo);
-                        if (uni !== 'Sem UNI') unisFiltradas.add(uni);
+            const unidadesSet = new Set();
+            
+            try {
+                if (!usuariosDriverData || usuariosDriverData.length === 0) {
+                    console.log('⚠️  usuariosDriverData vazio - unidades desabilitadas');
+                    selectU.innerHTML += '<option disabled>Carregue CSV usuarios driver</option>';
+                } else {
+                    if (transSelected) {
+                        // Filtrar apenas unidades da transportadora selecionada
+                        usuariosDriverData.forEach(m => {
+                            if (m && m.transportadora === transSelected && m.unidade && m.unidade !== 'Sem UNI') {
+                                unidadesSet.add(m.unidade);
+                            }
+                        });
+                    } else {
+                        // Mostrar todas as unidades
+                        usuariosDriverData.forEach(m => {
+                            if (m && m.unidade && m.unidade !== 'Sem UNI') {
+                                unidadesSet.add(m.unidade);
+                            }
+                        });
                     }
-                });
-            } else {
-                unisFiltradas = unidades;
+                    
+                    Array.from(unidadesSet).sort().forEach(u => {
+                        selectU.innerHTML += `<option value="${u}">${u}</option>`;
+                    });
+                }
+            } catch (err) {
+                console.error('Erro ao processar unidades:', err);
             }
             
-            Array.from(unisFiltradas).sort().forEach(u => {
-                selectU.innerHTML += `<option value="${u}">${u}</option>`;
-            });
+            console.log('Unidades encontradas para', transSelected || 'todas', ':', Array.from(unidadesSet));
+            console.log('✅ Unidades populadas:', unidadesSet.size);
         }
         
         // ============ ATUALIZAR FILTROS ============
         function atualizarFiltros() {
+            console.log('🔍 atualizarFiltros() chamado');
+            console.log('usuariosDriverData disponível:', usuariosDriverData && usuariosDriverData.length > 0);
+            
+            // Atualizar regiões
             const regioes = [...new Set(frotaData.map(v => v.regiao).filter(r => r && r !== 'Outros'))];
             const selectR = document.getElementById('region-filter');
             selectR.innerHTML = '<option value="">Todas Regiões</option>';
@@ -1182,80 +1636,175 @@
                 selectR.innerHTML += `<option value="${r}">${r}</option>`;
             });
             
+            console.log('Regiões populadas:', regioes.length);
+            
+            // ✅ Popular transportadoras - SOMENTE DO usuariosDriverData
             const selectT = document.getElementById('transportadora-filter');
             selectT.innerHTML = '<option value="">Todas Transportadoras</option>';
-            Array.from(transportadoras).sort().forEach(t => {
-                const label = t === 'Sem transporte' ? 'Sem Cadastro' : t;
+            
+            const transportadorasSet = new Set();
+            
+            // Adicionar transportadoras SOMENTE se usuariosDriverData for carregado
+            try {
+                if (usuariosDriverData && Array.isArray(usuariosDriverData) && usuariosDriverData.length > 0) {
+                    console.log('✅ usuariosDriverData carregado com', usuariosDriverData.length, 'registros');
+                    
+                    usuariosDriverData.forEach(m => {
+                        if (m && m.transportadora) {
+                            console.log('  -> Adicionando:', m.transportadora);
+                            transportadorasSet.add(m.transportadora);
+                        }
+                    });
+                } else {
+                    console.log('⚠️  usuariosDriverData vazio ou não carregado - filtros de transportadora desabilitados');
+                    selectT.innerHTML += '<option disabled>Carregue CSV usuarios driver</option>';
+                }
+            } catch (err) {
+                console.error('Erro ao processar usuariosDriverData:', err);
+            }
+            
+            console.log('Transportadoras encontradas:', Array.from(transportadorasSet));
+            
+            // Preencher select de transportadora
+            Array.from(transportadorasSet).sort().forEach(t => {
+                const label = (t === 'Sem transporte' || !t.trim()) ? 'Sem Cadastro' : t;
                 selectT.innerHTML += `<option value="${t}">${label}</option>`;
             });
+            
+            console.log('✅ Transportadoras populadas:', transportadorasSet.size);
             
             atualizarUnidades();
         }
         
-        // ============ GERAR ALERTAS AUTOMÁTICOS ============
-        function gerarAlertas() {
-            const alertsList = [];
+        // ============ GERAR STORYTELLING DE DADOS ============
+        function gerarStorytelling(dados, transportadora = '', unidade = '') {
+            // Se nenhum dado for passado, usar frotaData
+            if (!dados) dados = frotaData;
             
-            // Alertas de frota offline
-            const frotaOffline = frotaData.filter(v => v.status !== 'OK').length;
-            if (frotaOffline > 0) {
-                alertsList.push({
-                    tipo: 'danger',
-                    icon: 'bi-exclamation-circle',
-                    titulo: 'Veículos Offline',
-                    mensagem: `${frotaOffline} veículos sem comunicação há mais de 1 hora`,
-                    count: frotaOffline
+            if (dados.length === 0) {
+                document.getElementById('storytelling-content').innerHTML = '<p style="color: #999; font-style: italic;">Nenhum dado disponível com os filtros aplicados...</p>';
+                return;
+            }
+            
+            const total = dados.length;
+            const online = dados.filter(v => v.status === 'Online').length;
+            const naoAtivo = dados.filter(v => v.status === 'Não Ativo').length;
+            const offline = dados.filter(v => v.status === 'Offline').length;
+            
+            const taxaDisponibilidade = Math.round((online / total) * 100);
+            const taxaNaoAtivo = Math.round((naoAtivo / total) * 100);
+            const taxaOffline = Math.round((offline / total) * 100);
+            
+            // Análise por região (apenas dos dados filtrados)
+            const porRegiao = {};
+            dados.forEach(v => {
+                if (v.regiao) {
+                    porRegiao[v.regiao] = (porRegiao[v.regiao] || 0) + 1;
+                }
+            });
+            const regiaoMaiorFrota = Object.entries(porRegiao).sort((a, b) => b[1] - a[1])[0];
+            
+            // Contar motoristas com NFC respeitando os filtros aplicados
+            let motoristasComNFC = 0;
+            let totalMotoristasFiltrados = 0;
+            if (usuariosDriverData && usuariosDriverData.length > 0) {
+                usuariosDriverData.forEach(m => {
+                    // Verificar se tem vínculo (TRS + UNI)
+                    if (!m.transportadora || m.transportadora === 'Sem transportadora' ||
+                        !m.unidade || m.unidade === 'Sem UNI') {
+                        return; // Sem vínculo, pular
+                    }
+                    
+                    // Aplicar filtro de transportadora
+                    if (transportadora) {
+                        const filterMatch = transportadora === 'Sem transporte' 
+                            ? m.transportadora === 'Sem transportadora'
+                            : m.transportadora === transportadora;
+                        if (!filterMatch) return;
+                    }
+                    
+                    // Aplicar filtro de unidade
+                    if (unidade && m.unidade !== unidade) return;
+                    
+                    // Motorista passou nos filtros - contar
+                    totalMotoristasFiltrados++;
+                    
+                    // Verificar se tem NFC
+                    if (m.nfc && m.nfc.length > 14) {
+                        motoristasComNFC++;
+                    }
                 });
             }
             
-            // Alertas de motorista sem NFC
-            const motoristasChecker = motoristasData.filter(m => !m.nfc || m.nfc === '0').length;
-            if (motoristasChecker > 0) {
-                alertsList.push({
-                    tipo: 'warning',
-                    icon: 'bi-exclamation-triangle',
-                    titulo: 'Motoristas Sem NFC',
-                    mensagem: `${motoristasChecker} motoristas sem NFC válido registrado`,
-                    count: motoristasChecker
-                });
-            }
+            const porcentagemNFC = totalMotoristasFiltrados > 0 ? Math.round((motoristasComNFC / totalMotoristasFiltrados) * 100) : 0;
             
-            // Alertas de frota parada
-            const frotaParada = frotaData.filter(v => v.movimento === 'NO').length;
-            if (frotaParada > 0 && frotaParada > frotaData.length * 0.3) {
-                alertsList.push({
-                    tipo: 'warning',
-                    icon: 'bi-exclamation-triangle',
-                    titulo: 'Alta Taxa de Frota Parada',
-                    mensagem: `${frotaParada} veículos parados (${Math.round(frotaParada / frotaData.length * 100)}%)`,
-                    count: frotaParada
-                });
-            }
-            
-            // Atualizar interface
-            const container = document.getElementById('alerts-list');
-            if (alertsList.length === 0) {
-                container.innerHTML = '<p style="color: #28a745; font-weight: 600;">✅ Nenhum alerta crítico. Sistema operacional!</p>';
+            // Gerar insight principal
+            let insightPrincipal = '';
+            if (taxaDisponibilidade >= 80) {
+                insightPrincipal = `✅ Frota operando com <strong>${taxaDisponibilidade}%</strong> de disponibilidade (${online}/${total} veículos). Níveis ótimos de operação.`;
+            } else if (taxaDisponibilidade >= 60) {
+                insightPrincipal = `⚠️ Disponibilidade em <strong>${taxaDisponibilidade}%</strong> (${online}/${total}). Com ${naoAtivo} inativos e ${offline} offline. Requer atenção.`;
             } else {
-                container.innerHTML = alertsList.map(alert => `
-                    <div class="alert-item alert-${alert.tipo}">
-                        <div>
-                            <strong><i class="bi ${alert.icon}"></i> ${alert.titulo}</strong>
-                            <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${alert.mensagem}</p>
-                        </div>
-                        <span class="alert-badge">${alert.count}</span>
-                    </div>
-                `).join('');
+                insightPrincipal = `🔴 Disponibilidade crítica: <strong>${taxaDisponibilidade}%</strong> (${online}/${total}). Análise detalhada recomendada.`;
             }
+            
+            // Padrões detectados (baseado nos dados filtrados)
+            const padroes = [
+                `<strong>Status Filtrado:</strong> ${online} online (${taxaDisponibilidade}%), ${naoAtivo} inativos (${taxaNaoAtivo}%), ${offline} offline (${taxaOffline}%)`,
+                `<strong>Maior Concentração:</strong> ${regiaoMaiorFrota ? regiaoMaiorFrota[0] + ' (' + regiaoMaiorFrota[1] + ' veículos)' : 'Sem dados de região'}`,
+                `<strong>Cobertura NFC:</strong> ${motoristasComNFC} de ${totalMotoristasFiltrados} motoristas com rastreamento (${porcentagemNFC}%)`
+            ];
+            
+            // Recomendações baseadas em dados
+            const recomendacoes = [];
+            if (offline > total * 0.05) {
+                recomendacoes.push(`<strong>Investigar offline:</strong> ${offline} veículos sem comunicação requerem análise técnica`);
+            }
+            if (naoAtivo > total * 0.4) {
+                recomendacoes.push(`<strong>Revisar inativos:</strong> Percentual alto (${taxaNaoAtivo}%) de veículos parados`);
+            }
+            if (porcentagemNFC < 70 && totalMotoristasFiltrados > 0) {
+                recomendacoes.push(`<strong>Ampliar NFC:</strong> Apenas ${porcentagemNFC}% dos motoristas têm rastreamento de identidade`);
+            }
+            if (recomendacoes.length === 0) {
+                recomendacoes.push(`<strong>Status OK:</strong> Todos os indicadores operacionais estão dentro dos parâmetros esperados`);
+            }
+            
+            const storytelling = `
+                <div class="insight-section">
+                    <h3>🎯 Situação Principal</h3>
+                    <p>${insightPrincipal}</p>
+                </div>
+                
+                <div class="insight-section">
+                    <h3>📈 Padrões Detectados</h3>
+                    <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                        ${padroes.map(p => `<li style="margin-bottom: 8px;">• ${p}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="insight-section">
+                    <h3>💡 Recomendações</h3>
+                    <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                        ${recomendacoes.map(r => `<li style="margin-bottom: 8px;">• ${r}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            document.getElementById('storytelling-content').innerHTML = storytelling;
         }
+        
         
         // ============ ATUALIZAR GRÁFICOS ============
         function atualizarGraficos() {
+            const isDark = document.body.classList.contains('dark');
             const periodo = document.getElementById('comparison-period').value;
             const regiao = document.getElementById('region-filter').value;
             const transportadora = document.getElementById('transportadora-filter').value;
             const unidade = document.getElementById('unidade-filter').value;
+            const filtrarSemCadastro = document.getElementById('filtrarSemCadastroTemporal')?.checked || false;
             
+            // Aplicar filtros à frota
             let filtrados = frotaData.filter(v => {
                 const trans = extrairTransportadora(v.grupo);
                 const uni = extrairUnidade(v.grupo);
@@ -1275,35 +1824,122 @@
                 // Filtro de unidade
                 if (unidade && uni !== unidade) return false;
                 
+                // Filtro "Remover Sem cadastro"
+                if (filtrarSemCadastro) {
+                    const transInvalida = trans === 'Sem transportadora' || !trans;
+                    const uniInvalida = uni === 'Sem UNI' || !uni;
+                    if (transInvalida && uniInvalida) {
+                        return false;
+                    }
+                }
+                
                 return true;
             });
             
-            // KPI Cards
-            const online = filtrados.filter(v => v.status === 'OK').length;
-            const offline = filtrados.filter(v => v.status !== 'OK').length;
-            const motoristasComNFC = motoristasData.filter(m => m.nfc && m.nfc.length > 14).length;
-            
+            // ============ ATUALIZAR KPI CARDS (COM FILTROS) ============
+            // Total de veículos filtrados
             document.getElementById('kpi-total').textContent = filtrados.length;
-            document.getElementById('kpi-online').textContent = online;
-            document.getElementById('kpi-offline').textContent = offline;
-            document.getElementById('kpi-nfc').textContent = motoristasComNFC;
             
-            // GRÁFICO 1: Comparação Temporal (Frota Total vs Online)
+            // Contar motoristas com vínculo (TRS + UNI válido) - respeitando filtros
+            let motoristasComVinculo = 0;
+            usuariosDriverData.forEach(m => {
+                if (m.transportadora && m.transportadora !== 'Sem transportadora' &&
+                    m.unidade && m.unidade !== 'Sem UNI') {
+                    // Aplicar filtros se houver
+                    if (transportadora) {
+                        const filterMatch = transportadora === 'Sem transporte' 
+                            ? m.transportadora === 'Sem transportadora'
+                            : m.transportadora === transportadora;
+                        if (!filterMatch) return;
+                    }
+                    if (unidade && m.unidade !== unidade) return;
+                    
+                    motoristasComVinculo++;
+                }
+            });
+            
+            // Contar motoristas com NFC (dentro dos que têm vínculo + filtros)
+            let motoristasComNFC = 0;
+            usuariosDriverData.forEach(m => {
+                if (m.nfc && m.nfc.length > 14 &&
+                    m.transportadora && m.transportadora !== 'Sem transportadora' &&
+                    m.unidade && m.unidade !== 'Sem UNI') {
+                    // Aplicar filtros se houver
+                    if (transportadora) {
+                        const filterMatch = transportadora === 'Sem transporte' 
+                            ? m.transportadora === 'Sem transportadora'
+                            : m.transportadora === transportadora;
+                        if (!filterMatch) return;
+                    }
+                    if (unidade && m.unidade !== unidade) return;
+                    
+                    motoristasComNFC++;
+                }
+            });
+            
+            // Atualizar cards
+            document.getElementById('kpi-motoristas-vinculo').textContent = motoristasComVinculo;
+            document.getElementById('kpi-motoristas-nfc').textContent = motoristasComNFC;
+            
+            // Calcular e atualizar porcentagem NFC
+            const porcentagemNFC = motoristasComVinculo > 0 ? Math.round((motoristasComNFC / motoristasComVinculo) * 100) : 0;
+            document.getElementById('kpi-nfc-porcentagem').textContent = porcentagemNFC + '%';
+            
+            // Aplicar estilo FAROL
+            const cardNFC = document.getElementById('kpi-nfc-card');
+            cardNFC.classList.remove('red', 'yellow', 'green');
+            
+            if (porcentagemNFC <= 30) {
+                cardNFC.classList.add('red');
+            } else if (porcentagemNFC <= 60) {
+                cardNFC.classList.add('yellow');
+            } else {
+                cardNFC.classList.add('green');
+            }
+            
+            // ============ GERAR STORYTELLING COM DADOS FILTRADOS ============
+            gerarStorytelling(filtrados, transportadora, unidade);
+            
+            // ============ GRÁFICOS COM DADOS FILTRADOS ============
+            // GRÁFICO 1: Comparação Temporal (Frota - COM FILTROS)
             const frotaTotal = filtrados.length;
-            const frotaOnline = filtrados.filter(v => v.status === 'OK').length;
-            const frotaOffline = frotaTotal - frotaOnline;
+            const frotaOnline = filtrados.filter(v => v.status === 'Online').length;
+            const frotaNaoAtivo = filtrados.filter(v => v.status === 'Não Ativo' || v.status === 'Parado').length;
+            const frotaOffline = filtrados.filter(v => v.status === 'Offline').length;
+            
+            // Valores para GRÁFICOS 2 e posteriores
+            const statusOnline = frotaOnline;
+            const statusNaoAtivo = frotaNaoAtivo;
+            const statusOffline = frotaOffline;
+            
+            console.log('📊 GRÁFICO 1 - Com Filtros:', {
+                total: frotaTotal,
+                online: frotaOnline,
+                naoAtivo: frotaNaoAtivo,
+                offline: frotaOffline
+            });
+            
+            // Construir dados dinamicamente - mostrar apenas valores > 0
+            const g1Labels = ['Total de\nVeículos'];
+            const g1Data = [frotaTotal];
+            const g1Colors = ['#63a3d8'];
+            const g1BorderColors = ['#4a8fb8'];
+            
+            if (frotaOnline > 0) { g1Labels.push('Online'); g1Data.push(frotaOnline); g1Colors.push('#28a745'); g1BorderColors.push('#1e7e34'); }
+            if (frotaNaoAtivo > 0) { g1Labels.push('Não Ativo'); g1Data.push(frotaNaoAtivo); g1Colors.push('#ffc107'); g1BorderColors.push('#ff9800'); }
+            if (frotaOffline > 0) { g1Labels.push('Offline'); g1Data.push(frotaOffline); g1Colors.push('#dc3545'); g1BorderColors.push('#bd2130'); }
             
             if (chartTemporal) chartTemporal.destroy();
             chartTemporal = new Chart(document.getElementById('chart-temporal'), {
                 type: 'bar',
                 data: {
-                    labels: ['Total de\nVeículos', 'Online', 'Offline'],
+                    labels: g1Labels,
                     datasets: [
                         {
                             label: 'Quantidade',
-                            data: [frotaTotal, frotaOnline, frotaOffline],
-                            backgroundColor: ['#63a3d8', '#28a745', '#dc3545'],
-                            borderColor: ['#4a8fb8', '#1e7e34', '#bd2130'],
+                            data: g1Data,
+                            backgroundColor: g1Colors,
+                            borderColor: g1BorderColors,
                             borderWidth: 2
                         }
                     ]
@@ -1311,8 +1947,26 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            bottom: 80,
+                            top: 20,
+                            left: 20,
+                            right: 20
+                        }
+                    },
                     plugins: {
-                        legend: { display: false },
+                        legend: { 
+                            display: true, 
+                            position: "top",
+                            labels: {
+                                color: isDark ? '#fff' : '#000',
+                                font: { weight: 'bold' },
+                                padding: 15,
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        },
                         datalabels: { 
                             display: true, 
                             color: '#fff',
@@ -1328,30 +1982,44 @@
                 }
             });
             
-            // GRÁFICO 2: Tendência (Disponibilidade vs Indisponibilidade)
-            const taxaDisponibilidade = frotaTotal > 0 ? Math.round((frotaOnline / frotaTotal) * 100) : 0;
-            const taxaIndisponibilidade = 100 - taxaDisponibilidade;
+            // GRÁFICO 2: Status Online/Offline/Não Ativo - mostrar apenas valores > 0
+            const g2Labels = [];
+            const g2Data = [];
+            const g2Colors = [];
             
-            if (chartTrend) chartTrend.destroy();
-            chartTrend = new Chart(document.getElementById('chart-trend'), {
+            if (statusOnline > 0) { g2Labels.push(`Online (${statusOnline})`); g2Data.push(statusOnline); g2Colors.push('#28a745'); }
+            if (statusNaoAtivo > 0) { g2Labels.push(`Não Ativo (${statusNaoAtivo})`); g2Data.push(statusNaoAtivo); g2Colors.push('#ffc107'); }
+            if (statusOffline > 0) { g2Labels.push(`Offline (${statusOffline})`); g2Data.push(statusOffline); g2Colors.push('#dc3545'); }
+            
+            if (window.chartTendencia) window.chartTendencia.destroy();
+            window.chartTendencia = new Chart(document.getElementById('chart-status'), {
                 type: 'doughnut',
                 data: {
-                    labels: [`Disponível (${taxaDisponibilidade}%)`, `Indisponível (${taxaIndisponibilidade}%)`],
+                    labels: g2Labels,
                     datasets: [{
-                        data: [taxaDisponibilidade, taxaIndisponibilidade],
-                        backgroundColor: ['#28a745', '#dc3545'],
-                        borderColor: '#fff',
-                        borderWidth: 3
+                        data: g2Data,
+                        backgroundColor: g2Colors,
+                        borderColor: ['#fff', '#fff', '#fff'],
+                        borderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { position: 'bottom' },
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                color: isDark ? '#fff' : '#000',
+                                font: { weight: 'bold' },
+                                padding: 15,
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        },
                         datalabels: { 
-                            display: true,
-                            formatter: (value) => value + '%',
+                            display: true, 
+                            formatter: (value, context) => value,
                             color: '#fff',
                             font: { weight: 'bold' }
                         }
@@ -1359,10 +2027,26 @@
                 }
             });
             
-            // GRÁFICO 3: NFC por Transportadora - Top 5 (Melhorado)
+            // GRÁFICO 3: NFC por Transportadora - Top 5 (Baseado em usuariosDriverData)
             const nfcPorTrans = {};
-            motoristasData.forEach(m => {
+            
+            // Filtrar motoristas pela transportadora selecionada usando usuariosDriverData
+            usuariosDriverData.forEach(m => {
                 const trans = m.transportadora;
+                
+                // Aplicar filtro de transportadora
+                if (transportadora) {
+                    const filterMatch = transportadora === 'Sem transporte' 
+                        ? trans === 'Sem transportadora'
+                        : trans === transportadora;
+                    if (!filterMatch) return;
+                }
+                
+                // Aplicar filtro "Remover Sem cadastro"
+                if (filtrarSemCadastro && trans === 'Sem transportadora') {
+                    return;
+                }
+                
                 if (!nfcPorTrans[trans]) nfcPorTrans[trans] = { com: 0, sem: 0 };
                 m.nfc && m.nfc.length > 14 ? nfcPorTrans[trans].com++ : nfcPorTrans[trans].sem++;
             });
@@ -1398,7 +2082,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
-                        legend: { position: 'top' },
+                        legend: { 
+                            position: 'top',
+                            labels: {
+                                color: isDark ? '#fff' : '#000',
+                                font: { weight: 'bold' },
+                                padding: 15
+                            }
+                        },
                         datalabels: { display: true, color: '#fff', font: { size: 10 } }
                     },
                     scales: { 
@@ -1411,20 +2102,28 @@
                 }
             });
             
-            // GRÁFICO 4: Distribuição Regional
+            // GRÁFICO 4: Distribuição Regional - Ordenado do maior para o menor
             const frotaRegiao = {};
             filtrados.forEach(v => {
                 frotaRegiao[v.regiao] = (frotaRegiao[v.regiao] || 0) + 1;
             });
             
+            // Ordenar por quantidade (maior para menor)
+            const regiaoOrdenada = Object.entries(frotaRegiao)
+                .sort((a, b) => b[1] - a[1])
+                .reduce((acc, [key, val]) => {
+                    acc[key] = val;
+                    return acc;
+                }, {});
+            
             if (chartRegion) chartRegion.destroy();
             chartRegion = new Chart(document.getElementById('chart-frota-region'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(frotaRegiao),
+                    labels: Object.keys(regiaoOrdenada),
                     datasets: [{
                         label: 'Quantidade',
-                        data: Object.values(frotaRegiao),
+                        data: Object.values(regiaoOrdenada),
                         backgroundColor: '#3b5bdb',
                         borderRadius: 6
                     }]
@@ -1435,7 +2134,11 @@
                     plugins: {
                         legend: { 
                             display: true,
-                            labels: { color: '#fff' }
+                            labels: { 
+                                color: isDark ? '#fff' : '#000',
+                                font: { weight: 'bold' },
+                                padding: 15
+                            }
                         },
                         datalabels: {
                             display: true,
@@ -1450,21 +2153,30 @@
                 }
             });
             
-            // GRÁFICO 5: Distribuição por Unidade - Top 10
+            // GRÁFICO 5: Distribuição por Unidade - Ordenado do maior para o menor
             const frotaUnidade = {};
             filtrados.forEach(v => {
                 const uni = extrairUnidade(v.grupo);
                 frotaUnidade[uni] = (frotaUnidade[uni] || 0) + 1;
             });
             
+            // Ordenar por quantidade (maior para menor) e pegar Top 10
+            const unidadeOrdenada = Object.entries(frotaUnidade)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .reduce((acc, [key, val]) => {
+                    acc[key] = val;
+                    return acc;
+                }, {});
+            
             if (chartUnidade) chartUnidade.destroy();
             chartUnidade = new Chart(document.getElementById('chart-frota-unidade'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(frotaUnidade).map(u => u.replace('UNI_', '')).slice(0, 10),
+                    labels: Object.keys(unidadeOrdenada).map(u => u.replace('UNI_', '')),
                     datasets: [{
                         label: 'Quantidade',
-                        data: Object.values(frotaUnidade).slice(0, 10),
+                        data: Object.values(unidadeOrdenada),
                         backgroundColor: '#e74c3c',
                         borderRadius: 6
                     }]
@@ -1473,42 +2185,19 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: { 
+                            display: true, 
+                            position: "top",
+                            labels: {
+                                color: isDark ? '#fff' : '#000',
+                                font: { weight: 'bold' },
+                                padding: 15
+                            }
+                        },
                         datalabels: { display: true, color: '#fff', font: { size: 11 } }
                     },
                     scales: {
                         y: { beginAtZero: true }
-                    }
-                }
-            });
-            
-            // GRÁFICO 5: Status Online/Offline
-            const statusOnline = filtrados.filter(v => v.status === 'OK').length;
-            const statusOffline = filtrados.length - statusOnline;
-            
-            if (chartStatus) chartStatus.destroy();
-            chartStatus = new Chart(document.getElementById('chart-status'), {
-                type: 'doughnut',
-                data: {
-                    labels: [`Online (${statusOnline})`, `Offline (${statusOffline})`],
-                    datasets: [{
-                        data: [statusOnline, statusOffline],
-                        backgroundColor: ['#28a745', '#dc3545'],
-                        borderColor: ['#fff', '#fff'],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        datalabels: { 
-                            display: true, 
-                            formatter: (value, context) => value,
-                            color: '#fff',
-                            font: { weight: 'bold' }
-                        }
                     }
                 }
             });
@@ -1540,7 +2229,15 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: { 
+                            display: true, 
+                            position: "top",
+                            labels: {
+                                color: isDark ? '#fff' : '#000',
+                                font: { weight: 'bold' },
+                                padding: 15
+                            }
+                        },
                         datalabels: { display: true, color: '#fff', font: { size: 11 } }
                     },
                     scales: {
@@ -1549,145 +2246,124 @@
                 }
             });
             
-            // GRÁFICO 8: Top 10 Unidades por Número de Veículos
-            const uniCount = {};
-            filtrados.forEach(v => {
-                const uni = extrairUnidade(v.grupo);
-                uniCount[uni] = (uniCount[uni] || 0) + 1;
-            });
-            
-            const uniLabels = Object.entries(uniCount)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10)
-                .map(([uni]) => uni);
-            const uniData = uniLabels.map(uni => uniCount[uni]);
-            
-            const chartTopUnidades = window.chartTopUnidades;
-            if (chartTopUnidades) chartTopUnidades.destroy();
-            window.chartTopUnidades = new Chart(document.getElementById('chart-top-unidades'), {
-                type: 'bar',
-                data: {
-                    labels: uniLabels,
-                    datasets: [{
-                        label: 'Quantidade de Veículos',
-                        data: uniData,
-                        backgroundColor: '#63a3d8',
-                        borderColor: '#4a8fb8',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: true, position: 'top' },
-                        datalabels: { 
-                            display: true,
-                            formatter: (value) => value,
-                            color: '#000',
-                            font: { weight: 'bold', size: 11 },
-                            anchor: 'end',
-                            align: 'end'
-                        }
-                    },
-                    scales: {
-                        x: { beginAtZero: true }
-                    }
-                }
-            });
-            
-            // Gerar tabela de unidades
-            gerarTabelaUnidades(filtrados);
+            // Gerar storytelling com dados filtrados
+            gerarStorytelling(filtrados, transportadora, unidade);
+            gerarTabelaTransportadora(filtrados);
         }
         
-        // ============ GERAR TABELA POR UNIDADES ============
-        function gerarTabelaUnidades(dados) {
+        // ============ GERAR TABELA UNIDADE ============
+        function gerarTabelaTransportadora(dados) {
             const uniData = {};
             
             // Agrupar dados por unidade
             dados.forEach(v => {
                 const uni = extrairUnidade(v.grupo);
-                const trans = extrairTransportadora(v.grupo);
-                const transLabel = trans === 'Sem transportadora' ? 'Sem Cadastro' : trans.replace('TRS_', '');
+                const label = uni === 'Sem UNI' ? 'Sem UNI' : uni.replace('UNI_', '');
                 
-                if (!uniData[uni]) {
-                    uniData[uni] = {
-                        transportadora: transLabel,
+                if (!uniData[label]) {
+                    uniData[label] = {
                         total: 0,
                         online: 0,
                         offline: 0,
-                        movimento: 0,
-                        placas: []
+                        placas: [],
+                        uniRaw: uni
                     };
                 }
                 
-                uniData[uni].total++;
-                uniData[uni].placas.push(v.veiculo);
-                
+                uniData[label].total++;
+                uniData[label].placas.push(v.veiculo);
                 if (v.status === 'OK') {
-                    uniData[uni].online++;
+                    uniData[label].online++;
                 } else {
-                    uniData[uni].offline++;
-                }
-                if (v.movimento === 'YES') {
-                    uniData[uni].movimento++;
+                    uniData[label].offline++;
                 }
             });
             
             // Gerar HTML da tabela
-            const tbody = document.getElementById('unidade-tbody');
-            const rows = Object.entries(uniData)
-                .sort((a, b) => b[1].total - a[1].total) // Ordenar por total de veículos
-                .map(([uni, data]) => {
-                    const placasHTML = data.placas.slice(0, 5).join(', ') + 
-                                      (data.placas.length > 5 ? `... (+${data.placas.length - 5} mais)` : '');
-                    
-                    return `
-                        <tr>
-                            <td><strong>${uni}</strong></td>
-                            <td>${data.transportadora}</td>
-                            <td>${data.total}</td>
-                            <td><span class="status-badge status-online">${data.online}</span></td>
-                            <td><span class="status-badge status-offline">${data.offline}</span></td>
-                            <td>${data.movimento}</td>
-                            <td><small style="color: #666;">${placasHTML}</small></td>
-                        </tr>
-                    `;
+            const tbody = document.getElementById('transportadora-tbody');
+            const rows = Object.entries(uniData).map(([uni, data]) => {
+                // Contar motoristas dessa unidade usando usuariosDriverData
+                const motoristasUnicos = new Set();
+                const motoristasNFCUnicos = new Set();
+                
+                usuariosDriverData.forEach(m => {
+                    const veiculoUni = (m.unidade && m.unidade !== 'Sem UNI') ? m.unidade.replace('UNI_', '') : 'Sem UNI';
+                    // Apenas contar motoristas que têm AMBOS TRS_ E UNI_ (vinculados)
+                    if (veiculoUni === uni && 
+                        m.transportadora !== 'Sem transportadora' && 
+                        m.unidade !== 'Sem UNI' &&
+                        m.grupo && !m.grupo.includes('AMBEV')) {
+                        motoristasUnicos.add(m.nome);
+                        // NFC válido > 14 caracteres
+                        if (m.nfc && m.nfc.length > 14) {
+                            motoristasNFCUnicos.add(m.nome);
+                        }
+                    }
                 });
+                
+                const disponibilidade = data.total > 0 ? Math.round((data.online / data.total) * 100) : 0;
+                const placasStr = data.placas.join(', ');
+                
+                return `
+                    <tr>
+                        <td><strong>${uni}</strong></td>
+                        <td><small style="color: #666; word-break: break-word;">${placasStr}</small></td>
+                        <td>${data.total}</td>
+                        <td><span class="status-badge status-online">${data.online}</span></td>
+                        <td><span class="status-badge status-offline">${data.offline}</span></td>
+                        <td>${motoristasUnicos.size}</td>
+                        <td><strong>${motoristasNFCUnicos.size}</strong></td>
+                        <td><strong>${disponibilidade}%</strong></td>
+                    </tr>
+                `;
+            });
             
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7">Nenhum dado disponível</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8">Nenhum dado disponível</td></tr>';
             } else {
                 tbody.innerHTML = rows.join('');
             }
         }
         
-        
+        // ============ OBTER TOP N ENDEREÇOS ============
+        function obterTopEnderecos(dados, limit = 10) {
+            const enderecosFreq = {};
+            
+            dados.forEach(v => {
+                if (!v.endereco || v.endereco.trim() === '') return;
+                const endereco = v.endereco.split(',').slice(0, -1).join(',').trim(); // Remove UF/CEP
+                enderecosFreq[endereco] = (enderecosFreq[endereco] || 0) + 1;
+            });
+            
+            return Object.entries(enderecosFreq)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, limit)
+                .map(([endereco, freq]) => ({ endereco, freq }));
+        }
         function plotarNoMapa() {
+            const transportadora = document.getElementById('transportadora-filter').value;
+            const unidade = document.getElementById('unidade-filter').value;
+            const filtrarSemCadastro = document.getElementById('filtrarSemCadastroTemporal')?.checked || false;
+            
+            // DEBUG: Log do estado dos dados
+            console.log('====== DEBUG MAPA ======');
+            console.log('Total registros em frotaData:', frotaData.length);
+            console.log('Total registros com endereco:', frotaData.filter(v => v.endereco && v.endereco.trim() !== '').length);
+            
             // Limpar markers antigos
             markers.forEach(m => map.removeLayer(m));
             markers = [];
             
-            console.log(`🗺️ Plotando mapa com filtros...`);
+            let veiculosSemCoordenada = 0;
+            let veiculoComCoordenada = 0;
+            let veiculosSemEndereco = 0;
             
-            let plotados = 0;
-            let semEndereco = 0;
-            
-            // Pegar filtros iguais aos gráficos
-            const regiao = document.getElementById('region-filter').value;
-            const transportadora = document.getElementById('transportadora-filter').value;
-            const unidade = document.getElementById('unidade-filter').value;
-            
-            // Filtrar dados aplicando os mesmos critérios dos gráficos
-            const veiculosFiltrados = frotaData.filter(v => {
+            // Filtrar dados
+            let filtrados = frotaData.filter(v => {
                 const trans = extrairTransportadora(v.grupo);
                 const uni = extrairUnidade(v.grupo);
                 
-                // Filtro de região
-                if (regiao && v.regiao !== regiao) return false;
-                
-                // Filtro de transportadora
+                // Filtro de transportadora (incluindo "Sem transportadora")
                 if (transportadora) {
                     if (transportadora === 'Sem transporte') {
                         if (trans !== 'Sem transportadora') return false;
@@ -1699,61 +2375,155 @@
                 // Filtro de unidade
                 if (unidade && uni !== unidade) return false;
                 
+                // Filtro "Remover Sem cadastro" - Remove apenas registros com AMBOS transportadora E unidade inválidos
+                if (filtrarSemCadastro) {
+                    const transInvalida = trans === 'Sem transportadora' || !trans;
+                    const uniInvalida = uni === 'Sem UNI' || !uni;
+                    if (transInvalida && uniInvalida) {
+                        return false;
+                    }
+                }
+                
                 return true;
             });
             
-            // Plotar veículos filtrados
-            veiculosFiltrados.forEach(veiculo => {
-                // Pular se não tiver endereço
+            console.log('Registros após filtros:', filtrados.length);
+            console.log('Com endereço:', filtrados.filter(v => v.endereco && v.endereco.trim() !== '').length);
+            
+            // ====== Agrupar veículos por endereço ======
+            const veiculosPorEndereco = {};
+            
+            filtrados.forEach(veiculo => {
                 if (!veiculo.endereco || veiculo.endereco.trim() === '') {
-                    semEndereco++;
+                    veiculosSemEndereco++;
                     return;
                 }
                 
-                // Extrair coordenadas por cidade ou UF
-                const coords = getCoordsByEndereco(veiculo.endereco);
-                
-                // Determinar cor baseado no status
-                let cor = '#6c757d';
-                if (veiculo.status === 'OK' && veiculo.movimento === 'YES') {
-                    cor = '#28a745'; // Verde
-                } else if (veiculo.status === 'OK' && veiculo.movimento === 'NO') {
-                    cor = '#ffc107'; // Amarelo
-                } else if (veiculo.status !== 'OK') {
-                    cor = '#dc3545'; // Vermelho
+                if (!veiculosPorEndereco[veiculo.endereco]) {
+                    veiculosPorEndereco[veiculo.endereco] = [];
                 }
-                
-                // Criar marcador
-                const marker = L.circleMarker(coords, {
-                    radius: 6,
-                    fillColor: cor,
-                    color: '#ffffff',
-                    weight: 1,
-                    opacity: 0.9,
-                    fillOpacity: 0.8
-                }).addTo(map);
-                
-                // Popup simples
-                const statusText = veiculo.status === 'OK' ? '✅ Online' : '❌ Offline';
-                const movText = veiculo.movimento === 'YES' ? '🚗' : '🛑';
-                
-                marker.bindPopup(`
-                    <div style="font-size: 12px; width: 250px;">
-                        <strong>${veiculo.veiculo}</strong><br>
-                        ${statusText} | ${movText}<br>
-                        <small style="color: #666;">${veiculo.endereco}</small>
-                    </div>
-                `);
-                
-                markers.push(marker);
-                plotados++;
+                veiculosPorEndereco[veiculo.endereco].push(veiculo);
             });
             
-            console.log(`\n🗺️ ===== MAPA ATUALIZADO =====`);
-            console.log(`✅ ${plotados} veículos plotados (com filtros)`);
-            console.log(`❌ ${semEndereco} SEM endereço`);
-            console.log(`📍 Filtros: Região=${regiao || 'Todas'} | Trans=${transportadora || 'Todas'} | Unit=${unidade || 'Todas'}`);
-            console.log(`=============================\n`);
+            const enderecosUnicos = Object.keys(veiculosPorEndereco).length;
+            console.log(`🗺️ Endereços únicos: ${enderecosUnicos}`);
+            
+            // ====== Plotar cada veículo individualmente com offset dinâmico ======
+            Object.entries(veiculosPorEndereco).forEach(([endereco, veiculos]) => {
+                // Obter coordenadas base do endereço (usando a primeira que tiver)
+                let coordsBase = null;
+                
+                for (let v of veiculos) {
+                    if (v.coordenadas && v.coordenadas.trim()) {
+                        try {
+                            const [lat, lon] = v.coordenadas.split(',').map(x => parseFloat(x.trim()));
+                            if (!isNaN(lat) && !isNaN(lon)) {
+                                coordsBase = [lat, lon];
+                                veiculoComCoordenada++;
+                                break;
+                            }
+                        } catch (e) {}
+                    }
+                }
+                
+                // Se não tiver coordenadas exatas, usar a função de busca pelo endereço
+                if (!coordsBase) {
+                    coordsBase = extrairCoordenadaDoEndereco(endereco);
+                    veiculosSemCoordenada++;
+                }
+                
+                // Plotar cada veículo individualmente
+                veiculos.forEach((veiculo, index) => {
+                    // Se há múltiplos veículos, dar um offset para não sobrepor
+                    let coords = coordsBase;
+                    
+                    if (veiculos.length > 1) {
+                        // Offset amplo para distribuição bem bonita e visível
+                        // Escala com zoom: quanto mais perto, maior o offset
+                        const zoomLevel = map.getZoom();
+                        
+                        // Em zoom baixo (<=6): offset maior
+                        // Em zoom médio (6-14): offset proporcional e bem expansivo
+                        // Em zoom alto (>14): offset gigante para ficar espetacular
+                        let offsetGraus = 0.0005; // Base ampla (2,5x maior)
+                        if (zoomLevel > 6) {
+                            offsetGraus = 0.0005 * Math.pow(2.5, zoomLevel - 6); // Multiplicador 2.5 (maior expansão)
+                        }
+                        
+                        const angulo = (index / veiculos.length) * Math.PI * 2;
+                        const lat = coordsBase[0] + offsetGraus * Math.cos(angulo);
+                        const lon = coordsBase[1] + offsetGraus * Math.sin(angulo);
+                        
+                        coords = [lat, lon];
+                    }
+                    
+                    // Determinar cor baseado no status individual
+                    let cor = '#6c757d'; // Cinza - sem info
+                    if (veiculo.status === 'Online') {
+                        cor = '#28a745'; // Verde - online
+                    } else if (veiculo.status === 'Não Ativo') {
+                        cor = '#ffc107'; // Amarelo - não ativo (parado)
+                    } else if (veiculo.status === 'Offline') {
+                        cor = '#dc3545'; // Vermelho - offline
+                    }
+                    
+                    // Criar marcador para cada veículo (bolinha pequena)
+                    const marker = L.circleMarker(coords, {
+                        radius: 6,
+                        fillColor: cor,
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(map);
+                    
+                    // Popup com informações do veículo
+                    const statusEmoji = veiculo.status === 'Online' ? '🟢' : (veiculo.status === 'Não Ativo' ? '🟡' : '🔴');
+                    const movimentoEmoji = veiculo.movimento === 'YES' ? '🚗' : '🛑';
+                    
+                    const popup = `
+                        <div style="font-size: 0.9rem; min-width: 250px;">
+                            <div style="border-bottom: 2px solid #63a3d8; padding-bottom: 8px; margin-bottom: 8px;">
+                                <strong style="color: #63a3d8; font-size: 1rem;">${veiculo.veiculo}</strong>
+                                ${veiculos.length > 1 ? `<span style="color: #999; font-size: 0.8rem;"> (${index + 1}/${veiculos.length} neste local)</span>` : ''}
+                            </div>
+                            <div style="margin: 6px 0;">
+                                <span style="color: #666;">📍 Endereço:</span><br>
+                                <span style="color: #333; font-weight: 500; font-size: 0.85rem;">${veiculo.endereco}</span>
+                            </div>
+                            <div style="margin: 6px 0;">
+                                <span style="color: ${cor}; font-weight: 700;">
+                                    ${statusEmoji} ${veiculo.status}
+                                </span> 
+                                <span style="color: #666; margin-left: 10px;">
+                                    ${movimentoEmoji} ${veiculo.movimento === 'YES' ? 'Em Movimento' : 'Parado'}
+                                </span>
+                            </div>
+                            <div style="margin: 6px 0; border-top: 1px solid #eee; padding-top: 6px;">
+                                <small style="color: #999;">⏱️ Última com: ${veiculo.comunicacao || 'N/A'}</small>
+                            </div>
+                            ${veiculo.coordenadas ? `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee;">
+                                <small style="color: #63a3d8;">📌 ${veiculo.coordenadas}</small>
+                            </div>` : ''}
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popup);
+                    markers.push(marker);
+                });
+            });
+            
+            // Mostrar contador de veículos no console
+            const totalVeiculosComEndereco = Object.values(veiculosPorEndereco).reduce((acc, arr) => acc + arr.length, 0);
+            console.log(`\n📊 ===== RESUMO DO MAPA =====`);
+            console.log(`Total veículos carregados: ${filtrados.length}`);
+            console.log(`Veículos com endereço: ${totalVeiculosComEndereco}`);
+            console.log(`📍 Bolinhas plotadas: ${markers.length}`);
+            console.log(`🗺️ Endereços únicos: ${enderecosUnicos}`);
+            console.log(`❌ Sem coordenada exata (aprox): ${veiculosSemCoordenada}`);
+            console.log(`✅ Com coordenada exata: ${veiculoComCoordenada}`);
+            console.log(`📋 Sem endereço: ${veiculosSemEndereco}`);
+            console.log(`Zoom atual: ${map.getZoom()}`);
         }
         
         // ============ FUNÇÕES AUXILIARES ============
@@ -1767,17 +2537,39 @@
         const observer = new MutationObserver(() => {
             setTimeout(() => {
                 if (window.chartTemporal) window.chartTemporal.update();
-                if (window.chartTrend) window.chartTrend.update();
                 if (window.chartNfc) window.chartNfc.update();
                 if (window.chartRegion) window.chartRegion.update();
                 if (window.chartStatus) window.chartStatus.update();
                 if (window.chartComunicacao) window.chartComunicacao.update();
                 if (window.chartUnidade) window.chartUnidade.update();
-                if (window.chartPlanoDisp) window.chartPlanoDisp.update();
             }, 50);
         });
         
         observer.observe(document.body, { attributes: true });
+    
+        
+            
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
+        }
     </script>
 </body>
 </html>
+
+
+
+

@@ -6,10 +6,8 @@
     <title>Status da Frota - Sistema Argus Ambev</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
-    <script src="idb-manager.js"></script>
-    <script src="storage-adapter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
@@ -173,7 +171,6 @@
         .sidebar-footer {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
             font-size: 0.85rem;
             text-align: center;
             position: absolute;
@@ -181,11 +178,82 @@
             width: calc(var(--sidebar-width) - 40px);
         }
         
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+            padding: 0 30px 30px 30px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
             transition: all 0.3s ease;
-            padding: 0;
+            padding: 0 30px 30px 30px;
         }
         
         /* HEADER */
@@ -316,14 +384,14 @@
         }
 
         .container {
-            background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
-            border-radius: 16px;
-            padding: 50px 30px;
-            box-shadow: 0 4px 20px rgba(99, 163, 216, 0.08);
-            margin-bottom: 30px;
+            background: transparent;
+            border-radius: 4px;
+            padding: 8px 4px;
+            box-shadow: none;
+            margin-bottom: 8px;
             text-align: center;
-            transition: all 0.3s ease;
-            border: 2px dashed rgba(99, 163, 216, 0.2);
+            transition: all 0.2s ease;
+            border: none;
             position: relative;
             overflow: hidden;
         }
@@ -332,75 +400,67 @@
             display: none;
         }
         
+        /* dark mode container override - must be specific */
+        body.dark .container {
+            background: var(--dark-color) !important;
+            color: var(--light-color) !important;
+            border-color: rgba(255,255,255,0.1) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+        
+        body.dark .container h3 {
+            color: #FFD700 !important;
+        }
+        
+        body.dark .container p {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+        
         .upload-section:hover {
-            box-shadow: 0 12px 30px rgba(99, 163, 216, 0.15);
-            border-color: rgba(99, 163, 216, 0.4);
+            box-shadow: none;
         }
         
         .upload-icon {
-            font-size: 4rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 20px;
-            animation: float 4s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-15px) scale(1.05); }
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 6px;
         }
         
         .upload-section h3 {
             color: var(--primary-color);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 0.85rem;
+            display: none;
         }
         
         .upload-section p {
-            color: #666;
-            margin-bottom: 10px;
+            color: #888;
+            margin-bottom: 6px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
         }
         
         .btn-upload {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            background: var(--primary-color);
             color: white;
             border: none;
-            padding: 8px 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(99, 163, 216, 0.2);
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(99, 163, 216, 0.1);
             position: relative;
             overflow: hidden;
         }
         
-        .btn-upload::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-        
         .btn-upload:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(99, 163, 216, 0.4);
-        }
-        
-        .btn-upload:hover::before {
-            left: 100%;
+            background: var(--primary-dark);
+            box-shadow: 0 2px 6px rgba(99, 163, 216, 0.15);
         }
         
         .file-input-container {
@@ -472,7 +532,8 @@
         
         .card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(99, 163, 216, 0.12);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
         }
         
         .card::before {
@@ -712,12 +773,15 @@
             background: white;
             border-radius: 16px;
             padding: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 6px 18px rgba(0, 51, 160, .15);
+            border: 2px solid var(--primary-color);
             transition: all 0.3s ease;
         }
         
         .chart-container:hover {
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, .25);
+            border-color: var(--accent-color);
         }
         
         .chart-header {
@@ -740,7 +804,7 @@
         
         .chart-wrapper {
             position: relative;
-            height: 200px;
+            height: 380px;
         }
         
         #map {
@@ -762,7 +826,9 @@
             margin-bottom: 12px;
         }
         
-        /* Removed problematic dark mode filter - was making circles invisible */
+        body.dark #map {
+            filter: invert(0.93) hue-rotate(200deg);
+        }
         
         .table-section {
             background: white;
@@ -1112,8 +1178,26 @@
             color: #aaa;
         }
     </style>
+    <script>
+        // Aplicar dark mode ANTES do DOM carregar para evitar flash de light mode
+        (function() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'true') {
+                document.documentElement.classList.add('dark-preload');
+            }
+        })();
+    </script>
 </head>
 <style>
+    /* Preload dark mode para evitar flash */
+    html.dark-preload {
+        filter: none;
+    }
+    
+    html.dark-preload body {
+        background: linear-gradient(135deg, #071124 0%, #0b1726 100%) !important;
+        color: #e0e0e0 !important;
+    }
 /* Dark mode aprimorado (injetado automaticamente) */
 body.dark {
     background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
@@ -1133,11 +1217,14 @@ body.dark .header {
 /* Dark Mode para Gráficos e Tabelas */
 body.dark .chart-container {
     background: #0d1b2a;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 6px 18px rgba(0, 51, 160, .15);
 }
 
 body.dark .chart-container:hover {
-    box-shadow: 0 8px 25px rgba(99, 163, 216, 0.2);
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 51, 160, .25);
+    border-color: var(--accent-color);
 }
 
 body.dark .chart-header {
@@ -1219,6 +1306,25 @@ body.dark .pagination .page-info {
     color: white;
 }
 
+body.dark .container {
+    background: #081226 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark .container h3 {
+    color: #FFD700 !important;
+}
+
+body.dark .container p {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+body.dark .container small {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
 body.dark .topo {
     background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
@@ -1243,34 +1349,34 @@ body.dark .sidebar-menu a.active {
 <body>
     <div class="dashboard-container">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
                 <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-                <li><a href="status_frota.html" class="active"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-people"></i> Motoristas</a></li>
-                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-                <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
-                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
-                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
-                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
             </ul>
             <div class="sidebar-footer">
                 <p></p>
-                <p style="font-size: 0.7rem; margin: 8px 0 0 0; opacity: 0.7;">Última sincronização: 28/01/2026</p>
             </div>
         </nav>
         
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <header class="header">
                 <div class="header-branding">
                     <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
@@ -1280,23 +1386,18 @@ body.dark .sidebar-menu a.active {
                     Telemetria CCO
                     <small>Status da Frota</small>
                 </div>
+                <button class="btn-toggle" onclick="clearCache()" title="Limpar cache de dados da frota">🗑️ Limpar Cache</button>
                 <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
             </header>
             
 
             <div class="container">
-                <div class="upload-icon">
-                    <i class="bi bi-cloud-upload"></i>
-                </div>
-                <h3>Carregar Dados da Frota</h3>
-                <p>Importe seu arquivo CSV com os dados dos veículos Geotab para visualizar e analisar as informações da frota em tempo real.</p>
                 <button class="btn-upload" id="uploadBtn">
-                    <i class="bi bi-file-earmark-arrow-up"></i> Selecionar Arquivo CSV
+                    <i class="bi bi-cloud-upload"></i> Carregar CSV
                 </button>
                 <div class="file-input-container">
                     <input type="file" id="csvFileInput" class="file-input" accept=".csv">
                 </div>
-                <p class="mt-3"><small><i class="bi bi-info-circle"></i> Formatos suportados: CSV • Tamanho máximo: 50MB</small></p>
             </div>
             
             <!-- Loading Indicator -->
@@ -1378,14 +1479,11 @@ body.dark .sidebar-menu a.active {
                 <div class="filter-group filter-buttons">
                     <button onclick="applyFilters()"><i class="bi bi-funnel"></i> Filtrar</button>
                     <button class="reset" onclick="resetFilters()"><i class="bi bi-arrow-clockwise"></i> Limpar</button>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; color: var(--primary-color); padding: 10px 14px; background: rgba(99, 163, 216, 0.08); border-radius: 6px; border: 2px solid var(--accent-color); margin-left: auto;">
+                        <input type="checkbox" id="filtrarSemCadastroFrota" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color);">
+                        <span>🗑️ Remover "Sem cadastro"</span>
+                    </label>
                 </div>
-            </div>
-            
-            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
-              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; color: var(--primary-color);">
-                <input type="checkbox" id="filtrarSemCadastro" style="width: 18px; height: 18px; cursor: pointer;" onchange="updateDashboard()">
-                <span>Remover "Sem cadastro" e "Sem uni" dos gráficos</span>
-              </label>
             </div>
             
             <!-- Charts Section -->
@@ -1420,6 +1518,7 @@ body.dark .sidebar-menu a.active {
                         <canvas id="fabricanteChart"></canvas>
                     </div>
                 </div>
+
                 <div class="chart-container">
                     <div class="chart-header">
                         <div class="chart-title">
@@ -1540,12 +1639,27 @@ body.dark .sidebar-menu a.active {
         let currentPage = 1;
         const itemsPerPage = 10;
         
-        // Variáveis globais - inicializadas em DOMContentLoaded
+        // references to DOM elements (assigned on DOMContentLoaded)
         let csvFileInput, uploadBtn, loadingIndicator, summaryCards, chartsSection, tableSection, tableBody, toastNotification;
-        let searchPlaca, filterTransportadora, filterUnidade;
+        let searchPlaca, filterTransportadora, filterUnidade, filtrarSemCadastroFrota;
         
-        document.addEventListener('DOMContentLoaded', async function() {
-            // ✅ Agora inicializar os elementos do DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            // IMPORTANTE: Inicializar dark mode sync GLOBAL (com ITP fallback)
+            initDarkModeSync();
+            
+            // Ativar link correto no menu
+            activateCurrentLink();
+            
+            // IMPORTANTE: Remover classe 'dark' se localStorage for false
+            try {
+                if (localStorage.getItem('darkMode') === 'false') {
+                    document.body.classList.remove('dark');
+                }
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
+            
+            // grab elements after the DOM is ready
             csvFileInput = document.getElementById('csvFileInput');
             uploadBtn = document.getElementById('uploadBtn');
             loadingIndicator = document.getElementById('loadingIndicator');
@@ -1554,38 +1668,82 @@ body.dark .sidebar-menu a.active {
             tableSection = document.getElementById('tableSection');
             tableBody = document.getElementById('tableBody');
             toastNotification = document.getElementById('toastNotification');
+            
             searchPlaca = document.getElementById('searchPlaca');
             filterTransportadora = document.getElementById('filterTransportadora');
             filterUnidade = document.getElementById('filterUnidade');
+            filtrarSemCadastroFrota = document.getElementById('filtrarSemCadastroFrota');
             
-            // Carregar dados persistidos (com fallback para IndexedDB)
-            const savedData = await window.loadStorageData('statusFrotaData');
-            if (savedData) {
-              try {
-                fleetData = savedData;
-                console.log('✓ Dados carregados do localStorage/IndexedDB:', fleetData.length, 'registros');
-                updateDashboard();
-              } catch(e) {
-                console.warn('⚠️ Erro ao carregar dados persistidos:', e);
-              }
-            } else {
-              console.warn('ℹ️ Nenhum dado persistido encontrado');
+            // Restaurar estado do checkbox de filtro "Sem cadastro"
+            let savedFiltroState = null;
+            try {
+                savedFiltroState = localStorage.getItem('frotaFiltroSemCadastro');
+            } catch(e) {}
+            
+            if (savedFiltroState === 'true' && filtrarSemCadastroFrota) {
+                filtrarSemCadastroFrota.checked = true;
             }
             
-            uploadBtn.addEventListener('click', () => csvFileInput.click());
-            csvFileInput.addEventListener('change', handleFileSelect);
+            // Listener para o checkbox
+            if (filtrarSemCadastroFrota) {
+                filtrarSemCadastroFrota.addEventListener('change', function() {
+                    try {
+                        localStorage.setItem('frotaFiltroSemCadastro', this.checked ? 'true' : 'false');
+                    } catch(e) {}
+                    applyFilters();
+                });
+            }
+
+            // Registrar plugin de datalabels
+            if (window.Chart && window.ChartDataLabels) {
+                try { Chart.register(ChartDataLabels); } catch(e) { console.warn('ChartDataLabels:', e); }
+            }
             
+            // Inicializar gráficos ANTES de carregar dados
             initCharts();
-            // Não precisa mais chamar loadStoredData() pois já carregou acima
+            
+            // Carregar dados persistidos (com tratamento ITP)
+            let savedData = null;
+            try {
+                savedData = localStorage.getItem('statusFrotaData');
+            } catch(e) {
+                console.warn('Storage access denied, usando dados padrão');
+            }
+            
+            if (savedData) {
+                try {
+                    const fleetData_loaded = JSON.parse(savedData);
+                    if (fleetData_loaded && Array.isArray(fleetData_loaded)) {
+                        fleetData = fleetData_loaded;
+                        updateDashboard();
+                        console.log('✅ Dados carregados do localStorage');
+                    } else {
+                        console.warn('⚠️ Dados persistidos inválidos');
+                    }
+                } catch(parseErr) {
+                    console.warn('⚠️ Erro ao fazer parse dos dados salvos:', parseErr);
+                }
+            }
+
+            if (uploadBtn && csvFileInput) {
+                uploadBtn.addEventListener('click', () => csvFileInput.click());
+                csvFileInput.addEventListener('change', handleFileSelect);
+            } else {
+                console.error('uploadBtn ou csvFileInput não encontrados');
+            }
+            
+            loadStoredData();
             if (fleetData.length === 0) {
                 createSampleFleetData();
             }
         });
         
+        function shouldLabelBeInside(value, maxValue) {
+            // Se o valor for maior que 35% do máximo, coloca label dentro
+            return value > maxValue * 0.35;
+        }
+        
         function initCharts() {
-            // Registrar plugin de data labels
-            Chart.register(ChartDataLabels);
-            
             const isDarkMode = document.body.classList.contains('dark');
             const textColor = isDarkMode ? '#e0e0e0' : '#333';
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
@@ -1626,35 +1784,51 @@ body.dark .sidebar-menu a.active {
                         data: [],
                         backgroundColor: '#63a3d8',
                         borderColor: '#4a8fb8',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
-                        tooltip: { backgroundColor: tooltipBg },
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
                         datalabels: {
                             anchor: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
                             },
                             align: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
                             },
-                            offset: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 0 : 5;
-                            },
+                            font: { size: 10, weight: 'bold' },
                             color: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? '#fff' : textColor;
-                            },
-                            font: { weight: 'bold', size: 12 },
-                            formatter: function(value) { return value || 0; }
-                        }
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
                     },
                     scales: {
                         y: { 
@@ -1680,35 +1854,51 @@ body.dark .sidebar-menu a.active {
                         data: [],
                         backgroundColor: '#28a745',
                         borderColor: '#20c997',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
-                        legend: { display: false },
-                        tooltip: { backgroundColor: tooltipBg },
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
                         datalabels: {
                             anchor: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
                             },
                             align: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
                             },
-                            offset: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 0 : 5;
-                            },
+                            font: { size: 10, weight: 'bold' },
                             color: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? '#fff' : textColor;
-                            },
-                            font: { weight: 'bold', size: 12 },
-                            formatter: function(value) { return value || 0; }
-                        }
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
                     },
                     scales: { 
                         y: { 
@@ -1724,6 +1914,7 @@ body.dark .sidebar-menu a.active {
                 }
             });
             
+
             const cambioCtx = document.getElementById('cambioChart').getContext('2d');
             cambioChart = new Chart(cambioCtx, {
                 type: 'pie',
@@ -1759,35 +1950,51 @@ body.dark .sidebar-menu a.active {
                         data: [],
                         backgroundColor: '#9B59B6',
                         borderColor: '#8E44AD',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
-                        legend: { display: false },
-                        tooltip: { backgroundColor: tooltipBg },
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
                         datalabels: {
                             anchor: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
                             },
                             align: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
                             },
-                            offset: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 0 : 5;
-                            },
+                            font: { size: 10, weight: 'bold' },
                             color: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? '#fff' : textColor;
-                            },
-                            font: { weight: 'bold', size: 12 },
-                            formatter: function(value) { return value || 0; }
-                        }
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
                     },
                     scales: { 
                         y: { 
@@ -1838,35 +2045,51 @@ body.dark .sidebar-menu a.active {
                         data: [],
                         backgroundColor: '#3498DB',
                         borderColor: '#2980B9',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
-                        legend: { display: false },
-                        tooltip: { backgroundColor: tooltipBg },
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
                         datalabels: {
                             anchor: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
                             },
                             align: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
                             },
-                            offset: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 0 : 5;
-                            },
+                            font: { size: 10, weight: 'bold' },
                             color: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? '#fff' : textColor;
-                            },
-                            font: { weight: 'bold', size: 12 },
-                            formatter: function(value) { return value || 0; }
-                        }
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
                     },
                     scales: { 
                         y: { 
@@ -1917,16 +2140,7 @@ body.dark .sidebar-menu a.active {
                             position: 'bottom',
                             labels: { color: textColor, padding: 15 }
                         },
-                        tooltip: { backgroundColor: tooltipBg },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'end',
-                            offset: 3,
-                            color: '#fff',
-                            font: { weight: 'bold', size: 11 },
-                            padding: 4,
-                            formatter: function(value) { return value > 0 ? value : ''; }
-                        }
+                        tooltip: { backgroundColor: tooltipBg }
                     },
                     scales: {
                         x: { 
@@ -1957,46 +2171,74 @@ body.dark .sidebar-menu a.active {
         }
         
         function loadStoredData() {
-            const stored = localStorage.getItem('fleetData');
-            if (stored) {
-                try {
-                    fleetData = JSON.parse(stored);
-                    if (fleetData && fleetData.length > 0) {
-                        updateDashboard();
+            try {
+                const stored = localStorage.getItem('fleetData');
+                if (stored) {
+                    try {
+                        fleetData = JSON.parse(stored);
+                        if (fleetData && fleetData.length > 0) {
+                            updateDashboard();
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao carregar dados:', e);
                     }
-                } catch (e) {
-                    console.warn('Erro ao carregar dados:', e);
                 }
+            } catch(e) {
+                console.warn('⚠️ localStorage bloqueado (ITP/Tracking Prevention):', e.message);
             }
         }
         
         function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            const file = event.target.files && event.target.files[0];
+            if (!file) {
+                console.warn('Nenhum arquivo selecionado');
+                return;
+            }
+            
+            console.log('📁 Arquivo selecionado:', file.name, file.size, 'bytes');
             
             if (file.size > 50 * 1024 * 1024) {
                 alert('Arquivo muito grande. Máximo 50MB.');
                 return;
             }
             
-            document.querySelector('.container').classList.add('visible');
-            loadingIndicator.classList.add('visible');
+            const uploadContainer = document.querySelector('.container');
+            if (uploadContainer) uploadContainer.classList.add('visible');
+            if (loadingIndicator) loadingIndicator.classList.add('visible');
             
             const timeout = setTimeout(() => {
-                loadingIndicator.classList.remove('visible');
-                document.querySelector('.container').classList.remove('visible');
-                alert('Timeout ao processar arquivo.');
+                if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                if (uploadContainer) uploadContainer.classList.remove('visible');
+                console.error('⏱️ Timeout ao processar arquivo');
+                alert('Timeout ao processar arquivo. Tente com um arquivo menor.');
             }, 30000);
             
-            Papa.parse(file, {
-                header: true,
-                delimiter: ';',
-                skipEmptyLines: true,
-                dynamicTyping: false,
-                worker: true,
-                complete: function(results) {
-                    clearTimeout(timeout);
-                    if (results.data && results.data.length > 0) {
+            // Detectar delimitador automaticamente
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const firstLine = e.target.result.split('\n')[0];
+                let delimiter = ';';
+                
+                if (firstLine.includes(',') && !firstLine.includes(';')) {
+                    delimiter = ',';
+                } else if (firstLine.includes('\t')) {
+                    delimiter = '\t';
+                }
+                
+                console.log('🔍 Delimitador detectado:', JSON.stringify(delimiter), 'Primeira linha:', firstLine.substring(0, 100));
+                
+                Papa.parse(file, {
+                    header: true,
+                    delimiter: delimiter,
+                    skipEmptyLines: true,
+                    dynamicTyping: false,
+                    worker: true,
+                    complete: function(results) {
+                        clearTimeout(timeout);
+                        console.log('✅ Papa.parse concluído. Erros:', results.errors?.length ? results.errors : 'nenhum');
+                        if (results.data && results.data.length > 0) {
+                            console.log('📊 Papa.parse success. Registros encontrados:', results.data.length);
+                            console.log('📋 Colunas detectadas:', Object.keys(results.data[0]));
                         // Detecta qual coluna contém a placa
                         const firstRow = results.data[0];
                         const placaKey = Object.keys(firstRow).find(key => 
@@ -2010,53 +2252,77 @@ body.dark .sidebar-menu a.active {
                             key === 'Placa'
                         );
                         
-                        console.log('Coluna de placa detectada:', placaKey);
+                        console.log('🔑 Coluna de placa detectada:', placaKey, '| Colunas disponíveis:', Object.keys(firstRow));
                         
                         if (placaKey) {
+                            console.log('✔️ Coluna de placa encontrada:', placaKey);
                             fleetData = results.data
                                 .filter(row => row[placaKey] && row[placaKey].trim() !== '')
                                 .map(row => normalizeGeotabData(row, placaKey));
                         } else {
+                            console.warn('⚠️ Coluna de placa não encontrada, tentando com a primeira linha');
                             fleetData = results.data
                                 .filter(row => Object.values(row).some(v => v && v.toString().trim() !== ''))
                                 .map(row => normalizeGeotabData(row));
                         }
                         
-                        // 🔍 DEBUG: Mostrar primeiro registro para validação
-                        if (fleetData.length > 0) {
-                            console.log('\n🚗 PRIMEIRO VEÍCULO CARREGADO:');
-                            console.log('─────────────────────────────────────');
-                            const primeiro = fleetData[0];
-                            console.log(`Placa: ${primeiro.placa}`);
-                            console.log(`Status: ${primeiro.status}`);
-                            console.log(`Endereço: ${primeiro.endereco}`);
-                            console.log(`Transportadora: ${primeiro.transportadora}`);
-                            console.log(`Fabricante: ${primeiro.fabricante}`);
-                            console.log(`Tipo: ${primeiro['tipo de veículo']}`);
-                            console.log('─────────────────────────────────────\n');
+                        console.log('✅ Registros carregados:', fleetData.length);
+                        if (fleetData.length === 0) {
+                            console.error('❌ Nenhum registro foi processado');
+                            alert('Aviso: Nenhum dado válido foi encontrado no arquivo. Verifique o formato.');
                         }
                         
-                        console.log(`✅ Registros carregados: ${fleetData.length}`);
-                        console.log(`📊 Com endereço: ${fleetData.filter(v => v.endereco && v.endereco.trim()).length}`);
+                        // Salvar no localStorage apenas se não for muito grande
+                        if (fleetData.length < 500) {
+                            try {
+                                localStorage.setItem('statusFrotaData', JSON.stringify(fleetData));
+                                console.log('💾 Dados salvos no localStorage');
+                            } catch(e) {
+                                console.warn('⚠️ Não foi possível salvar no localStorage:', e.message);
+                            }
+                        } else {
+                            console.warn('⚠️ Arquivo muito grande para localStorage, dados não foram persistidos');
+                        }
                         
-                        window.saveDataSafely('statusFrotaData', fleetData);
-                        
-                        loadingIndicator.classList.remove('visible');
+                        if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                        console.log('📈 Atualizando dashboard com', fleetData.length, 'veículos');
                         updateDashboard();
                         showToast();
+                        // permitir novo envio: restaurar container e resetar input
+                        const uploadContainer = document.querySelector('.container');
+                        if (uploadContainer) uploadContainer.classList.remove('visible');
+                        // resetar file input para permitir re-envio
+                        if (csvFileInput) {
+                            csvFileInput.value = '';
+                            csvFileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
                     } else {
-                        loadingIndicator.classList.remove('visible');
-                        document.querySelector('.container').classList.remove('visible');
-                        alert('Nenhum dado encontrado no arquivo.');
+                        if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                        const uploadContainer = document.querySelector('.container');
+                        if (uploadContainer) uploadContainer.classList.remove('visible');
+                        console.error('❌ Nenhum dado encontrado no arquivo');
+                        alert('Nenhum dado encontrado no arquivo. Verifique o formato CSV.');
                     }
                 },
                 error: function(error) {
                     clearTimeout(timeout);
-                    loadingIndicator.classList.remove('visible');
-                    document.querySelector('.container').classList.remove('visible');
+                    console.error('Papa.parse error:', error);
+                    if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                    const uploadContainer = document.querySelector('.container');
+                    if (uploadContainer) uploadContainer.classList.remove('visible');
                     alert('Erro ao processar CSV: ' + error.message);
                 }
-            });
+                });
+            };
+            reader.onerror = function() {
+                clearTimeout(timeout);
+                console.error('❌ Erro ao ler arquivo');
+                if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                const uploadContainer = document.querySelector('.container');
+                if (uploadContainer) uploadContainer.classList.remove('visible');
+                alert('Erro ao ler o arquivo. Verifique se o arquivo é válido.');
+            };
+            reader.readAsText(file);
         }
         
         function normalizeGeotabData(row, placaKey) {
@@ -2143,19 +2409,35 @@ body.dark .sidebar-menu a.active {
                         normalized['tipo de cambio'] = cambioMatch[0].trim();
                     }
                     
-                    // Extrair fabricante (MERCEDES BENZ, VOLVO, SCANIA, etc.) - Normalizar Volkswagen
-                    let fabMatch = grupoValue.match(/(MERCEDES BENZ|VOLVO|SCANIA|IVECO|FORD|VOLKSWAGEN|VW|JAC|MAM)/i);
+                    // Extrair fabricante (MERCEDES BENZ, VOLVO, SCANIA, etc.) - Ordenado por comprimento para evitar false matches
+                    // MAN e JAC devem estar protegidos por word boundaries para não capturar MANUAL, JACAREI, JAGUARI, etc.
+                    let fabMatch = grupoValue.match(/(MERCEDES BENZ|FREIGHTLINER|PETERBILT|VOLKSWAGEN|HYUNDAI|MITSUBISHI|NAVISTAR|RENAULT|AGRALE|SCANIA|VOLVO|CUMMINS|FOTON|HINO|ISUZU|LIBRA|FIAT|FORD|IVECO|TRACAO|TRACTION|MACK|VW|DAF|MAM|(?<![A-Z])JAC(?![A-Z])|(?<![A-Z])MAN(?![A-Z]))/i);
                     if (fabMatch) {
                         let fab = fabMatch[0].trim().toUpperCase();
                         // Normalizar variações de Volkswagen
                         if (fab.includes('VOLKSWAGEN') || fab === 'VW') fab = 'Volkswagen';
                         else if (fab.includes('MERCEDES')) fab = 'Mercedes Benz';
+                        else if (fab.includes('FREIGHTLINER')) fab = 'Freightliner';
+                        else if (fab.includes('PETERBILT')) fab = 'Peterbilt';
                         else if (fab.includes('VOLVO')) fab = 'Volvo';
                         else if (fab.includes('SCANIA')) fab = 'Scania';
                         else if (fab.includes('IVECO')) fab = 'Iveco';
                         else if (fab.includes('FORD')) fab = 'Ford';
+                        else if (fab.includes('RENAULT')) fab = 'Renault';
+                        else if (fab.includes('FOTON')) fab = 'Foton';
+                        else if (fab.includes('HINO')) fab = 'Hino';
+                        else if (fab.includes('ISUZU')) fab = 'Isuzu';
+                        else if (fab.includes('LIBRA')) fab = 'Libra';
+                        else if (fab.includes('FIAT')) fab = 'Fiat';
+                        else if (fab.includes('AGRALE')) fab = 'Agrale';
+                        else if (fab.includes('HYUNDAI')) fab = 'Hyundai';
+                        else if (fab.includes('MITSUBISHI')) fab = 'Mitsubishi';
+                        else if (fab.includes('NAVISTAR')) fab = 'Navistar';
+                        else if (fab.includes('CUMMINS')) fab = 'Cummins';
+                        else if (fab.includes('MACK')) fab = 'Mack';
                         else if (fab.includes('JAC')) fab = 'JAC';
                         else if (fab.includes('MAM')) fab = 'MAM';
+                        else if (fab.includes('DAF')) fab = 'DAF';
                         normalized.fabricante = fab;
                     }
                 }
@@ -2188,9 +2470,7 @@ body.dark .sidebar-menu a.active {
             // Mapear última comunicação
             const ultimaKey = Object.keys(row).find(key => 
                 key.toLowerCase().includes('última data') || 
-                key.toLowerCase().includes('data de comunicação') ||
-                key.toLowerCase().includes('ultima data') ||
-                key.toLowerCase().includes('comunicacao')
+                key.toLowerCase().includes('data de comunicação')
             );
             if (ultimaKey) {
                 normalized.ultima = row[ultimaKey];
@@ -2199,38 +2479,62 @@ body.dark .sidebar-menu a.active {
             // Mapear série/número
             const serieKey = Object.keys(row).find(key => 
                 key.toLowerCase().includes('série') || 
-                key.toLowerCase().includes('numero de serie') ||
-                key.toLowerCase().includes('serie')
+                key.toLowerCase().includes('numero de serie')
             );
             if (serieKey) {
                 normalized.serie = row[serieKey];
             }
             
-            // ⭐ MAPEAR ENDEREÇO - Tentar múltiplas colunas possíveis
+            // Mapear último endereço - buscar coluna com nome similar
+            let enderecoMapeado = false;
+            
+            // Primeiro tentar palavras-chave específicas
             const enderecoKey = Object.keys(row).find(key => {
-                const lower = key.toLowerCase();
-                return lower.includes('último endereço') || 
-                       lower.includes('ultimoendereco') ||
-                       lower.includes('endereco') ||
-                       lower.includes('endereço') ||
-                       lower.includes('localização') ||
-                       lower.includes('localizacao') ||
-                       lower.includes('location') ||
-                       lower.includes('address');
+                const keyLower = key.toLowerCase();
+                return keyLower.includes('último endereço') || 
+                       keyLower.includes('ultimo endereco') ||
+                       keyLower.includes('last address') ||
+                       keyLower.includes('endereço conhecido') ||
+                       keyLower.includes('endereco conhecido');
             });
             
             if (enderecoKey) {
                 normalized.endereco = row[enderecoKey];
-                console.log(`✓ Endereço encontrado na coluna: "${enderecoKey}"`);
-            } else {
-                console.warn(`⚠️ Nenhuma coluna de endereço encontrada para placa: ${normalized.placa}`);
-                console.warn(`   Colunas disponíveis: ${Object.keys(row).join(', ')}`);
+                enderecoMapeado = true;
+            }
+            
+            // Fallback: procurar qualquer coluna com "endereço" ou "endereco"
+            if (!enderecoMapeado) {
+                const enderecoKeyFallback = Object.keys(row).find(key => {
+                    const keyLower = key.toLowerCase();
+                    return keyLower.includes('endereço') || 
+                           keyLower.includes('endereco') ||
+                           keyLower.includes('localizacao') ||
+                           keyLower.includes('localização') ||
+                           keyLower.includes('location') ||
+                           keyLower.includes('address');
+                });
+                
+                if (enderecoKeyFallback) {
+                    normalized.endereco = row[enderecoKeyFallback];
+                    enderecoMapeado = true;
+                }
+            }
+            
+            // Último fallback: procurar coluna M (índice 12)
+            if (!enderecoMapeado) {
+                const columnNames = Object.keys(row);
+                if (columnNames.length >= 13) {
+                    const columnM = columnNames[12];
+                    if (row[columnM] && row[columnM].trim() !== '') {
+                        normalized.endereco = row[columnM];
+                    }
+                }
             }
             
             // Mapear status do dispositivo
             const statusDispositivoKey = Object.keys(row).find(key => 
-                key.toLowerCase().includes('status do dispositivo') ||
-                key.toLowerCase().includes('status dispositivo')
+                key.toLowerCase().includes('status do dispositivo')
             );
             if (statusDispositivoKey) {
                 normalized['status do dispositivo'] = row[statusDispositivoKey];
@@ -2251,8 +2555,6 @@ body.dark .sidebar-menu a.active {
             statusChart.data.datasets[0].data = [online, parado, offline];
             statusChart.update();
             
-            const filtrarSemCadastro = document.getElementById('filtrarSemCadastro')?.checked || false;
-            
             // Gráfico de Regiões
             const regions = {};
             fleetData.forEach(v => {
@@ -2260,10 +2562,7 @@ body.dark .sidebar-menu a.active {
                 regions[region] = (regions[region] || 0) + 1;
             });
             
-            let sortedRegions = Object.entries(regions).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedRegions = sortedRegions.filter(r => r[0] !== 'Sem cadastro');
-            }
+            const sortedRegions = Object.entries(regions).sort((a, b) => b[1] - a[1]);
             regionChart.data.labels = sortedRegions.map(r => r[0]);
             regionChart.data.datasets[0].data = sortedRegions.map(r => r[1]);
             regionChart.update();
@@ -2275,13 +2574,12 @@ body.dark .sidebar-menu a.active {
                 fabricantes[fab] = (fabricantes[fab] || 0) + 1;
             });
             
-            let sortedFabricantes = Object.entries(fabricantes).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedFabricantes = sortedFabricantes.filter(f => f[0] !== 'Sem cadastro');
-            }
+            const sortedFabricantes = Object.entries(fabricantes).sort((a, b) => b[1] - a[1]);
             fabricanteChart.data.labels = sortedFabricantes.map(f => f[0]);
             fabricanteChart.data.datasets[0].data = sortedFabricantes.map(f => f[1]);
             fabricanteChart.update();
+            
+
             
             // Gráfico de Câmbio
             const cambios = {};
@@ -2290,10 +2588,7 @@ body.dark .sidebar-menu a.active {
                 cambios[cambio] = (cambios[cambio] || 0) + 1;
             });
             
-            let sortedCambios = Object.entries(cambios).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedCambios = sortedCambios.filter(c => c[0] !== 'Sem cadastro');
-            }
+            const sortedCambios = Object.entries(cambios).sort((a, b) => b[1] - a[1]);
             cambioChart.data.labels = sortedCambios.map(c => c[0]);
             cambioChart.data.datasets[0].data = sortedCambios.map(c => c[1]);
             cambioChart.update();
@@ -2305,10 +2600,7 @@ body.dark .sidebar-menu a.active {
                 tiposVeiculo[tipo] = (tiposVeiculo[tipo] || 0) + 1;
             });
             
-            let sortedTipos = Object.entries(tiposVeiculo).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedTipos = sortedTipos.filter(t => t[0] !== 'Sem cadastro');
-            }
+            const sortedTipos = Object.entries(tiposVeiculo).sort((a, b) => b[1] - a[1]);
             tipoVeiculoChart.data.labels = sortedTipos.map(t => t[0]);
             tipoVeiculoChart.data.datasets[0].data = sortedTipos.map(t => t[1]);
             tipoVeiculoChart.update();
@@ -2320,26 +2612,19 @@ body.dark .sidebar-menu a.active {
                 transportadoras[trans] = (transportadoras[trans] || 0) + 1;
             });
             
-            let sortedTransportadoras = Object.entries(transportadoras).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedTransportadoras = sortedTransportadoras.filter(t => t[0] !== 'Sem cadastro');
-            }
+            const sortedTransportadoras = Object.entries(transportadoras).sort((a, b) => b[1] - a[1]);
             transportadoraChart.data.labels = sortedTransportadoras.map(t => t[0]);
             transportadoraChart.data.datasets[0].data = sortedTransportadoras.map(t => t[1]);
             transportadoraChart.update();
             
-            // Gráfico de Unidade (Top 15)
+            // Gráfico de Unidade (Top 10)
             const unidades = {};
             fleetData.forEach(v => {
                 const uni = v.unidade || 'Sem cadastro';
                 unidades[uni] = (unidades[uni] || 0) + 1;
             });
             
-            let sortedUnidades = Object.entries(unidades).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedUnidades = sortedUnidades.filter(u => u[0] !== 'Sem cadastro');
-            }
-            sortedUnidades = sortedUnidades.slice(0, 15);
+            const sortedUnidades = Object.entries(unidades).sort((a, b) => b[1] - a[1]).slice(0, 10);
             unidadeChart.data.labels = sortedUnidades.map(u => u[0]);
             unidadeChart.data.datasets[0].data = sortedUnidades.map(u => u[1]);
             unidadeChart.update();
@@ -2378,15 +2663,25 @@ body.dark .sidebar-menu a.active {
             // Gerar Insights
             generateInsights();
             
-            summaryCards.classList.add('visible');
-            chartsSection.classList.add('visible');
-            tableSection.classList.add('visible');
-            document.getElementById('insightsSection').classList.add('visible');
+            // Mostrar seções (com verificação de null)
+            if (summaryCards) summaryCards.classList.add('visible');
+            if (chartsSection) chartsSection.classList.add('visible');
+            if (tableSection) tableSection.classList.add('visible');
+            const insightsSection = document.getElementById('insightsSection');
+            if (insightsSection) insightsSection.classList.add('visible');
+            
+            // Plotar mapa com endereços
+            setTimeout(() => { plotarNoMapa().catch(console.error); }, 100);
         }
         
         function populateFilterSelects() {
-            // Preencher opções de Transportadora
-            const transportadoras = [...new Set(fleetData.map(v => v.transportadora).filter(Boolean))].sort();
+            // Preencher opções de Transportadora - incluir "Sem cadastro" se houver valores vazios
+            let transportadoras = [...new Set(fleetData.map(v => v.transportadora).filter(Boolean))].sort();
+            const temSemCadastroTransportadora = fleetData.some(v => !v.transportadora || v.transportadora.trim() === '');
+            if (temSemCadastroTransportadora) {
+                transportadoras.unshift('Sem cadastro');
+            }
+            
             filterTransportadora.innerHTML = '<option value="">Todas as Transportadoras</option>';
             transportadoras.forEach(t => {
                 const option = document.createElement('option');
@@ -2408,21 +2703,40 @@ body.dark .sidebar-menu a.active {
             // Filtrar unidades conforme transportadora selecionada
             let unidades;
             if (transportadoraSelecionada) {
-                unidades = [...new Set(
-                    fleetData
-                        .filter(v => v.transportadora === transportadoraSelecionada)
-                        .map(v => v.unidade)
-                        .filter(Boolean)
-                )].sort();
+                // Se "Sem cadastro" é selecionado, mostrar unidades sem cadastro também
+                if (transportadoraSelecionada === 'Sem cadastro') {
+                    unidades = [...new Set(
+                        fleetData
+                            .filter(v => !v.transportadora || v.transportadora.trim() === '')
+                            .map(v => v.unidade)
+                    )].filter(u => !u || u.trim() === '').sort();
+                    // Se houver unidades com cadastro mesmo com transportadora vazia, incluir "Sem cadastro"
+                    if (fleetData.some(v => (!v.transportadora || v.transportadora.trim() === '') && (!v.unidade || v.unidade.trim() === ''))) {
+                        if (!unidades.includes('Sem cadastro')) {
+                            unidades.unshift('Sem cadastro');
+                        }
+                    }
+                } else {
+                    unidades = [...new Set(
+                        fleetData
+                            .filter(v => v.transportadora === transportadoraSelecionada)
+                            .map(v => v.unidade)
+                            .filter(Boolean)
+                    )].sort();
+                }
             } else {
                 unidades = [...new Set(fleetData.map(v => v.unidade).filter(Boolean))].sort();
+                const temSemCadastroUnidade = fleetData.some(v => !v.unidade || v.unidade.trim() === '');
+                if (temSemCadastroUnidade) {
+                    unidades.unshift('Sem cadastro');
+                }
             }
             
             filterUnidade.innerHTML = '<option value="">Todas as Unidades</option>';
             unidades.forEach(u => {
                 const option = document.createElement('option');
-                option.value = u;
-                option.textContent = u;
+                option.value = u || 'Sem cadastro';
+                option.textContent = u || 'Sem cadastro';
                 filterUnidade.appendChild(option);
             });
         }
@@ -2432,14 +2746,42 @@ body.dark .sidebar-menu a.active {
             const placaBusca = (searchPlaca.value || '').toUpperCase().trim();
             const transportadoraSelecionada = filterTransportadora.value;
             const unidadeSelecionada = filterUnidade.value;
+            const filtrarSemCadastro = filtrarSemCadastroFrota?.checked || false;
             
             filteredData = fleetData.filter(v => {
                 const placaMatch = !placaBusca || (v.placa || '').toUpperCase().includes(placaBusca);
-                const transportadoraMatch = !transportadoraSelecionada || v.transportadora === transportadoraSelecionada;
-                const unidadeMatch = !unidadeSelecionada || v.unidade === unidadeSelecionada;
+                
+                // Melhorado: suportar "Sem cadastro" como filtro
+                let transportadoraMatch = true;
+                if (transportadoraSelecionada) {
+                    if (transportadoraSelecionada === 'Sem cadastro') {
+                        transportadoraMatch = !v.transportadora || v.transportadora.trim() === '';
+                    } else {
+                        transportadoraMatch = v.transportadora === transportadoraSelecionada;
+                    }
+                }
+                
+                let unidadeMatch = true;
+                if (unidadeSelecionada) {
+                    if (unidadeSelecionada === 'Sem cadastro') {
+                        unidadeMatch = !v.unidade || v.unidade.trim() === '';
+                    } else {
+                        unidadeMatch = v.unidade === unidadeSelecionada;
+                    }
+                }
+                
                 const statusMatch = !selectedStatusFilter || v.status === selectedStatusFilter;
                 
-                return placaMatch && transportadoraMatch && unidadeMatch && statusMatch;
+                // Filtro "Remover Sem cadastro" - Remove apenas registros com AMBOS transportadora E unidade inválidos
+                let semCadastroMatch = true;
+                if (filtrarSemCadastro) {
+                    const transInvalida = !v.transportadora || v.transportadora.trim() === '' || v.transportadora === 'Sem cadastro';
+                    const unidadeInvalida = !v.unidade || v.unidade.trim() === '' || v.unidade === 'Sem cadastro';
+                    const ambosSemCadastro = transInvalida && unidadeInvalida;
+                    semCadastroMatch = !ambosSemCadastro;
+                }
+                
+                return placaMatch && transportadoraMatch && unidadeMatch && statusMatch && semCadastroMatch;
             });
             
             // Atualizar gráficos com dados filtrados
@@ -2470,6 +2812,7 @@ body.dark .sidebar-menu a.active {
             searchPlaca.value = '';
             filterTransportadora.value = '';
             filterUnidade.value = '';
+            filtrarSemCadastroFrota.checked = false;
             selectedStatusFilter = null;
             currentPage = 1;
             filteredData = [...fleetData];
@@ -2478,6 +2821,13 @@ body.dark .sidebar-menu a.active {
             document.getElementById('cardOnline').classList.remove('selected');
             document.getElementById('cardNaoAtivo').classList.remove('selected');
             document.getElementById('cardOffline').classList.remove('selected');
+            
+            // Resetar localStorage
+            try {
+                localStorage.setItem('frotaFiltroSemCadastro', 'false');
+            } catch(e) {
+                console.warn('⚠️ localStorage bloqueado:', e.message);
+            }
             
             // Voltar aos gráficos originais
             updateChartsWithFilteredData();
@@ -2488,7 +2838,6 @@ body.dark .sidebar-menu a.active {
         
         function updateChartsWithFilteredData() {
             const dataSource = filteredData && filteredData.length > 0 ? filteredData : fleetData;
-            const filtrarSemCadastro = document.getElementById('filtrarSemCadastro')?.checked || false;
             
             // Atualizar cards de resumo
             const online = dataSource.filter(v => v.status === 'Online').length;
@@ -2510,10 +2859,7 @@ body.dark .sidebar-menu a.active {
                 regions[region] = (regions[region] || 0) + 1;
             });
             
-            let sortedRegions = Object.entries(regions).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedRegions = sortedRegions.filter(r => r[0] !== 'Sem cadastro');
-            }
+            const sortedRegions = Object.entries(regions).sort((a, b) => b[1] - a[1]);
             regionChart.data.labels = sortedRegions.map(r => r[0]);
             regionChart.data.datasets[0].data = sortedRegions.map(r => r[1]);
             regionChart.update();
@@ -2525,13 +2871,12 @@ body.dark .sidebar-menu a.active {
                 fabricantes[fab] = (fabricantes[fab] || 0) + 1;
             });
             
-            let sortedFabricantes = Object.entries(fabricantes).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedFabricantes = sortedFabricantes.filter(f => f[0] !== 'Sem cadastro');
-            }
+            const sortedFabricantes = Object.entries(fabricantes).sort((a, b) => b[1] - a[1]);
             fabricanteChart.data.labels = sortedFabricantes.map(f => f[0]);
             fabricanteChart.data.datasets[0].data = sortedFabricantes.map(f => f[1]);
             fabricanteChart.update();
+            
+
             
             // Atualizar gráfico de Câmbio
             const cambios = {};
@@ -2540,10 +2885,7 @@ body.dark .sidebar-menu a.active {
                 cambios[cambio] = (cambios[cambio] || 0) + 1;
             });
             
-            let sortedCambios = Object.entries(cambios).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedCambios = sortedCambios.filter(c => c[0] !== 'Sem cadastro');
-            }
+            const sortedCambios = Object.entries(cambios).sort((a, b) => b[1] - a[1]);
             cambioChart.data.labels = sortedCambios.map(c => c[0]);
             cambioChart.data.datasets[0].data = sortedCambios.map(c => c[1]);
             cambioChart.update();
@@ -2555,10 +2897,7 @@ body.dark .sidebar-menu a.active {
                 tiposVeiculo[tipo] = (tiposVeiculo[tipo] || 0) + 1;
             });
             
-            let sortedTipos = Object.entries(tiposVeiculo).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedTipos = sortedTipos.filter(t => t[0] !== 'Sem cadastro');
-            }
+            const sortedTipos = Object.entries(tiposVeiculo).sort((a, b) => b[1] - a[1]);
             tipoVeiculoChart.data.labels = sortedTipos.map(t => t[0]);
             tipoVeiculoChart.data.datasets[0].data = sortedTipos.map(t => t[1]);
             tipoVeiculoChart.update();
@@ -2570,26 +2909,19 @@ body.dark .sidebar-menu a.active {
                 transportadoras[trans] = (transportadoras[trans] || 0) + 1;
             });
             
-            let sortedTransportadoras = Object.entries(transportadoras).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedTransportadoras = sortedTransportadoras.filter(t => t[0] !== 'Sem cadastro');
-            }
+            const sortedTransportadoras = Object.entries(transportadoras).sort((a, b) => b[1] - a[1]);
             transportadoraChart.data.labels = sortedTransportadoras.map(t => t[0]);
             transportadoraChart.data.datasets[0].data = sortedTransportadoras.map(t => t[1]);
             transportadoraChart.update();
             
-            // Atualizar gráfico de Unidade (Top 15)
+            // Atualizar gráfico de Unidade (Top 10)
             const unidades = {};
             dataSource.forEach(v => {
                 const uni = v.unidade || 'Sem cadastro';
                 unidades[uni] = (unidades[uni] || 0) + 1;
             });
             
-            let sortedUnidades = Object.entries(unidades).sort((a, b) => b[1] - a[1]);
-            if (filtrarSemCadastro) {
-                sortedUnidades = sortedUnidades.filter(u => u[0] !== 'Sem cadastro');
-            }
-            sortedUnidades = sortedUnidades.slice(0, 15);
+            const sortedUnidades = Object.entries(unidades).sort((a, b) => b[1] - a[1]).slice(0, 10);
             unidadeChart.data.labels = sortedUnidades.map(u => u[0]);
             unidadeChart.data.datasets[0].data = sortedUnidades.map(u => u[1]);
             unidadeChart.update();
@@ -2697,15 +3029,56 @@ body.dark .sidebar-menu a.active {
             setTimeout(() => toastNotification.classList.remove('show'), 3000);
         }
         
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
+        }
+        
         function toggleDark() {
+            console.log('toggleDark chamado');
             document.body.classList.toggle('dark');
             const isDark = document.body.classList.contains('dark');
-            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            console.log('isDark agora:', isDark);
+            try {
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            } catch(e) {
+                console.warn('⚠️ localStorage bloqueado:', e.message);
+            }
             const btn = document.querySelector('.btn-toggle');
-            if (btn) btn.textContent = isDark ? '☀️' : '🌙 Dark / ☀️ Light';
+            if (btn) {
+                btn.textContent = isDark ? '☀️ Light' : '🌙 Dark / ☀️ Light';
+                console.log('Botão atualizado:', btn.textContent);
+            }
             // Atualizar gráficos com cores do dark mode
             if (statusChart) {
+                console.log('Atualizando gráficos...');
                 updateChartColors();
+            }
+        }
+
+        function clearCache() {
+            try {
+                localStorage.removeItem('statusFrotaData');
+                localStorage.removeItem('frotaFiltroSemCadastro');
+                alert('✅ Cache limpo com sucesso!\n\nRecarregue a página e carregue o CSV novamente.');
+                console.log('✅ Cache de dados da frota removido');
+            } catch(e) {
+                alert('❌ Erro ao limpar cache: ' + e.message);
+                console.error('Erro ao limpar cache:', e);
             }
         }
 
@@ -2729,13 +3102,7 @@ body.dark .sidebar-menu a.active {
             }
         }
         
-        // Carregar preferência dark mode
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark');
-            const btn = document.querySelector('.btn-toggle');
-            if (btn) btn.textContent = '☀️';
-        }
-        
+
         function generateInsights() {
             const dataSource = filteredData && filteredData.length > 0 ? filteredData : fleetData;
             
@@ -2824,7 +3191,7 @@ body.dark .sidebar-menu a.active {
             document.getElementById('insightsContainer').style.display = 'block';
             
             // Plotar mapa
-            setTimeout(() => plotarNoMapa(), 100);
+            setTimeout(() => { plotarNoMapa().catch(console.error); }, 100);
         }
         
         // ============ MAPA COM LEAFLET ============
@@ -2840,162 +3207,211 @@ body.dark .sidebar-menu a.active {
             }).addTo(map);
         }
         
+        // cache para geocoding de endereços
+        const geocodeCache = {};
+        async function geocodeAddress(endereco) {
+            if (!endereco) return [-14.235, -51.925];
+            if (geocodeCache[endereco]) return geocodeCache[endereco];
+            try {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`);
+                const data = await resp.json();
+                if (data && data.length) {
+                    const c = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                    geocodeCache[endereco] = c;
+                    return c;
+                }
+            } catch(e) {
+                console.warn('geocode falhou', e);
+            }
+            const fallback = extrairCoordenadaDoEndereco(endereco);
+            geocodeCache[endereco] = fallback;
+            return fallback;
+        }
+
         function extrairCoordenadaDoEndereco(endereco) {
             if (!endereco) return [-14.235, -51.925];
             
-            // 🔍 Procurar padrão: "SP, " ou " SP," (estado seguido de vírgula/espaço)
-            const ufMatch = endereco.match(/,?\s+([A-Z]{2})[,\s]/);
-            
-            if (!ufMatch || !ufMatch[1]) {
-                console.warn(`⚠️ Nao conseguiu extrair UF de: ${endereco}`);
-                return [-14.235, -51.925];
-            }
-            
-            const uf = ufMatch[1];
-            
-            const ufCoords = {
-                'SP': [-23.5505, -46.6333], 'RJ': [-22.9068, -43.1729], 'MG': [-19.8716, -43.9477],
-                'BA': [-12.9714, -38.5014], 'SC': [-27.5921, -49.6129], 'PR': [-25.4196, -49.2646],
-                'RS': [-29.7673, -95.7344], 'ES': [-20.2976, -40.2958], 'PE': [-8.0476, -34.8770],
-                'GO': [-15.7942, -48.2676], 'DF': [-15.8267, -47.8711], 'CE': [-3.1190, -60.0217],
-                'PA': [-1.3521, -48.5104], 'PI': [-5.0920, -42.7404], 'MA': [-3.1526, -60.6992],
-                'AL': [-9.5141, -36.7718], 'RN': [-5.1762, -37.3477], 'RO': [-8.7619, -63.9039],
-                'AC': [-9.9757, -67.8243], 'AM': [-3.1190, -60.0217], 'AP': [0.0349, -51.0494],
-                'TO': [-10.1753, -48.2982], 'MT': [-15.5527, -56.2393], 'PB': [-7.1195, -34.8450],
+            // Mapa de cidades principais com suas coordenadas
+            const CIDADES_COORDS = {
+                'São Paulo': [-23.5505, -46.6333],
+                'Rio de Janeiro': [-22.9068, -43.1729],
+                'Belo Horizonte': [-19.9191, -43.9386],
+                'Salvador': [-12.9714, -38.5014],
+                'Curitiba': [-25.4284, -49.2733],
+                'Brasília': [-15.7975, -47.8919],
+                'Fortaleza': [-3.7319, -38.5267],
+                'Recife': [-8.0476, -34.8771],
+                'Porto Alegre': [-30.0277, -51.5805],
+                'Florianópolis': [-27.5954, -48.5482],
+                'Goiânia': [-15.7942, -48.2694],
+                'Campo Grande': [-20.4697, -54.6201],
+                'Vitória': [-20.3155, -40.2558],
+                'Belém': [-1.4554, -48.4915],
+                'São Luís': [-2.8883, -44.2395],
+                'Teresina': [-5.0892, -42.8045],
+                'Natal': [-5.7945, -35.2110],
+                'Maceió': [-9.6498, -35.7351],
+                'Manaus': [-3.1190, -60.0217],
+                'Porto Velho': [-8.7619, -63.9039],
+                'Palmas': [-10.1753, -48.2982],
+                'Cuiabá': [-15.5527, -56.2393],
+                'João Pessoa': [-7.1195, -34.8450],
             };
             
-            const baseCoords = ufCoords[uf] || [-14.235, -51.925];
+            // Procurar por cidades conhecidas no endereço
+            for (const [cidade, coords] of Object.entries(CIDADES_COORDS)) {
+                if (endereco.includes(cidade)) {
+                    return coords;
+                }
+            }
             
-            // 🎲 Adicionar offset aleatório para espalhar pontos proximos (dispersao de ~0.8 graus)
-            // Evita que todos os veiculos do mesmo estado apareçam no mesmo ponto
-            const offsetLat = (Math.random() - 0.5) * 0.8;
-            const offsetLng = (Math.random() - 0.5) * 0.8;
+            // Fallback: extrair UF (estado) e mapear para coordenadas
+            const ufMatch = endereco.match(/,?\s*([A-Z]{2})(?:\s|,|$)/);
+            if (ufMatch) {
+                const uf = ufMatch[1];
+                const ufCoords = {
+                    'SP': [-23.5505, -46.6333],
+                    'RJ': [-22.9068, -43.1729],
+                    'MG': [-19.9191, -43.9386],
+                    'BA': [-12.9714, -38.5014],
+                    'PR': [-25.4284, -49.2733],
+                    'SC': [-27.5954, -48.5482],
+                    'RS': [-30.0277, -51.5805],
+                    'PE': [-8.0476, -34.8771],
+                    'CE': [-3.7319, -38.5267],
+                    'DF': [-15.7975, -47.8919],
+                    'GO': [-15.7942, -48.2694],
+                    'MS': [-20.4697, -54.6201],
+                    'ES': [-20.3155, -40.2558],
+                    'PA': [-1.4554, -48.4915],
+                    'MA': [-2.8883, -44.2395],
+                    'PI': [-5.0892, -42.8045],
+                    'RN': [-5.7945, -35.2110],
+                    'AL': [-9.6498, -35.7351],
+                    'SE': [-10.5105, -37.0735],
+                    'RO': [-8.7619, -63.9039],
+                    'AC': [-9.9757, -67.8243],
+                    'AM': [-3.1190, -60.0217],
+                    'AP': [0.0349, -51.0494],
+                    'TO': [-10.1753, -48.2982],
+                    'MT': [-15.5527, -56.2393],
+                    'PB': [-7.1195, -34.8450],
+                };
+                return ufCoords[uf] || [-14.235, -51.925];
+            }
             
-            return [
-                baseCoords[0] + offsetLat,
-                baseCoords[1] + offsetLng
-            ];
+            // Se nada funcionar, usar centro do Brasil
+            return [-14.235, -51.925];
         }
         
-        function plotarNoMapa() {
-            console.log('🗺️ plotarNoMapa() iniciado...');
-            
-            // Garantir que o mapa existe
-            if (!map) {
-                console.log('📍 Inicializando mapa...');
-                initializeMap();
-                
-                // Aguardar um pouco para o Leaflet renderizar
-                setTimeout(() => {
-                    if (map) {
-                        console.log('✅ Mapa inicializado com sucesso');
-                        plotarNoMapa(); // Chamar recursivamente após init
-                    } else {
-                        console.error('❌ Falha ao inicializar o mapa');
-                    }
-                }, 200);
-                return;
-            }
-            
-            console.log('📍 Mapa já existe, plotando dados...');
+        async function plotarNoMapa() {
+            if (!map) initializeMap();
             
             // Limpar markers antigos
-            mapMarkers.forEach(m => {
-                try {
-                    map.removeLayer(m);
-                } catch (e) {
-                    console.warn('⚠️ Erro ao remover marker:', e);
-                }
-            });
+            mapMarkers.forEach(m => map.removeLayer(m));
             mapMarkers = [];
             
-            let plotados = 0;
-            let semEndereco = 0;
-            const dataSource = fleetData && Array.isArray(fleetData) && fleetData.length > 0 ? fleetData : [];
+            // Agrupar veículos por endereço
+            const veiculosPorEndereco = {};
             
-            if (dataSource.length === 0) {
-                console.warn('⚠️ Nenhum dado para plotar no mapa - fleetData está vazio!');
-                console.warn('   fleetData tipo:', typeof fleetData);
-                console.warn('   fleetData isArray:', Array.isArray(fleetData));
+            if (!fleetData || fleetData.length === 0) {
+                console.log('🗺️ Nenhum dado para plotar no mapa');
                 return;
             }
             
-            console.log(`📍 Processando ${dataSource.length} veículos...`);
+            console.log(`📍 Total de veículos para mapear: ${fleetData.length}`);
+            console.log(`📍 Veículos com endereço: ${fleetData.filter(v => v.endereco && v.endereco.trim() !== '').length}`);
             
-            // 🔍 DEBUG: Análise dos dados antes de plotar
-            let comEndereco = 0;
-            const primeirosWith = dataSource.slice(0, 3).filter(v => v.endereco && v.endereco.trim());
-            primeirosWith.forEach(v => {
-                console.log(`✓ ${v.placa}: ${v.endereco}`);
-                comEndereco++;
+            // Agrupar por endereço
+            fleetData.forEach(veiculo => {
+                const endereco = veiculo.endereco || 'N/A';
+                if (endereco === 'N/A' || endereco.trim() === '') return;
+                
+                if (!veiculosPorEndereco[endereco]) {
+                    veiculosPorEndereco[endereco] = [];
+                }
+                veiculosPorEndereco[endereco].push(veiculo);
             });
-            if (comEndereco === 0 && dataSource.length > 0) {
-                console.warn(`⚠️ NENHUM dos 3 primeiros tem endereço preenchido!`);
-                console.warn(`   Primeiro veículo:`, dataSource[0]);
-            }
             
-            // Plotar cada veículo individualmente
-            dataSource.forEach((veiculo, index) => {
-                try {
-                    const endereco = veiculo.endereco || veiculo['último endereço conhecido'] || '';
+            const enderecosUnicos = Object.keys(veiculosPorEndereco).length;
+            console.log(`🗺️ ${enderecosUnicos} endereços únicos no mapa`);
+            
+            // Plotar cada veículo individualmente com offset (async loop)
+            for (const [endereco, veiculos] of Object.entries(veiculosPorEndereco)) {
+                // Obter coordenadas base do endereço através de geocode
+                const coordsBase = await geocodeAddress(endereco);
+                
+                console.log(`  📌 ${endereco} -> ${veiculos.length} veículo(s) em [${coordsBase[0].toFixed(4)}, ${coordsBase[1].toFixed(4)}]`);
+                
+                // Plotar cada veículo individualmente
+                veiculos.forEach((veiculo, index) => {
+                    // Se há múltiplos veículos no mesmo endereço, dar um offset pequeno
+                    let coords = coordsBase;
                     
-                    if (!endereco || endereco.trim() === '') {
-                        semEndereco++;
-                        return;
+                    if (veiculos.length > 1) {
+                        // Offset bem pequeno: apenas para não sobrepor
+                        const zoomLevel = map.getZoom();
+                        let offsetGraus = 0.00005; // Base muito pequeno
+                        if (zoomLevel > 6) {
+                            offsetGraus = 0.00005 * Math.pow(1.5, zoomLevel - 6);
+                        }
+                        
+                        const angulo = (index / veiculos.length) * Math.PI * 2;
+                        const lat = coordsBase[0] + offsetGraus * Math.cos(angulo);
+                        const lon = coordsBase[1] + offsetGraus * Math.sin(angulo);
+                        
+                        coords = [lat, lon];
                     }
-                    
-                    // Extrair coordenadas por UF do endereço
-                    const coords = extrairCoordenadaDoEndereco(endereco);
                     
                     // Determinar cor baseado no status
-                    let cor = '#6c757d'; // Cinza padrão
+                    let cor = '#6c757d'; // Cinza - sem info
                     if (veiculo.status === 'Online') {
                         cor = '#28a745'; // Verde
-                    } else if (veiculo.status === 'Não Ativo') {
-                        cor = '#ffc107'; // Amarelo
                     } else if (veiculo.status === 'Offline') {
                         cor = '#dc3545'; // Vermelho
+                    } else if (veiculo.status === 'Não Ativo') {
+                        cor = '#ffc107'; // Amarelo
                     }
                     
-                    // Criar marcador individual
+                    // Criar marcador para cada veículo
                     const marker = L.circleMarker(coords, {
                         radius: 6,
                         fillColor: cor,
-                        color: '#ffffff',
+                        color: '#fff',
                         weight: 2,
-                        opacity: 1.0,
-                        fillOpacity: 0.85
+                        opacity: 1,
+                        fillOpacity: 0.9
                     }).addTo(map);
                     
                     // Popup com informações do veículo
-                    const statusEmoji = veiculo.status === 'Online' ? '🟢' : (veiculo.status === 'Não Ativo' ? '🟡' : '🔴');
+                    const statusEmoji = veiculo.status === 'Online' ? '🟢' : (veiculo.status === 'Offline' ? '🔴' : '🟡');
                     
-                    marker.bindPopup(`
-                        <div style="font-size: 12px; width: 280px;">
-                            <strong>${veiculo.placa || 'N/A'}</strong><br>
-                            ${statusEmoji} <strong>${veiculo.status || 'Desconhecido'}</strong><br>
-                            <small style="color: #666;">${endereco}</small><br>
-                            <hr style="margin: 6px 0; border: none; border-top: 1px solid #ddd;">
-                            <small>
-                                <strong>Transportadora:</strong> ${veiculo.transportadora || 'N/A'}<br>
-                                <strong>Fabricante:</strong> ${veiculo.fabricante || 'N/A'}<br>
-                                <strong>Tipo:</strong> ${veiculo['tipo de veículo'] || 'N/A'}
-                            </small>
+                    const popup = `
+                        <div style="font-size: 0.9rem; min-width: 280px;">
+                            <div style="border-bottom: 2px solid #63a3d8; padding-bottom: 8px; margin-bottom: 8px;">
+                                <strong style="color: #63a3d8; font-size: 1rem;">${statusEmoji} ${veiculo.placa}</strong>
+                                ${veiculos.length > 1 ? `<br><span style="color: #999; font-size: 0.8rem;">(${index + 1}/${veiculos.length} neste local)</span>` : ''}
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <div><strong>Status:</strong> ${veiculo.status}</div>
+                                <div><strong>Transportadora:</strong> ${veiculo.transportadora || 'N/A'}</div>
+                                <div><strong>Unidade:</strong> ${veiculo.unidade || 'N/A'}</div>
+                                <div><strong>Região:</strong> ${veiculo.regiao || 'N/A'}</div>
+                            </div>
+                            <div style="border-top: 1px solid #ddd; padding-top: 8px;">
+                                <div style="font-size: 0.85rem; color: #666;">
+                                    📍 ${endereco}
+                                </div>
+                            </div>
                         </div>
-                    `);
+                    `;
                     
+                    marker.bindPopup(popup);
                     mapMarkers.push(marker);
-                    plotados++;
-                } catch (e) {
-                    console.error(`❌ Erro ao plotar veículo ${index}:`, e);
-                }
-            });
+                });
+            };
             
-            // Log detalhado
-            console.log(`\n🗺️ ===== MAPA ATUALIZADO =====`);
-            console.log(`✅ ${plotados} veículos plotados`);
-            console.log(`❌ ${semEndereco} SEM endereço`);
-            console.log(`=============================\n`);
+            console.log(`✅ ${mapMarkers.length} veículos plotados no mapa`);
         }
     </script>
             </div>

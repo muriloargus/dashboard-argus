@@ -6,10 +6,8 @@
     <title>Dispositivos - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
-    <script src="idb-manager.js"></script>
-    <script src="storage-adapter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -114,11 +112,83 @@
             left: 20px;
             right: 20px;
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: 15px;
             color: rgba(255,255,255,0.7);
             font-size: 0.75rem;
         }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
 
         body.dark .sidebar {
             background: linear-gradient(180deg, #0b2440 0%, #071830 100%) !important;
@@ -157,7 +227,6 @@
 
         body.dark .sidebar-footer {
             color: rgba(255,255,255,0.6);
-            border-top: 1px solid rgba(255,255,255,0.1);
         }
 
         .logos-container {
@@ -326,6 +395,13 @@
             padding: 15px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
         }
 
         body.dark .chart-card {
@@ -539,31 +615,34 @@
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h1><i class="bi bi-truck"></i> Telemetria CCO</h1>
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-person-walking"></i> Motoristas</a></li>
-                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-                <li><a href="dashboard_usuarios.html"><i class="bi bi-people"></i> Usuários</a></li>
-                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
-                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-                <li><a href="dashboard_dispositivos.html" class="active"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
-                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
             </ul>
-            <div class="sidebar-footer"></div>
+            <div class="sidebar-footer">
+                <p></p>
+            </div>
         </nav>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <div class="container-custom">
                 <!-- Header -->
                 <div class="header">
@@ -715,19 +794,77 @@
 
         function toggleDark() {
             const isDark = document.body.classList.toggle('dark');
-            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            try {
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
             // Atualizar gráficos com cores apropriadas
             setTimeout(function() {
                 renderizarGraficos();
             }, 100);
         }
 
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark');
+        // Inicializar dark mode
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                try {
+                    if (localStorage.getItem('darkMode') === 'true') {
+                        document.body.classList.add('dark');
+                    } else {
+                        document.body.classList.remove('dark');
+                    }
+                } catch(e) {
+                    console.warn('Storage access denied');
+                }
+                initDarkModeSync();
+            });
+        } else {
+            try {
+                if (localStorage.getItem('darkMode') === 'true') {
+                    document.body.classList.add('dark');
+                } else {
+                    document.body.classList.remove('dark');
+                }
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
+            initDarkModeSync();
         }
+
+        // Carregar dados padrão ao iniciar
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (rawData.length === 0) {
+                    loadDefaultDispositivos();
+                }
+            }, 500);
+        });
 
         function processarDados() {
             // Dados já estão processados no handleCSVUpload
+        }
+
+        function loadDefaultDispositivos() {
+            rawData = [
+                { dispositivo: 'MG-1547', grupoDispositivo: 'TRS_LOG20', dataInicio: '2026-03-04 08:30', duracao: '04:15:00', durMinutos: 255, horaInicio: 8, origem: 'Belo Horizonte', destino: 'Goiânia', tempoParado: '00:30:00', velMaxima: 95 },
+                { dispositivo: 'SP-2891', grupoDispositivo: 'TRS_TRANPLA', dataInicio: '2026-03-04 07:15', duracao: '05:45:00', durMinutos: 345, horaInicio: 7, origem: 'São Paulo', destino: 'Osasco', tempoParado: '00:45:00', velMaxima: 110 },
+                { dispositivo: 'GO-3456', grupoDispositivo: 'TRS_LOG20', dataInicio: '2026-03-04 06:00', duracao: '06:30:00', durMinutos: 390, horaInicio: 6, origem: 'Goiânia', destino: 'Brasília', tempoParado: '01:00:00', velMaxima: 105 },
+                { dispositivo: 'SP-4821', grupoDispositivo: 'TRS_TRANSLOG', dataInicio: '2026-03-03 22:00', duracao: '07:20:00', durMinutos: 440, horaInicio: 22, origem: 'Campinas', destino: 'São Paulo', tempoParado: '01:15:00', velMaxima: 115 },
+                { dispositivo: 'MG-5678', grupoDispositivo: 'TRS_LOG20', dataInicio: '2026-03-03 18:45', duracao: '03:50:00', durMinutos: 230, horaInicio: 18, origem: 'Uberlândia', destino: 'Belo Horizonte', tempoParado: '00:20:00', velMaxima: 100 },
+                { dispositivo: 'PR-2105', grupoDispositivo: 'TRS_TRANPLA', dataInicio: '2026-03-03 14:30', duracao: '05:15:00', durMinutos: 315, horaInicio: 14, origem: 'Curitiba', destino: 'Londrina', tempoParado: '00:50:00', velMaxima: 108 },
+                { dispositivo: 'SP-9334', grupoDispositivo: 'TRS_TRANSLOG', dataInicio: '2026-03-02 23:00', duracao: '08:10:00', durMinutos: 490, horaInicio: 23, origem: 'Rio de Janeiro', destino: 'São Paulo', tempoParado: '01:30:00', velMaxima: 120 },
+                { dispositivo: 'MG-7890', grupoDispositivo: 'TRS_LOG20', dataInicio: '2026-03-02 09:00', duracao: '04:40:00', durMinutos: 280, horaInicio: 9, origem: 'Juiz de Fora', destino: 'Belo Horizonte', tempoParado: '00:35:00', velMaxima: 98 }
+            ];
+            filteredData = [...rawData];
+            atualizarCartoes();
+            gerarInsights();
+            renderizarGraficos();
+            mostrarTabela();
+            document.getElementById('insightsContainer').style.display = 'block';
+            document.getElementById('chartsContainer').style.display = 'grid';
+            document.getElementById('tableContainer').style.display = 'block';
+            console.log('Dados padrão carregados (8 trajetos)');
         }
 
         function handleCSVUpload(event) {
@@ -785,8 +922,6 @@
 
                             filteredData = [...rawData];
                             console.log('Processando dados...');
-                            // Salvar com fallback para IndexedDB
-                            window.saveDataSafely('dispositivosData', rawData);
                             processarDados();
                             console.log('Atualizando cartões...');
                             atualizarCartoes();
@@ -1282,6 +1417,28 @@
             renderizarPagina(paginaAtual);
             renderizarPaginacao();
         }
+  
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
+        }
+        
+        // Chama a função para ativar o link correto
+        activateCurrentLink();
     </script>
 </body>
 </html>

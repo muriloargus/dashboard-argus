@@ -10,6 +10,7 @@
     <script src="idb-manager.js"></script>
     <script src="storage-adapter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -108,10 +109,82 @@
             left: 20px;
             width: calc(var(--sidebar-width) - 40px);
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: 15px;
             font-size: 0.85rem;
         }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
         
         .main-content {
             margin-left: var(--sidebar-width);
@@ -508,33 +581,34 @@
 <body>
     <div class="dashboard-container">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
                 <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-person-walking"></i> Motoristas</a></li>
-                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-graph-up"></i> Desempenho</a></li>
-                <li><a href="dashboard_usuarios.html"><i class="bi bi-people"></i> Usuários</a></li>
-                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-                <li><a href="dashboard_risco_colisao.html" class="active"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
-                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
             </ul>
             <div class="sidebar-footer">
+                <p></p>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <div class="main-content">
+        <div class="main-content" id="mainContent">
             <div class="topo">
                 <div class="logo-container">
                     <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" class="logo argus" style="filter: brightness(0) invert(1);">
@@ -575,6 +649,11 @@
                     <div class="kpi-title">Benchmark Médio</div>
                     <div class="kpi-value" id="benchmark-medio">-</div>
                     <div class="kpi-subtitle">Desempenho Esperado</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Período Analisado</div>
+                    <div class="kpi-value" id="periodo-analisado">-</div>
+                    <div class="kpi-subtitle">Data dos registros</div>
                 </div>
             </div>
 
@@ -766,23 +845,37 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Carregar preferência dark mode ao iniciar
-            const darkMode = localStorage.getItem('darkMode');
-            console.log('Carregando dark mode:', darkMode);
-            if (darkMode === 'true') {
-                document.body.classList.add('dark');
-                console.log('Dark mode aplicado ao carregar');
-            }
-
-            // Tentar carregar dados do localStorage
-            const savedData = localStorage.getItem('riscoColisaoData');
-            if (savedData) {
-                try {
-                    rawData = JSON.parse(savedData);
-                    atualizarDados();
-                } catch(e) {
-                    console.log('Erro ao carregar dados salvos');
+            activateCurrentLink();
+            // Inicializar dark mode sync GLOBAL
+            initDarkModeSync();
+            
+            // Remover classe 'dark' se localStorage for false
+            try {
+                if (localStorage.getItem('darkMode') === 'false') {
+                    document.body.classList.remove('dark');
                 }
+            } catch(e) {}
+
+            // Tentar carregar dados do localStorage (com tratamento ITP)
+            let savedData = null;
+            try {
+                savedData = localStorage.getItem('riscoColisaoData');
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
+            
+            if (savedData) {
+                const rawData_loaded = safeParseJSON(savedData);
+                if (rawData_loaded && Array.isArray(rawData_loaded)) {
+                    rawData = rawData_loaded;
+                    atualizarDados();
+                    console.log('✅ Dados carregados do localStorage');
+                } else {
+                    console.warn('⚠️ Dados persistidos inválidos');
+                    loadDefaultRiscoColisao();
+                }
+            } else {
+                loadDefaultRiscoColisao();
             }
         });
 
@@ -795,6 +888,23 @@
             currentPage = 1;
             atualizarTabela();
             console.log('Dados atualizados. Total:', rawData.length, 'Filtrados:', filteredData.length);
+        }
+
+        function loadDefaultRiscoColisao() {
+            rawData = [
+                { 'Nome': 'Roberto Lima', 'Dispositivo': 'MG-1547', 'Grupo': 'TRS_LOG20, UNI_GOIANIA, REG_MG', 'Tipo de Evento': 'Aproximação Excessiva', 'Data': '2026-03-04', 'Risco': 'ALTO' },
+                { 'Nome': 'Marcos Oliveira', 'Dispositivo': 'SP-2891', 'Grupo': 'TRS_TRANPLA, UNI_OSASCO, REG_SP', 'Tipo de Evento': 'Mudança Brusca de Pista', 'Data': '2026-03-03', 'Risco': 'ALTO' },
+                { 'Nome': 'Fernanda Lima', 'Dispositivo': 'GO-3456', 'Grupo': 'TRS_LOG20, UNI_GOIANIA, REG_GO', 'Tipo de Evento': 'Distância Mínima', 'Data': '2026-03-02', 'Risco': 'ALTO' },
+                { 'Nome': 'Roberto Lima', 'Dispositivo': 'MG-1547', 'Grupo': 'TRS_LOG20, UNI_GOIANIA, REG_MG', 'Tipo de Evento': 'Aproximação Excessiva', 'Data': '2026-03-01', 'Risco': 'ALTO' },
+                { 'Nome': 'João Paulo', 'Dispositivo': 'SP-4821', 'Grupo': 'TRS_TRANSLOG, UNI_SAO PAULO, REG_SP', 'Tipo de Evento': 'Mudança Brusca de Pista', 'Data': '2026-02-28', 'Risco': 'MÉDIO' },
+                { 'Nome': 'Marcos Oliveira', 'Dispositivo': 'SP-2891', 'Grupo': 'TRS_TRANPLA, UNI_OSASCO, REG_SP', 'Tipo de Evento': 'Distância Mínima', 'Data': '2026-02-27', 'Risco': 'ALTO' },
+                { 'Nome': 'Fernando Santos', 'Dispositivo': 'MG-5678', 'Grupo': 'TRS_LOG20, UNI_GOIANIA, REG_MG', 'Tipo de Evento': 'Aproximação Excessiva', 'Data': '2026-02-26', 'Risco': 'MÉDIO' },
+                { 'Nome': 'Roberto Lima', 'Dispositivo': 'MG-1547', 'Grupo': 'TRS_LOG20, UNI_GOIANIA, REG_MG', 'Tipo de Evento': 'Distância Mínima', 'Data': '2026-02-25', 'Risco': 'ALTO' },
+                { 'Nome': 'Carla Mendes', 'Dispositivo': 'PR-2105', 'Grupo': 'TRS_TRANPLA, UNI_OSASCO, REG_PR', 'Tipo de Evento': 'Mudança Brusca de Pista', 'Data': '2026-02-24', 'Risco': 'BAIXO' },
+                { 'Nome': 'Marcos Oliveira', 'Dispositivo': 'SP-2891', 'Grupo': 'TRS_TRANPLA, UNI_OSASCO, REG_SP', 'Tipo de Evento': 'Aproximação Excessiva', 'Data': '2026-02-23', 'Risco': 'ALTO' }
+            ];
+            atualizarDados();
+            console.log('Dados padrão carregados (10 riscos de colisão)');
         }
 
         function preencherFiltros() {
@@ -816,6 +926,26 @@
                 option.value = t;
                 option.textContent = t;
                 selectTransportadora.appendChild(option);
+            });
+            
+            // Preencher Unidades
+            const unidades = new Set();
+            rawData.forEach(d => {
+                const grupo = d['Grupo'] || '';
+                const match = grupo.match(/UNI_([A-Z0-9_\s]+)/);
+                if (match) {
+                    unidades.add(match[1]);
+                }
+            });
+            
+            const selectUnidade = document.getElementById('filterUnidade');
+            const unidadesOrdenadas = Array.from(unidades).sort();
+            selectUnidade.innerHTML = '<option value="">Todas</option>';
+            unidadesOrdenadas.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u;
+                option.textContent = u;
+                selectUnidade.appendChild(option);
             });
 
             atualizarUnidades();
@@ -846,6 +976,47 @@
             });
         }
 
+        function formatarDataBrasil(dataStr) {
+            if (!dataStr || dataStr === '0') return '-';
+            
+            const str = String(dataStr).trim();
+            
+            // Tentar formato brasileiro já (DD/MM/YYYY) - testar primeiro
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
+                return str;
+            }
+            
+            // Tentar formato ISO (YYYY-MM-DD)
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                const parts = str.substring(0, 10).split('-');
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            
+            // Tentar número Excel (formato antigo) - exemplo: 46080,875
+            const asNum = Number(str.replace(',', '.'));
+            if (!isNaN(asNum) && asNum >= 1 && asNum < 100000) {
+                try {
+                    // Usar a fórmula padrão Excel -> JavaScript
+                    // Excel epoch é 1º jan 1900, JS epoch é 1º jan 1970
+                    // Diferença é 25569 dias (com bug do Excel em conta)
+                    const excelEpoch = 25569;
+                    const jsDate = new Date((asNum - excelEpoch) * 86400 * 1000);
+                    
+                    if (!isNaN(jsDate.getTime()) && jsDate.getFullYear() >= 1900 && jsDate.getFullYear() <= 2100) {
+                        const dia = String(jsDate.getDate()).padStart(2, '0');
+                        const mes = String(jsDate.getMonth() + 1).padStart(2, '0');
+                        const ano = jsDate.getFullYear();
+                        return `${dia}/${mes}/${ano}`;
+                    }
+                } catch (e) {
+                    // Cair para retorno padrão
+                }
+            }
+            
+            // Se nada funcionou, retornar vazio
+            return '-';
+        }
+        
         function atualizarKPIs() {
             const dados = (filteredData.length > 0 ? filteredData : rawData).filter(d => d['Risco de colisão']);
             generateInsights(dados);
@@ -858,6 +1029,33 @@
             document.getElementById('total-veiculos').textContent = dados.length;
             document.getElementById('alto-risco').textContent = altoRisco;
             document.getElementById('benchmark-medio').textContent = benchmarkMedio + '%';
+            
+            // Período analisado
+            if (dados.length > 0) {
+                // Procurar pela coluna de data (pode ser 'Data' ou 'Data da observação')
+                const datasObj = dados.map(r => {
+                    const dataField = r['Data da observação'] || r['Data'] || '';
+                    return dataField ? { raw: dataField, formatado: formatarDataBrasil(dataField) } : null;
+                }).filter(d => d && d.formatado !== '-');
+                
+                if (datasObj.length > 0) {
+                    // Ordenar pelo formato YYYY-MM-DD para ordenação correta
+                    datasObj.sort((a, b) => {
+                        const aData = /\d{2}\/\d{2}\/(\d{4})/.exec(a.formatado) ? 
+                            a.formatado.split('/').reverse().join('-') : a.formatado;
+                        const bData = /\d{2}\/\d{2}\/(\d{4})/.exec(b.formatado) ? 
+                            b.formatado.split('/').reverse().join('-') : b.formatado;
+                        return aData.localeCompare(bData);
+                    });
+                    const dataInicio = datasObj[0].formatado;
+                    const dataFim = datasObj[datasObj.length - 1].formatado;
+                    document.getElementById('periodo-analisado').textContent = dataInicio + ' até ' + dataFim;
+                } else {
+                    document.getElementById('periodo-analisado').textContent = '-';
+                }
+            } else {
+                document.getElementById('periodo-analisado').textContent = '-';
+            }
         }
 
         function atualizarGraficos() {
@@ -1388,6 +1586,25 @@
                 currentPage--;
                 atualizarTabela();
                 window.scrollTo(0, document.querySelector('.data-table').offsetTop - 100);
+            }
+        }
+  
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
             }
         }
     </script>

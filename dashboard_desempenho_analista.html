@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Desempenho - Analista - Sistema Argus Ambev</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
-    <script src="idb-manager.js"></script>
-    <script src="storage-adapter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -107,10 +106,82 @@
             left: 20px;
             width: calc(var(--sidebar-width) - 40px);
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: 15px;
             font-size: 0.85rem;
         }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
         
         .main-content {
             margin-left: var(--sidebar-width);
@@ -315,6 +386,13 @@
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: scale(1.02);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
         }
         
         .chart-title {
@@ -564,35 +642,34 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
 <body>
     <div class="dashboard-container">
         <!-- Sidebar Navigation -->
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
                 <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-person-walking"></i> Motoristas</a></li>
-                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-                <li><a href="dashboard_usuarios.html"><i class="bi bi-people"></i> Usuários</a></li>
-                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-                <li><a href="dashboard_desempenho_analista.html" class="active"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
-                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
-                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
             </ul>
             <div class="sidebar-footer">
                 <p></p>
-                <p style="font-size: 0.7rem; margin: 8px 0 0 0; opacity: 0.7;">Última sincronização: 29/01/2026</p>
             </div>
         </nav>
         
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <header class="topo">
                 <div class="logo-container">
                     <div class="logo argus"><img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'"></div>
@@ -881,7 +958,8 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
                         skipEmptyLines: true,
                         complete: function(results) {
                             console.log('CSV carregado:', results.data);
-                            window.saveDataSafely('desempenhoData', results.data);
+                            localStorage.setItem('desempenhoData', JSON.stringify(results.data));
+                            console.log('Dados salvos no localStorage');
                             alert('✅ Arquivo CSV carregado com sucesso! (' + results.data.length + ' registros)');
                         },
                         error: function(error) {
@@ -896,25 +974,37 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
         }
         
         document.addEventListener('DOMContentLoaded', function() {
+            activateCurrentLink();
             console.log('DOM carregado');
             
-            // Carregar preferência dark mode ao iniciar
-            const darkMode = localStorage.getItem('darkMode');
-            console.log('Carregando dark mode:', darkMode);
-            if (darkMode === 'true') {
-                document.body.classList.add('dark');
-                console.log('Dark mode aplicado ao carregar');
+            // Inicializar dark mode sync GLOBAL
+            initDarkModeSync();
+            
+            // Registrar plugin ChartDataLabels
+            if (window.Chart && window.ChartDataLabels) {
+                try {
+                    Chart.register(ChartDataLabels);
+                } catch(e) {
+                    console.warn('Erro ao registrar ChartDataLabels:', e);
+                }
             }
 
-            // Carregar dados persistidos
-            const savedData = localStorage.getItem('desempenhoData');
+            // Carregar dados persistidos (com tratamento ITP)
+            let savedData = null;
+            try {
+                savedData = localStorage.getItem('desempenhoData');
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
+            
             if (savedData) {
-              try {
-                analistas = JSON.parse(savedData);
-                console.log('Dados carregados do localStorage');
-              } catch(e) {
-                console.log('Erro ao carregar dados persistidos');
-              }
+                const analistas_loaded = safeParseJSON(savedData);
+                if (analistas_loaded && Array.isArray(analistas_loaded)) {
+                    analistas = analistas_loaded;
+                    console.log('✅ Dados carregados do localStorage');
+                } else {
+                    console.warn('⚠️ Dados persistidos inválidos');
+                }
             }
             
             setTimeout(function() {
@@ -974,7 +1064,7 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false },
+                            legend: { display: true, position: "top" },
                             tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor, borderColor: gridColor }
                         },
                         scales: {
@@ -1153,7 +1243,7 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: false },
+                                legend: { display: true, position: "top" },
                                 tooltip: { backgroundColor: tooltipBg, titleColor: tooltipColor, bodyColor: tooltipColor }
                             },
                             scales: {
@@ -1232,39 +1322,63 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
         };
         
         function carregarDados() {
-            // Simular carregamento de dados
-            // Em um cenário real, isso viria de uma API ou arquivo CSV
+            // Carregar dados persistidos do localStorage ou usar dados padrão
+            let analistas = {};
+            const savedData = localStorage.getItem('desempenhoData');
             
-            const analistas = {
-                'Gabriel Faria': {
-                    atividades: Math.floor(Math.random() * 150) + 50,
-                    taxa: Math.floor(Math.random() * 40) + 60,
-                    tempo: Math.floor(Math.random() * 8) + 2,
-                    qualidade: Math.floor(Math.random() * 30) + 70
-                },
-                'Murilo Anjos': {
-                    atividades: Math.floor(Math.random() * 150) + 50,
-                    taxa: Math.floor(Math.random() * 40) + 60,
-                    tempo: Math.floor(Math.random() * 8) + 2,
-                    qualidade: Math.floor(Math.random() * 30) + 70
-                },
-                'Ellen Ferreira': {
-                    atividades: Math.floor(Math.random() * 150) + 50,
-                    taxa: Math.floor(Math.random() * 40) + 60,
-                    tempo: Math.floor(Math.random() * 8) + 2,
-                    qualidade: Math.floor(Math.random() * 30) + 70
-                },
-                'Angelica Luz': {
-                    atividades: Math.floor(Math.random() * 150) + 50,
-                    taxa: Math.floor(Math.random() * 40) + 60,
-                    tempo: Math.floor(Math.random() * 8) + 2,
-                    qualidade: Math.floor(Math.random() * 30) + 70
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    if (Array.isArray(parsedData) && parsedData.length > 0) {
+                        // Processar dados do CSV
+                        parsedData.forEach(row => {
+                            const nome = row.nome || row.Analista || row.analista || 'Unknown';
+                            analistas[nome] = {
+                                atividades: parseInt(row.atividades || row.Atividades || 0) || 0,
+                                taxa: parseInt(row.taxa || row.Taxa || 0) || 0,
+                                tempo: parseFloat(row.tempo || row.Tempo || 0) || 0,
+                                qualidade: parseInt(row.qualidade || row.Qualidade || 0) || 0
+                            };
+                        });
+                    }
+                } catch(e) {
+                    console.log('Erro ao processar dados persistidos');
                 }
-            };
+            }
+            
+            // Se não houver dados persistidos, usar dados padrão/amostra
+            if (Object.keys(analistas).length === 0) {
+                analistas = {
+                    'Gabriel Faria': {
+                        atividades: 127,
+                        taxa: 85,
+                        tempo: 3.5,
+                        qualidade: 92
+                    },
+                    'Murilo Anjos': {
+                        atividades: 145,
+                        taxa: 88,
+                        tempo: 3.2,
+                        qualidade: 95
+                    },
+                    'Ellen Ferreira': {
+                        atividades: 158,
+                        taxa: 92,
+                        tempo: 3.0,
+                        qualidade: 96
+                    },
+                    'Angelica Luz': {
+                        atividades: 131,
+                        taxa: 80,
+                        tempo: 3.8,
+                        qualidade: 88
+                    }
+                };
+            }
             
             // Atualizar cards dos analistas
             Object.keys(analistas).forEach(analista => {
-                const id = analista.toLowerCase().replace(/\s+/g, '-');
+                const id = analista.toLowerCase().split(' ')[0]; // Usar apenas primeiro nome
                 const dados = analistas[analista];
                 
                 document.getElementById(id + '-atividades').textContent = dados.atividades;
@@ -1331,47 +1445,86 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
             const nomes = Object.keys(analistas);
             const taxas = nomes.map(n => analistas[n].taxa);
             const atividades = nomes.map(n => analistas[n].atividades);
-            const horas = nomes.map(n => Math.floor(Math.random() * 8) + 2);
+            const horas = nomes.map(n => Math.round(analistas[n].tempo * 10) / 10);
             
             // Desempenho
-            allCharts.desempenho.data.datasets[0].data = taxas;
-            allCharts.desempenho.update();
+            if (allCharts.desempenho) {
+                allCharts.desempenho.data.datasets[0].data = taxas;
+                allCharts.desempenho.update();
+            }
             
             // Atividades
-            allCharts.atividades.data.datasets[0].data = atividades;
-            allCharts.atividades.update();
+            if (allCharts.atividades) {
+                allCharts.atividades.data.datasets[0].data = atividades;
+                allCharts.atividades.update();
+            }
             
             // Horas Trabalhadas
-            allCharts.horas.data.datasets[0].data = horas;
-            allCharts.horas.update();
+            if (allCharts.horas) {
+                allCharts.horas.data.datasets[0].data = horas;
+                allCharts.horas.update();
+            }
             
             // Taxa de Conclusão (linha - por dia da semana)
-            const dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-            nomes.forEach((nome, idx) => {
-                allCharts.taxa.data.datasets[idx].data = dias.map(() => Math.floor(Math.random() * 40) + 60);
-            });
-            allCharts.taxa.update();
+            if (allCharts.taxa) {
+                const dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+                nomes.forEach((nome, idx) => {
+                    // Usar a taxa do analista com pequena variação realista
+                    const baseTaxa = analistas[nome].taxa;
+                    const variacoes = dias.map(() => baseTaxa + (Math.random() * 10 - 5));
+                    allCharts.taxa.data.datasets[idx].data = variacoes.map(v => Math.max(50, Math.min(100, Math.round(v))));
+                });
+                allCharts.taxa.update();
+            }
             
             // Qualidade (linha - por semana)
-            const semanas = [1, 2, 3, 4];
-            nomes.forEach((nome, idx) => {
-                allCharts.qualidade.data.datasets[idx].data = semanas.map(() => Math.floor(Math.random() * 30) + 70);
-            });
-            allCharts.qualidade.update();
+            if (allCharts.qualidade) {
+                const semanas = [1, 2, 3, 4];
+                nomes.forEach((nome, idx) => {
+                    // Usar a qualidade do analista com pequena variação realista
+                    const baseQualidade = analistas[nome].qualidade;
+                    const variacoes = semanas.map(() => baseQualidade + (Math.random() * 8 - 4));
+                    allCharts.qualidade.data.datasets[idx].data = variacoes.map(v => Math.max(60, Math.min(100, Math.round(v))));
+                });
+                allCharts.qualidade.update();
+            }
             
             // Produtividade (radar)
-            nomes.forEach((nome, idx) => {
-                allCharts.produtividade.data.datasets[idx].data = [
-                    Math.floor(Math.random() * 30) + 70,
-                    Math.floor(Math.random() * 30) + 70,
-                    Math.floor(Math.random() * 30) + 70,
-                    Math.floor(Math.random() * 30) + 70,
-                    Math.floor(Math.random() * 30) + 70
-                ];
-            });
-            allCharts.produtividade.update();
+            if (allCharts.produtividade) {
+                nomes.forEach((nome, idx) => {
+                    const baseQualidade = analistas[nome].qualidade;
+                    const baseTaxa = analistas[nome].taxa;
+                    allCharts.produtividade.data.datasets[idx].data = [
+                        Math.round(baseTaxa),
+                        Math.round(baseQualidade),
+                        Math.round(baseQualidade - 5),
+                        Math.round(baseTaxa + 3),
+                        Math.round((baseTaxa + baseQualidade) / 2)
+                    ];
+                });
+                allCharts.produtividade.update();
+            }
             
             generateInsightsAnalista(analistas);
+        }
+  
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
         }
     </script>
 </body>

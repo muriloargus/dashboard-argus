@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="dashboard-shared.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
   <style>
@@ -134,13 +135,84 @@
     .sidebar-footer {
       margin-top: 30px;
       padding-top: 20px;
-      border-top: 1px solid rgba(255,255,255,0.1);
       font-size: 0.85rem;
       text-align: center;
       position: absolute;
       bottom: 20px;
       width: calc(var(--sidebar-width) - 40px);
     }
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
 
     .main-wrapper {
       flex: 1;
@@ -1023,31 +1095,33 @@ body.dark .sidebar-menu a.active {
 </style>
 
 <body>
-  <nav class="sidebar">
-    <div class="sidebar-header">
-      <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
-    </div>
-    <ul class="sidebar-menu">
-      <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-      <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-      <li><a href="dashboard_motoristas%20v2.html" class="active"><i class="bi bi-people"></i> Motoristas</a></li>
-      <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-      <li><a href="dashboard_usuarios.html"><i class="bi bi-person-check"></i> Usuários</a></li>
-      <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-      <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
-            <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-            <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-      <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-      <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-      <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-      <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
-    </ul>
-    <div class="sidebar-footer">
-      <p></p>
-    </div>
-  </nav>
+  <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <p></p>
+            </div>
+        </nav>
 
-  <div class="main-wrapper">
+  <div class="main-wrapper" id="mainContent">
   <header class="topo">
     <div class="logo-container">
       <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
@@ -1176,6 +1250,10 @@ body.dark .sidebar-menu a.active {
   </div>
 
   <script>
+    // ===== VARIÁVEIS GLOBAIS =====
+    let paginaAtual = 1;
+    const itensPorPagina = 10;
+    
     function toggleDark() {
       const isDark = document.body.classList.toggle('dark');
       localStorage.setItem('darkMode', isDark ? 'true' : 'false');
@@ -1191,6 +1269,7 @@ body.dark .sidebar-menu a.active {
 
     // Carregar preferência dark mode ao iniciar
     document.addEventListener('DOMContentLoaded', function() {
+            activateCurrentLink();
       const darkMode = localStorage.getItem('darkMode');
       console.log('Carregando dark mode:', darkMode);
       if (darkMode === 'true') {
@@ -1203,21 +1282,34 @@ body.dark .sidebar-menu a.active {
       // Registrar plugin datalabels
       Chart.register(ChartDataLabels);
 
+      // Inicializar dark mode sync GLOBAL
+      initDarkModeSync();
+
       // Variáveis globais
       let data = [], chart1, chart2, chart3;
       const nfcOk = n => n && n.trim() !== "0" && n.trim().length > 14 && /^[0-9]+$/.test(n.trim());
 
-      // Carregar dados persistidos
-      const savedData = localStorage.getItem('motoristasData');
+      // Carregar dados persistidos (com tratamento ITP)
+      let savedData = null;
+      try {
+        savedData = localStorage.getItem('motoristasData');
+      } catch(e) {
+        console.warn('Storage access denied');
+      }
+      
       if (savedData) {
-        try {
-          data = JSON.parse(savedData);
+        const data_loaded = safeParseJSON(savedData);
+        if (data_loaded && Array.isArray(data_loaded)) {
+          data = data_loaded;
           carregarTransportadoras();
           atualizar();
-          console.log('Dados carregados do localStorage');
-        } catch(e) {
-          console.log('Erro ao carregar dados persistidos');
+          console.log('✅ Dados carregados do localStorage');
+        } else {
+          console.warn('⚠️ Dados persistidos inválidos');
+          loadDefaultMotoristas();
         }
+      } else {
+        loadDefaultMotoristas();
       }
 
       // Atualizar data no footer
@@ -1241,11 +1333,25 @@ body.dark .sidebar-menu a.active {
           </tr>
         `;
 
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          delimiter: ";",
-          dynamicTyping: false,
+        // Detectar delimitador automaticamente
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const firstLine = e.target.result.split('\n')[0];
+          let delimiter = ';';
+          
+          if (firstLine.includes(',') && !firstLine.includes(';')) {
+            delimiter = ',';
+          } else if (firstLine.includes('\t')) {
+            delimiter = '\t';
+          }
+          
+          console.log('🔍 Delimitador detectado:', JSON.stringify(delimiter), 'Primeira linha:', firstLine.substring(0, 100));
+          
+          Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            delimiter: delimiter,
+            dynamicTyping: false,
           complete: r => {
             if (r.errors.length > 0 || r.data.length === 0) {
               alert('⚠️ Erro ao processar o arquivo CSV.');
@@ -1335,7 +1441,28 @@ body.dark .sidebar-menu a.active {
             `;
           }
         });
+        };
+        reader.readAsText(file);
       };
+
+      // Carregar dados padrão
+      function loadDefaultMotoristas() {
+        data = [
+          { nome: 'João Felipe Santos', cpf: '12345678901', transportadora: 'TRS_LOG20', unidade: 'UNI_OSASCO', nfc: '12345678901234', regiao: 'SP' },
+          { nome: 'Pedro Oliveira Costa', cpf: '23456789012', transportadora: 'TRS_TRANPLA', unidade: 'UNI_GOIANIA', nfc: '23456789012345', regiao: 'GO' },
+          { nome: 'Ana Paula Silva', cpf: '34567890123', transportadora: 'TRS_LOG20', unidade: 'UNI_SAO PAULO', nfc: '34567890123456', regiao: 'SP' },
+          { nome: 'Rodrigo Martins', cpf: '45678901234', transportadora: 'TRS_TRANSLOG', unidade: 'UNI_MANAUS', nfc: '45678901234567', regiao: 'AM' },
+          { nome: 'Marcelo Ferreira', cpf: '56789012345', transportadora: 'TRS_LOG20', unidade: 'UNI_GOIANIA', nfc: '56789012345678', regiao: 'GO' },
+          { nome: 'Carlos Eduardo', cpf: '67890123456', transportadora: 'TRS_TRANPLA', unidade: 'UNI_OSASCO', nfc: '67890123456789', regiao: 'SP' },
+          { nome: 'Fernanda Gomes', cpf: '78901234567', transportadora: 'TRS_TRANSLOG', unidade: 'UNI_MANAUS', nfc: '78901234567890', regiao: 'AM' },
+          { nome: 'Bruno Alves', cpf: '89012345678', transportadora: 'TRS_LOG20', unidade: 'UNI_CDD UBERABA', nfc: '89012345678901', regiao: 'MG' },
+          { nome: 'Ricardo Souza', cpf: '90123456789', transportadora: 'TRS_TRANPLA', unidade: 'UNI_GOIANIA', nfc: '90123456789012', regiao: 'GO' },
+          { nome: 'Juliana Santos', cpf: '01234567890', transportadora: 'TRS_LOG20', unidade: 'UNI_SAO PAULO', nfc: '01234567890123', regiao: 'SP' }
+        ];
+        carregarTransportadoras();
+        atualizar();
+        console.log('Dados padrão carregados (10 motoristas)');
+      }
 
       // Extrair transportadora do grupo
       function extrairTransportadora(grupo) {
@@ -1408,12 +1535,25 @@ body.dark .sidebar-menu a.active {
         const ft = document.getElementById('transportadora').value;
         const fu = document.getElementById('unidade').value;
         const b = document.getElementById('busca').value.toLowerCase();
+        const filtrarIrrelevantes = document.getElementById('filtrarSemCadastro')?.checked || false;
 
         let filtrados = data.filter(x =>
           (!ft || x.transportadora === ft) &&
           (!fu || x.unidade === fu) &&
           (!b || x.nome.toLowerCase().includes(b) || (x.nfc && x.nfc.toLowerCase().includes(b)) || (b === 'válido' && nfcOk(x.nfc)) || (b === 'inválido' && !nfcOk(x.nfc)))
         );
+
+        // Aplicar filtro de remoção de "Sem cadastro" e "Sem UNI"
+        if (filtrarIrrelevantes) {
+          filtrados = filtrados.filter(x => 
+            x.transportadora !== 'Sem cadastro' && 
+            x.transportadora !== 'Sem Transportadora' && 
+            x.transportadora !== '' &&
+            x.unidade !== 'Sem UNI' && 
+            x.unidade !== 'Sem cadastro' && 
+            x.unidade !== ''
+          );
+        }
 
         const total = filtrados.length;
         const ok = filtrados.filter(x => nfcOk(x.nfc)).length;
@@ -1465,10 +1605,10 @@ body.dark .sidebar-menu a.active {
           nfcInvalidPercent = 0;
         }
 
-        // Contar com vínculo completo
+        // Contar com vínculo completo: deve ter AMBAS transportadora E unidade preenchidas
         const comVinculo = filtrados.filter(x => 
-          x.transportadora && x.transportadora.trim() !== '' && 
-          x.unidade && x.unidade.trim() !== ''
+          x.transportadora && x.transportadora.trim() !== '' && x.transportadora !== 'Sem cadastro' &&
+          x.unidade && x.unidade.trim() !== '' && x.unidade !== 'Sem UNI'
         ).length;
         const semVinculo = total - comVinculo;
 
@@ -1487,8 +1627,10 @@ body.dark .sidebar-menu a.active {
         
         // Cabeçalho com resumo geral
         html += `<div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #63a3d8;">`;
-        html += `<p style="margin: 0; font-weight: 600;">📊 Base Geral: 39.630 motoristas cadastrados</p>`;
-        html += `<p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666;">✅ 16.130 (40,70%) com vínculo (Transportadora + Unidade) | ⚠️ 23.500 (59,30%) sem vínculo</p>`;
+        html += `<p style="margin: 0; font-weight: 600;">📊 Base Geral: ${total.toLocaleString('pt-BR')} motoristas cadastrados</p>`;
+        const percComVinculo = total > 0 ? ((comVinculo / total) * 100).toFixed(2).replace('.', ',') : '0,00';
+        const percSemVinculo = total > 0 ? ((semVinculo / total) * 100).toFixed(2).replace('.', ',') : '0,00';
+        html += `<p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666;">✅ ${comVinculo.toLocaleString('pt-BR')} (${percComVinculo}%) com vínculo (Transportadora + Unidade) | ⚠️ ${semVinculo.toLocaleString('pt-BR')} (${percSemVinculo}%) sem vínculo</p>`;
         html += `</div>`;
 
         if (total === 0) {
@@ -1540,9 +1682,15 @@ body.dark .sidebar-menu a.active {
         const ok = filtrados.filter(x => nfcOk(x.nfc)).length;
         chart2 = criarGraficoDoughnut('g2', ['Com NFC Válido', 'Sem NFC Válido'], [ok, filtrados.length - ok]);
 
-        // Gráfico 3 - Motoristas por Unidade (TOP 15)
+        // Gráfico 3 - Motoristas por Unidade (TOP 15) com NFC Válido
         const porU = {};
-        filtrados.forEach(x => porU[x.unidade] = (porU[x.unidade] || 0) + 1);
+        const nfcPorU = {};
+        filtrados.forEach(x => {
+          porU[x.unidade] = (porU[x.unidade] || 0) + 1;
+          if (nfcOk(x.nfc)) {
+            nfcPorU[x.unidade] = (nfcPorU[x.unidade] || 0) + 1;
+          }
+        });
         
         let unidadesLabels = Object.keys(porU);
         if (filtrarIrrelevantes) {
@@ -1557,8 +1705,9 @@ body.dark .sidebar-menu a.active {
         
         const labelsTop = topUnidades.map(e => e[0]);
         const dataTop = topUnidades.map(e => e[1]);
+        const dataNfcTop = labelsTop.map(u => nfcPorU[u] || 0);
         if (chart3) chart3.destroy();
-        chart3 = criarGraficoPizza('g3', labelsTop, dataTop);
+        chart3 = criarGraficoComDoisEixos('g3', labelsTop, dataTop, dataNfcTop);
       }
 
       function criarGraficoBarras(id, dados, titulo) {
@@ -1817,8 +1966,161 @@ body.dark .sidebar-menu a.active {
         });
       }
 
-      let paginaAtual = 1;
-      const itensPorPagina = 10;
+      function criarGraficoComDoisEixos(id, labels, dataMotoristasTotal, dataNfcValido) {
+        const canvas = document.getElementById(id);
+        
+        const sortedIndices = Array.from({length: labels.length}, (_, i) => i)
+          .sort((a, b) => dataMotoristasTotal[b] - dataMotoristasTotal[a]);
+        const sortedLabels = sortedIndices.map(i => labels[i]);
+        const sortedDataMotoristas = sortedIndices.map(i => dataMotoristasTotal[i]);
+        const sortedDataNfc = sortedIndices.map(i => dataNfcValido[i]);
+        
+        // Calcular percentual de NFC válido
+        const sortedDataNfcPercent = sortedDataMotoristas.map((total, i) => 
+          total > 0 ? parseFloat(((sortedDataNfc[i] / total) * 100).toFixed(1)) : 0
+        );
+        
+        // Encontrar o máximo percentual para escalar melhor o eixo Y1
+        const maxPercent = Math.max(...sortedDataNfcPercent);
+        const y1Max = Math.ceil(maxPercent / 10) * 10 + 10; // Arredondar para próximo 10% com margem
+        
+        return new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels: sortedLabels,
+            datasets: [
+              {
+                label: 'Total de Motoristas',
+                data: sortedDataMotoristas,
+                backgroundColor: '#4f7fd9',
+                borderRadius: 6,
+                borderWidth: 0,
+                yAxisID: 'y',
+                borderSkipped: false,
+                order: 2
+              },
+              {
+                label: 'Cobertura NFC (%)',
+                data: sortedDataNfcPercent,
+                backgroundColor: 'rgba(40, 167, 69, 0.15)',
+                borderColor: '#20a745',
+                borderWidth: 3,
+                yAxisID: 'y1',
+                type: 'line',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 6,
+                pointBackgroundColor: '#20a745',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2.5,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: '#1a8a38',
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { 
+                display: true,
+                position: 'top',
+                labels: { 
+                  font: { size: 12, weight: 'bold' }, 
+                  usePointStyle: true, 
+                  padding: 20,
+                  color: '#1a1a1a'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#FFD700',
+                bodyColor: '#fff',
+                borderColor: '#FFD700',
+                borderWidth: 1,
+                padding: 12,
+                titleFont: { size: 12, weight: 'bold' },
+                bodyFont: { size: 11 },
+                callbacks: {
+                  label: function(context) {
+                    if (context.dataset.yAxisID === 'y') {
+                      return 'Total: ' + context.parsed.y + ' motoristas';
+                    } else {
+                      return 'Cobertura: ' + context.parsed.y + '%';
+                    }
+                  }
+                }
+              },
+              datalabels: {
+                display: true,
+                anchor: function(context) {
+                  return context.dataset.type === 'line' ? 'top' : 'end';
+                },
+                align: 'top',
+                offset: function(context) {
+                  return context.dataset.type === 'line' ? 10 : 5;
+                },
+                font: { size: 11, weight: 'bold' },
+                color: function(context) {
+                  return context.dataset.type === 'line' ? '#20a745' : '#4f7fd9';
+                },
+                formatter: function(value, context) {
+                  if (context.dataset.type === 'line') {
+                    return value + '%';
+                  }
+                  return value;
+                }
+              }
+            },
+            scales: {
+              x: { 
+                ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }, 
+                grid: { display: false } 
+              },
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { 
+                  display: true, 
+                  text: 'Total de Motoristas', 
+                  font: { size: 12, weight: 'bold' },
+                  color: '#4f7fd9'
+                },
+                ticks: { 
+                  precision: 0, 
+                  font: { size: 10 },
+                  color: '#4f7fd9'
+                },
+                beginAtZero: true,
+                grid: { color: 'rgba(79, 127, 217, 0.1)' }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { 
+                  display: true, 
+                  text: 'Cobertura NFC (%)', 
+                  font: { size: 12, weight: 'bold' },
+                  color: '#20a745'
+                },
+                ticks: { 
+                  precision: 0, 
+                  font: { size: 10 },
+                  color: '#20a745',
+                  callback: function(value) { return value + '%'; } 
+                },
+                beginAtZero: true,
+                max: y1Max,
+                grid: { drawOnChartArea: false }
+              }
+            }
+          }
+        });
+      }
 
       function atualizarTabela(filtrados) {
         const tbody = document.getElementById('lista');
@@ -1994,7 +2296,26 @@ DETALHAMENTO
         printWindow.print();
       };
     });
-  </script>
+  
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
+        }
+    </script>
   </div>
 </body>
 </html>

@@ -6,10 +6,8 @@
     <title>Usuários - Sistema Argus Ambev</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- IndexedDB Storage Manager - Capacidade 1GB -->
-    <script src="idb-manager.js"></script>
-    <script src="storage-adapter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -110,10 +108,82 @@
             left: 20px;
             right: 20px;
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: 15px;
             color: rgba(255,255,255,0.7);
         }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
         
         .sidebar-footer p {
             margin: 4px 0;
@@ -242,8 +312,15 @@
             text-align: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
         }
-        
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-left-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
+        }
+
         .card-icon {
             font-size: 1.8rem;
             margin-bottom: 8px;
@@ -606,8 +683,6 @@
             background: rgba(255,255,255,0.05);
             color: rgba(255,255,255,0.85);
         }
-            }
-        }
         
         @media (max-width: 768px) {
             .insights-section {
@@ -729,33 +804,34 @@ body.dark .pagination button.active {
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <nav class="sidebar">
+        <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
                 <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><i class="bi bi-house"></i> Home</a></li>
-                <li><a href="status_frota.html"><i class="bi bi-speedometer2"></i> Status Frota</a></li>
-                <li><a href="dashboard_motoristas%20v2.html"><i class="bi bi-person-walking"></i> Motoristas</a></li>
-                <li><a href="dashboard_ativos.html"><i class="bi bi-truck"></i> Ativos</a></li>
-                <li><a href="dashboard_usuarios.html" class="active"><i class="bi bi-people"></i> Usuários</a></li>
-                <li><a href="dashboard_comparativo.html"><i class="bi bi-bar-chart"></i> Comparativo</a></li>
-                <li><a href="dashboard_desempenho_analista.html"><i class="bi bi-person-badge"></i> Desempenho - Analista</a></li>
-                <li><a href="dashboard_excecoes.html"><i class="bi bi-exclamation-triangle"></i> Exceções</a></li>
-                <li><a href="dashboard_falhas.html"><i class="bi bi-bug"></i> Falhas</a></li>
-                <li><a href="dashboard_risco_colisao.html"><i class="bi bi-shield-exclamation"></i> Risco de Colisão</a></li>
-                <li><a href="dashboard_temporal_mapas.html"><i class="bi bi-calendar-range"></i> Temporal & Mapas</a></li>
-                <li><a href="dashboard_timeline.html"><i class="bi bi-calendar-event"></i> Motorista Não Identificado</a></li>
-                <li><a href="dashboard_dispositivos.html"><i class="bi bi-inbox"></i> Disp. Sem Vínculo</a></li>
-                <li><a href="tv_dashboard.html"><i class="bi bi-television"></i> 🎬 Dashboard TV</a></li>
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
             </ul>
             <div class="sidebar-footer">
+                <p></p>
             </div>
         </nav>
         
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <header class="header">
                 <div class="header-branding">
                     <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
@@ -767,9 +843,12 @@ body.dark .pagination button.active {
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                 <button class="btn-upload" id="uploadBtn">
-                    <i class="bi bi-cloud-upload"></i> Carregar CSV
+                    <i class="bi bi-cloud-upload"></i> 📤 Carregar CSV
                 </button>
-                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+                <button class="btn-upload" id="exportBtn" onclick="exportUsuariosData()" title="Exportar dados">
+                    <i class="bi bi-download"></i> 📥 Exportar
+                </button>
+                <button class="btn-toggle" id="toggleDarkBtn" onclick="toggleDarkModeGlobal()">🌙 Dark / ☀️ Light</button>
                 </div>
                 <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
             </header>
@@ -822,6 +901,33 @@ body.dark .pagination button.active {
                 </div>
             </div>
             
+            <!-- Insights Section -->
+            <!-- Storytelling de Dados -->
+            <div id="insightsContainer" class="insights-container" style="display: none;">
+                <div class="insights-card">
+                    <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+                    
+                    <div class="insight-section">
+                        <h3>🎯 Situação Principal</h3>
+                        <p id="insightPrincipal">Carregando análise...</p>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>📈 Padrões Detectados</h3>
+                        <ul id="insightPadroes">
+                            <li>Carregando padrões...</li>
+                        </ul>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>💡 Recomendações</h3>
+                        <ul id="insightRecomendacoes">
+                            <li>Carregando recomendações...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Charts Section -->
             <section class="charts-section" id="chartsSection">
                 <div class="chart-container">
@@ -855,33 +961,6 @@ body.dark .pagination button.active {
                     </div>
                 </div>
             </section>
-            
-            <!-- Insights Section -->
-            <!-- Storytelling de Dados -->
-            <div id="insightsContainer" class="insights-container" style="display: none;">
-                <div class="insights-card">
-                    <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
-                    
-                    <div class="insight-section">
-                        <h3>🎯 Situação Principal</h3>
-                        <p id="insightPrincipal">Carregando análise...</p>
-                    </div>
-
-                    <div class="insight-section">
-                        <h3>📈 Padrões Detectados</h3>
-                        <ul id="insightPadroes">
-                            <li>Carregando padrões...</li>
-                        </ul>
-                    </div>
-
-                    <div class="insight-section">
-                        <h3>💡 Recomendações</h3>
-                        <ul id="insightRecomendacoes">
-                            <li>Carregando recomendações...</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
             
             <!-- Table Section -->
             <section class="table-section" id="tableSection">
@@ -972,15 +1051,14 @@ body.dark .pagination button.active {
             return value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase();
         }
             function toggleDark() {
-                document.body.classList.toggle('dark');
-                const isDark = document.body.classList.contains('dark');
-                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
-                const btn = document.querySelector('.btn-toggle');
-                if (btn) btn.textContent = isDark ? '☀️' : '🌙 Dark / ☀️ Light';
-                console.log('Dark mode:', isDark);
-                // Recriar gráficos com cores apropriadas
-                updateChartColors();
+                toggleDarkModeGlobal();  // Chamar função global de sync
+                updateChartColors();     // Atualizar cores dos gráficos locais
             }
+            
+            // Definir função de atualização de gráficos para usar quando dark mode muda em outras abas
+            window.updateChartsForDarkMode = function() {
+                updateChartColors();
+            };
             
             function updateChartColors() {
                 // Destruir todos os gráficos
@@ -997,17 +1075,11 @@ body.dark .pagination button.active {
                 }
             }
 
-            // Carregar preferência dark mode ao iniciar
+            // Carregar preferência dark mode ao iniciar (SYNC GLOBAL)
             document.addEventListener('DOMContentLoaded', function() {
-                const darkMode = localStorage.getItem('darkMode');
-                console.log('Carregando dark mode:', darkMode);
-                if (darkMode === 'true') {
-                    document.body.classList.add('dark');
-                    const btn = document.querySelector('.btn-toggle');
-                    if (btn) btn.textContent = '☀️';
-                    console.log('Dark mode aplicado ao carregar');
-                }
-
+            activateCurrentLink();
+                initDarkModeSync();
+                
                 // Declarar elementos do DOM
                 const uploadBtn = document.getElementById('uploadBtn');
                 const csvFileInput = document.getElementById('csvFileInput');
@@ -1018,19 +1090,38 @@ body.dark .pagination button.active {
                 window.chartsSection = document.getElementById('chartsSection');
                 window.tableSection = document.getElementById('tableSection');
 
-                // Carregar dados persistidos
-                const savedData = localStorage.getItem('usuariosData');
+                // Registrar plugin ChartDataLabels
+                if (window.Chart && window.ChartDataLabels) {
+                    try {
+                        Chart.register(ChartDataLabels);
+                    } catch(e) {
+                        console.warn('Erro ao registrar ChartDataLabels:', e);
+                    }
+                }
+
+                // Carregar dados persistidos (com tratamento de erro para privacy/ITP)
+                let savedData = null;
+                try {
+                    savedData = localStorage.getItem('usuariosData');
+                } catch(e) {
+                    console.warn('Storage access denied (ITP/Privacy), usando dados padrão');
+                }
+                
                 if (savedData) {
-                  try {
-                    userData = JSON.parse(savedData);
-                    filteredData = [...userData];
-                    populateFilterSelects();
-                    initCharts();
-                    updateCharts(filteredData);
-                    console.log('Dados carregados do localStorage');
-                  } catch(e) {
-                    console.log('Erro ao carregar dados persistidos');
-                  }
+                    const userData_loaded = safeParseJSON(savedData);
+                    if (userData_loaded && Array.isArray(userData_loaded)) {
+                        userData = userData_loaded;
+                        filteredData = [...userData];
+                        populateFilterSelects();
+                        initCharts();
+                        updateCharts(filteredData);
+                        console.log('✅ Dados carregados do localStorage');
+                    } else {
+                        console.warn('⚠️ Dados persistidos inválidos, usando dados padrão');
+                        loadSampleData();
+                    }
+                } else {
+                    loadSampleData();
                 }
 
                 if (uploadBtn && csvFileInput) {
@@ -1041,12 +1132,19 @@ body.dark .pagination button.active {
                 }
             
             initCharts();
-            loadSampleData();
         });
         
         function initCharts() {
-            // Registrar plugin de data labels
-            Chart.register(ChartDataLabels);
+            // IMPORTANTE: Destruir charts antigos antes de recrear
+            if (typeof window.transportadoraChart !== 'undefined' && window.transportadoraChart) {
+                try { window.transportadoraChart.destroy(); } catch(e) {}
+            }
+            if (typeof window.designacaoChart !== 'undefined' && window.designacaoChart) {
+                try { window.designacaoChart.destroy(); } catch(e) {}
+            }
+            if (typeof window.unidadeChart !== 'undefined' && window.unidadeChart) {
+                try { window.unidadeChart.destroy(); } catch(e) {}
+            }
             
             const isDarkMode = document.body.classList.contains('dark');
             const textColor = isDarkMode ? '#e0e0e0' : '#333';
@@ -1071,27 +1169,40 @@ body.dark .pagination button.active {
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { 
-                        legend: { display: false },
+                        legend: { display: true, position: "top" },
                         tooltip: { backgroundColor: tooltipBg },
                         datalabels: {
+                            display: true,
                             anchor: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const data = context.dataset.data;
+                                const maxValue = Math.max(...data);
+                                const currentValue = data[context.dataIndex];
+                                const percentage = (currentValue / maxValue) * 100;
+                                return percentage > 15 ? 'center' : 'end';
                             },
                             align: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
+                                const data = context.dataset.data;
+                                const maxValue = Math.max(...data);
+                                const currentValue = data[context.dataIndex];
+                                const percentage = (currentValue / maxValue) * 100;
+                                return percentage > 15 ? 'center' : 'top';
                             },
                             offset: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 0 : 5;
+                                const data = context.dataset.data;
+                                const maxValue = Math.max(...data);
+                                const currentValue = data[context.dataIndex];
+                                const percentage = (currentValue / maxValue) * 100;
+                                return percentage > 15 ? 0 : 8;
                             },
+                            font: { size: 11, weight: 'bold' },
                             color: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? '#fff' : textColor;
+                                const data = context.dataset.data;
+                                const maxValue = Math.max(...data);
+                                const currentValue = data[context.dataIndex];
+                                const percentage = (currentValue / maxValue) * 100;
+                                return percentage > 15 ? '#fff' : '#0033A0';
                             },
-                            font: { weight: 'bold', size: 12 },
-                            formatter: function(value) { return value || 0; }
+                            padding: 5
                         }
                     },
                     scales: {
@@ -1155,28 +1266,8 @@ body.dark .pagination button.active {
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { 
-                        legend: { display: false },
-                        tooltip: { backgroundColor: tooltipBg },
-                        datalabels: {
-                            anchor: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
-                            },
-                            align: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 'center' : 'end';
-                            },
-                            offset: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? 0 : 5;
-                            },
-                            color: function(context) {
-                                const value = context.dataset.data[context.dataIndex];
-                                return value > 10 ? '#fff' : textColor;
-                            },
-                            font: { weight: 'bold', size: 12 },
-                            formatter: function(value) { return value || 0; }
-                        }
+                        legend: { display: true, position: "top" },
+                        tooltip: { backgroundColor: tooltipBg }
                     },
                     scales: {
                         y: { 
@@ -1197,12 +1288,35 @@ body.dark .pagination button.active {
             const file = event.target.files[0];
             if (!file) return;
             
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                delimiter: ';',
-                dynamicTyping: false,
+            const requiredColumns = ['NOME COMPLETO', 'E-mail', 'Designação'];
+            
+            // Detectar delimitador automaticamente
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const firstLine = e.target.result.split('\n')[0];
+                let delimiter = ';';
+                
+                if (firstLine.includes(',') && !firstLine.includes(';')) {
+                    delimiter = ',';
+                } else if (firstLine.includes('\t')) {
+                    delimiter = '\t';
+                }
+                
+                console.log('🔍 Delimitador detectado:', JSON.stringify(delimiter), 'Primeira linha:', firstLine.substring(0, 100));
+                
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    delimiter: delimiter,
+                    dynamicTyping: false,
                 complete: (results) => {
+                    // Validar colunas obrigatórias
+                    const validation = validateCSVColumns(results.meta.fields, requiredColumns);
+                    if (!validation.valid) {
+                        alert(validation.message + '\n\n✅ Colunas obrigatórias: ' + requiredColumns.join(', '));
+                        return;
+                    }
+                    
                     if (results.errors && results.errors.length > 0) {
                         alert('❌ Erro ao processar CSV: ' + results.errors[0].message);
                         return;
@@ -1237,7 +1351,18 @@ body.dark .pagination button.active {
                 error: (error) => {
                     alert('❌ Erro ao ler arquivo: ' + error.message);
                 }
-            });
+                });
+            };
+            reader.readAsText(file);
+        }
+        
+        function exportUsuariosData() {
+            if (userData.length === 0) {
+                alert('❌ Nenhum dado para exportar');
+                return;
+            }
+            const timestamp = new Date().toISOString().split('T')[0];
+            exportToCSV(userData, `usuarios_${timestamp}.csv`);
         }
 
         function extrairTransportadora(grupo) {
@@ -1390,7 +1515,8 @@ body.dark .pagination button.active {
             document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
             document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
         }
-        
+
+
         function updateChartsWithFilteredData() {
             const dataSource = filteredData.length > 0 ? filteredData : userData;
             
@@ -1404,8 +1530,9 @@ body.dark .pagination button.active {
                 transportadoras[t] = (transportadoras[t] || 0) + 1;
             });
             
-            transportadoraChart.data.labels = Object.keys(transportadoras).sort();
-            transportadoraChart.data.datasets[0].data = Object.keys(transportadoras).sort().map(k => transportadoras[k]);
+            const transportadorasLabels = Object.keys(transportadoras).sort();
+            transportadoraChart.data.labels = transportadorasLabels;
+            transportadoraChart.data.datasets[0].data = transportadorasLabels.map(k => transportadoras[k]);
             transportadoraChart.update();
             
             const designacoes = {};
@@ -1425,17 +1552,19 @@ body.dark .pagination button.active {
                 unidades[un] = (unidades[un] || 0) + 1;
             });
             
-            // Top 15 por quantidade
-            const top15Unidades = Object.entries(unidades)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 15);
-            
-            unidadeChart.data.labels = top15Unidades.map(u => u[0]);
-            unidadeChart.data.datasets[0].data = top15Unidades.map(u => u[1]);
+            const unidadesLabelsSorted = Object.keys(unidades).sort();
+            const unidadesLabels = unidadesLabelsSorted.slice(0, 15);
+            unidadeChart.data.labels = unidadesLabels;
+            unidadeChart.data.datasets[0].data = unidadesLabels.map(k => unidades[k]);
             unidadeChart.update();
             
             generateInsights(dataSource);
             document.getElementById('insightsContainer').style.display = dataSource.length > 0 ? 'block' : 'none';
+        }
+        
+        // Alias para compatibilidade com chamadas de updateCharts(data)
+        function updateCharts(data) {
+            updateChartsWithFilteredData();
         }
         
         function updateDashboard() {
@@ -1526,10 +1655,43 @@ body.dark .pagination button.active {
         
         function loadDefaultSampleData() {
             userData = [
-                { nome: 'THIAGO ALEXANDRE', email: '99773674@AMBEV.COM.BR', designacao: 'GOD', cpf: '8433463642', transportadora: 'AMBEV', unidade: 'UNI_CDD UBERABA' },
-                { nome: 'Gabriela Yuna Kondo', email: '99810245@ambev.com.br', designacao: 'Gerente Transportes', cpf: '45387146827', transportadora: 'Company Group', unidade: 'Company Group' }
+                { nome: 'THIAGO ALEXANDRE', email: '99773674@AMBEV.COM.BR', designacao: 'GOD', cpf: '8433463642', transportadora: 'TRS_LOG20', unidade: 'UNI_CDD UBERABA' },
+                { nome: 'Gabriela Yuna Kondo', email: '99810245@ambev.com.br', designacao: 'Gerente', cpf: '45387146827', transportadora: 'TRS_LOG20', unidade: 'UNI_CDD UBERABA' },
+                { nome: 'Carlos Felipe Santos', email: 'carlos.santos@ambev.com.br', designacao: 'Supervisor', cpf: '12345678901', transportadora: 'TRS_TRANPLA', unidade: 'UNI_OSASCO' },
+                { nome: 'Marina Oliveira Costa', email: 'marina.costa@ambev.com.br', designacao: 'Analista', cpf: '23456789012', transportadora: 'TRS_LOG20', unidade: 'UNI_GOIANIA' },
+                { nome: 'Roberto Alves Junior', email: 'roberto.alves@ambev.com.br', designacao: 'Operador', cpf: '34567890123', transportadora: 'TRS_TRANPLA', unidade: 'UNI_MANAUS' },
+                { nome: 'Juliana Ferreira Silva', email: 'juliana.ferreira@ambev.com.br', designacao: 'Analista', cpf: '45678901234', transportadora: 'TRS_LOG20', unidade: 'UNI_CDD UBERABA' },
+                { nome: 'Marcos Henrique Pereira', email: 'marcos.pereira@ambev.com.br', designacao: 'Coordenador', cpf: '56789012345', transportadora: 'TRS_TRANPLA', unidade: 'UNI_GOIANIA' },
+                { nome: 'Fernanda Gomes Xavier', email: 'fernanda.xavier@ambev.com.br', designacao: 'Supervisor', cpf: '67890123456', transportadora: 'TRS_TRANSLOG', unidade: 'UNI_SAO PAULO' },
+                { nome: 'Paulo Ricardo Mendes', email: 'paulo.mendes@ambev.com.br', designacao: 'Operador', cpf: '78901234567', transportadora: 'TRS_LOG20', unidade: 'UNI_OSASCO' },
+                { nome: 'Adriana Moura Ribeiro', email: 'adriana.ribeiro@ambev.com.br', designacao: 'Analista', cpf: '89012345678', transportadora: 'TRS_TRANPLA', unidade: 'UNI_MANAUS' },
+                { nome: 'Leonardo Brás Oliveira', email: 'leonardo.oliveira@ambev.com.br', designacao: 'Técnico', cpf: '90123456789', transportadora: 'TRS_TRANSLOG', unidade: 'UNI_SAO PAULO' },
+                { nome: 'Beatriz Alves Barbosa', email: 'beatriz.barbosa@ambev.com.br', designacao: 'Analista', cpf: '01234567890', transportadora: 'TRS_LOG20', unidade: 'UNI_GOIANIA' },
+                { nome: 'Diego Morais Santos', email: 'diego.santos@ambev.com.br', designacao: 'Supervisão', cpf: '11223344556', transportadora: 'TRS_TRANPLA', unidade: 'UNI_OSASCO' },
+                { nome: 'Camila Araujo Tavares', email: 'camila.tavares@ambev.com.br', designacao: 'Operador', cpf: '22334455667', transportadora: 'TRS_TRANSLOG', unidade: 'UNI_SAO PAULO' },
+                { nome: 'Gustavo Lima Ferreiro', email: 'gustavo.ferreiro@ambev.com.br', designacao: 'Gestor', cpf: '33445566778', transportadora: 'TRS_LOG20', unidade: 'UNI_CDD UBERABA' }
             ];
-            console.log('Usando dados padrão (2 usuários)');
+            console.log('Usando dados padrão (15 usuários)');
+        }
+  
+        
+            
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
         }
     </script>
 </body>
