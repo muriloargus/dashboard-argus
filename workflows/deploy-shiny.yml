@@ -1,0 +1,84 @@
+name: Deploy Shiny Dashboards to Posit Cloud
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'shiny/**'
+      - '.github/workflows/deploy-shiny.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: '4.3.0'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
+    - name: Install R packages
+      run: |
+        install.packages(c('shiny', 'shinydashboard', 'plotly', 'dplyr', 'readr', 'reactable', 'rsconnect'))
+      shell: Rscript {0}
+
+    - name: Setup Posit Cloud credentials
+      run: |
+        mkdir -p ~/.config/rsconnect
+        cat > ~/.config/rsconnect/deployment.dcf << EOF
+        name: shinyapps-io
+        account: ${{ secrets.POSIT_ACCOUNT_NAME }}
+        server: shinyapps.io
+        accountId: ${{ secrets.POSIT_ACCOUNT_ID }}
+        bundleId: NA
+        EOF
+
+    - name: Deploy dashboards  
+      run: |
+        R_CONNECTAPI_TOKEN="${{ secrets.POSIT_TOKEN }}" \
+        R_CONNECTAPI_SERVER="https://${{ secrets.POSIT_ACCOUNT_NAME }}.shinyapps.io/" \
+        Rscript deploy_dashboards.R
+      env:
+        POSIT_TOKEN: ${{ secrets.POSIT_TOKEN }}
+        POSIT_SECRET: ${{ secrets.POSIT_SECRET }}
+
+    - name: Create deployment report
+      if: always()
+      run: |
+        echo "# Deployment Report" > deployment_report.md
+        echo "Date: $(date)" >> deployment_report.md
+        echo "Status: ${{ job.status }}" >> deployment_report.md
+        echo "" >> deployment_report.md
+        echo "## Dashboards Deployed:" >> deployment_report.md
+        ls -la shiny/ | grep "^d" | awk '{print "- " $NF}' >> deployment_report.md
+
+    - name: Upload deployment report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: deployment-report
+        path: deployment_report.md
+
+    - name: Notify deployment
+      if: always()
+      run: |
+        echo "Deployment completed with status: ${{ job.status }}"
+        echo "Check logs for details"
