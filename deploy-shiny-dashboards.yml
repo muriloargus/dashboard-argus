@@ -2,12 +2,7 @@ name: Deploy Shiny Dashboards
 
 on:
   push:
-    branches:
-      - main
-      - master
-    paths:
-      - 'shiny/**'
-      - '.github/workflows/deploy-shiny-dashboards.yml'
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
