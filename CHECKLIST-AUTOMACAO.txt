@@ -1,0 +1,235 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                   📋 CHECKLIST - AUTOMAÇÃO ARGUS SETUP                        ║
+║                                                                                ║
+║  Acompanhe seu progresso aqui! Marque ✅ conforme completar cada item        ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+FASE 1: CONFIGURAÇÃO IMEDIATA (HOJE - 5-10 minutos)
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  [ ] 1. Leia AUTOMACAO-GUIA-RAPIDO.txt
+       └─ Entender visão geral
+       └─ Entender 4 opções de uso
+
+  [ ] 2. Copie alguns CSVs para ./input/ (ou raiz)
+       └─ ativos_*.csv
+       └─ falhas_*.csv
+       └─ usuarios_*.csv (opcional)
+
+  [ ] 3. Execute: RODAR-ORQUESTRADOR.bat (clique 2x)
+       └─ Observe o progresso no console
+       └─ Aguarde até "✅ TODOS OS SISTEMAS SINCRONIZADOS COM SUCESSO"
+
+  [ ] 4. Verifique ./logs/orquestrador.log
+       └─ Procure por ✅ (sucesso) ou ⚠️ (avisos)
+       └─ Se tudo OK, continue para fase 2
+
+  [ ] 5. Confirme dados no Supabase
+       └─ Abra https://fnlgstkkkxzrszmxqwwf.supabase.co
+       └─ Acesse SQL Editor
+       └─ Execute: SELECT COUNT(*) FROM ativos;
+       └─ Deve mostrar registros novos
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+FASE 2: AUTOMAÇÃO GitHub Actions (ESSA SEMANA)
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  [ ] 1. Verifique workflows criados
+       └─ Abra: .github/workflows/
+       └─ Confirme que existem 3 arquivos:
+          [ ] bot.yml ✅
+          [ ] geotab-sync.yml ✅
+          [ ] deploy.yml ✅
+
+  [ ] 2. Faça commit dos workflows no GitHub
+       └─ git add .github/workflows/
+       └─ git commit -m "🤖 Automação: Workflows GitHub Actions"
+       └─ git push
+
+  [ ] 3. Verifique execução do bot
+       └─ Abra: https://github.com/muriloargus/dashboard-argus/actions
+       └─ Clique em "Argus Bot"
+       └─ Confirme que o último run foi bem-sucedido (✅)
+
+  [ ] 4. Se usar Geotab, configure secrets (OPCIONAL)
+       └─ https://github.com/muriloargus/dashboard-argus/settings/secrets
+       └─ Adicione:
+          [ ] GEOTAB_DB_HOST
+          [ ] GEOTAB_DB_PORT
+          [ ] GEOTAB_DB_NAME
+          [ ] GEOTAB_DB_USER
+          [ ] GEOTAB_DB_PASSWORD
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+FASE 3: AUTOMAÇÃO LOCAL - OPÇÃO AVANÇADA (OPCIONAL - Essa semana)
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  [ ] 1. Abra PowerShell COMO ADMINISTRADOR
+       └─ Windows + X → Windows PowerShell (Admin)
+
+  [ ] 2. Execute comando de agendamento
+       └─ cd "C:\Users\MuriloEduardoOliveir\Downloads\Dash - supabase + github"
+       └─ .\ORQUESTRADOR-AVANCADO.ps1 -AgendarTarefaWindows -IntervaloCada 6
+
+  [ ] 3. Confirme agendamento
+       └─ Windows + R → taskschd.msc
+       └─ Procure por "Argus Bot Automático"
+       └─ Confirme que está agendado para execução regular
+
+  [ ] 4. (Opcional) Customize frequência
+       └─ Task Scheduler: Clique direito na tarefa → Edit
+       └─ Mude "Repeat every 6 hours" para seu intervalo desejado
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+FASE 4: VALIDAÇÃO DOS DASHBOARDS (Essa semana)
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  [ ] 1. Abra cada dashboard no navegador
+       └─ Comece com: file:///.../index.html
+       └─ Menu lateral deve carregar
+
+  [ ] 2. Selecione um dashboard CSV
+       └─ Ex: Dashboard Motoristas v2
+       └─ Clique "Carregar dados" ou refresque a página
+       └─ Dados devem aparecer (via localStorage/IndexedDB)
+
+  [ ] 3. Selecione um dashboard Supabase
+       └─ Ex: Dashboard Ativos (Supabase)
+       └─ Deve carregar automaticamente em tempo real
+       └─ Dados vêm do cloud (Supabase)
+
+  [ ] 4. Teste armazenamento
+       └─ Abra: diagnostico-storage.html
+       └─ Verifique capacidade (deve mostrar 1GB+ para IndexedDB)
+       └─ Teste modo dark (deve funcionar sem travar)
+
+  [ ] 5. Validação completa
+       └─ Todos os 11 dashboards antigos funcionando ✓
+       └─ Todos os 3 dashboards Supabase funcionando ✓
+       └─ TV Dashboard mostrando dados em tempo real ✓
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+FASE 5: DOCUMENTAÇÃO E REFERÊNCIA (Próximas semanas)
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  [ ] 1. Salve links principais
+       └─ GitHub: https://github.com/muriloargus/dashboard-argus
+       └─ Supabase: https://fnlgstkkkxzrszmxqwwf.supabase.co
+       └─ Actions: https://github.com/muriloargus/dashboard-argus/actions
+
+  [ ] 2. Salve arquivos de documentação local
+       └─ AUTOMACAO-GUIA-RAPIDO.txt (referência rápida)
+       └─ SETUP-AUTOMACAO-COMPLETA.md (detalhes técnicos)
+       └─ ARQUITETURA-AUTOMACAO.txt (diagrama de fluxo)
+
+  [ ] 3. Configure seu IDE favorito
+       └─ (Opcional) Abra projeto em VS Code para editar quando necessário
+       └─ Git integrado funciona naturalmente
+
+  [ ] 4. Notifique sua equipe (OPCIONAL)
+       └─ Compartilhe AUTOMACAO-GUIA-RAPIDO.txt
+       └─ Explique que agora sincronização é automática
+       └─ Ninguém precisa fazer upload manual de CSV
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+FASE 6: MANUTENÇÃO CONTÍNUA (Mensalmente)
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  [Mensal] 1. Revise logs
+           └─ ./logs/orquestrador.log (últimas execuções local)
+           └─ GitHub Actions → Workflows (nuvem)
+
+  [Mensal] 2. Confirme que dados continuam sincronizando
+           └─ Supabase Dashboard → Verificar tabelas
+
+  [Mensal] 3. Se problemas surgem, verifique:
+           [ ] .env está configurado corretamente?
+           [ ] GitHub Secrets ainda válidas?
+           [ ] Geotab rodando (se aplicável)?
+
+  [Quando necessário] 4. Atualize frequência de execução
+                      └─ PowerShell: -IntervaloCada N
+                      └─ GitHub Actions: Edite cron
+                      └─ Task Scheduler: Edite propriedades da tarefa
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+TROUBLESHOOTING - Se algo não funcionar
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  ❌ "Cliquei em RODAR-ORQUESTRADOR.bat mas não aconteceu nada"
+     └─ [ ] Python está instalado? (python --version)
+     └─ [ ] requirements.txt foi instalado? (pip list)
+     └─ [ ] .env tem SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY?
+
+  ❌ "Saída do BAT mostra ⚠️ warning mas não erro"
+     └─ [ ] Is normal, se tiver ✅ no final, funcionou
+     └─ [ ] Verifique dados no Supabase
+
+  ❌ "GitHub Actions ainda falhando"
+     └─ [ ] Atualize os 3 workflow files (.yml)
+     └─ [ ] Verifique GitHub Secrets configurados
+     └─ [ ] Clique no run que falhou e veja logs detalhados
+
+  ❌ "PowerShell diz 'script not signed'"
+     └─ [ ] Execute como admin
+     └─ [ ] Ou: Set-ExecutionPolicy RemoteSigned
+
+  ❌ "Dados não aparecem no dashboard"
+     └─ [ ] Supabase tem dados? (SQL Editor → SELECT * FROM ativos)
+     └─ [ ] Arquivo CSV tem formato correto?
+     └─ [ ] Dashboard está acessando Supabase correto?
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+FEEDBACK & MELHORIAS FUTURAS
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  Considerações para depois:
+  [ ] Adicionar mais datasources (APIs, bancos de dados)
+  [ ] Migrar mais dashboards para Supabase (tempo real)
+  [ ] Melhorar alerts/notifications quando falhas ocorrem
+  [ ] Adicionar webhook triggers para eventos específicos
+  [ ] Expandir Geotab sync com mais tabelas
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+NOTAS RÁPIDAS
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  Hoje completamos:
+  ✅ 3 workflows GitHub Actions (corrigidos NodeJS)
+  ✅ 2 tipos de automação local (BAT + PowerShell)
+  ✅ 4 bots de sincronização integrados
+  ✅ Agendamento Windows nativo
+  ✅ 3 documentações completas
+  ✅ Troubleshooting e FAQs
+
+  Próxima execução automática recomendada:
+  • Local (Manual): HOJE - clique 2x
+  • Local (Agendado): Setup essa semana (5 min)
+  • GitHub Actions: Já está rodando 24/7
+
+  Se precisar executar manualmente:
+  1. Coloque dados em ./input/ (ou raiz)
+  2. Clique 2x em RODAR-ORQUESTRADOR.bat
+  3. Aguarde 5-10 minutos
+  4. Confirme em Supabase
+
+
+༺════════════════════════════════════════════════════════════════════════════════༻
+
+  ✨ PRONTO PARA COMEÇAR ✨
+  
+  Próximo passo: Execute RODAR-ORQUESTRADOR.bat (clique 2x)
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════

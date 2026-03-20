@@ -1,0 +1,168 @@
+╔════════════════════════════════════════════════════════════════╗
+║  ⏰ AUTOMAÇÃO NO WINDOWS - TASK SCHEDULER                      ║
+║  Execute a sincronização AUTOMATICAMENTE a cada 15 minutos    ║
+╚════════════════════════════════════════════════════════════════╝
+
+OPÇÃO 1: AUTOMAÇÃO RÁPIDA COM SCRIPT BATCH
+════════════════════════════════════════════════════════════════
+
+1. Abra o Agendador de Tarefas:
+   └─ Pressione Windows + R
+   └─ Digite: taskschd.msc
+   └─ Pressione ENTER
+
+2. Clique em "Ação" no menu superior
+
+3. Clique em "Criar Tarefa Básica..."
+
+4. Preenchimento:
+   Nome: SincronizarGeotab
+   Descrição: Sincroniza dados MyGeotab com Supabase a cada 15 min
+
+5. Clique "Próximo"
+
+6. Selecione um gatilho (escolha 1):
+   ✓ "Quando o computador é iniciado" (recomendado)
+   ✓ "Uma vez por dia" (com horário específico)
+   ✓ "Diariamente" a cada X minutos
+
+7. Se escolher "Diariamente", preencha:
+   □ Iniciar em: 07:00 (ou hora que quiser)
+   □ Repetir a cada: 15 minutos
+   □ Duração: indefinidamente (ou 24 horas)
+
+8. Clique "Próximo"
+
+9. Selecione: "Iniciar um programa"
+
+10. Preencha:
+    Programa/Script: C:\Windows\System32\cmd.exe
+    
+    Adicionar argumentos: /c cd "C:\Users\MuriloEduardoOliveir\Downloads\Dash - supabase + github" && python sync_geotab_to_supabase.py
+
+    Nota: Ajuste o caminho se sua pasta está em outro lugar!
+
+11. Clique "Próximo"
+
+12. Revise as informações e clique "Concluir"
+
+✓ PRONTO! A sincronização rodará automaticamente!
+
+
+OPÇÃO 2: AUTOMAÇÃO COM POWERSHELL (MAIS CONFIÁVEL)
+════════════════════════════════════════════════════════════════
+
+1. Abra o Agendador de Tarefas (Windows + R → taskschd.msc)
+
+2. Clique em "Ação" → "Criar Tarefa Básica..."
+
+3. Preenchimento:
+   Nome: SincronizarGeotab-PowerShell
+   Descrição: Sincronização automática Geotab
+
+4. Clique "Próximo" e escolha o gatilho
+   (exemplo: ao iniciar / a cada 15 min)
+
+5. Clique "Próximo"
+
+6. Selecione: "Iniciar um programa"
+
+7. Preencha:
+   Programa/Script: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+   
+   Adicionar argumentos:
+   -NoProfile -ExecutionPolicy Bypass -File "C:\Users\MuriloEduardoOliveir\Downloads\Dash - supabase + github\SINCRONIZAR-GEOTAB.ps1"
+
+8. Clique "Próximo" → "Concluir"
+
+✓ Esta opção é mais confiável e mostra mensagens!
+
+
+OPÇÃO 3: AUTOMAÇÃO COM PYTHON SCHEDULER (MELHOR)
+════════════════════════════════════════════════════════════════
+
+Crie um arquivo chamado: auto_sync_geotab.py
+
+    #!/usr/bin/env python3
+    import schedule
+    import time
+    import subprocess
+    import logging
+    
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    def sincronizar():
+        logger.info("🚗 Executando sincronização programada...")
+        subprocess.run(['python', 'sync_geotab_to_supabase.py'])
+    
+    # Agenda para rodar a cada 15 minutos
+    schedule.every(15).minutes.do(sincronizar)
+    
+    # Roda indefinidamente
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+Instale a dependência:
+    pip install schedule
+
+Adicione ao Task Scheduler:
+    Programa: C:\Windows\System32\python.exe
+    Argumentos: auto_sync_geotab.py
+    
+✓ Roda continuamente! Melhor opção!
+
+
+VERIFICAR SE ESTÁ FUNCIONANDO
+════════════════════════════════════════════════════════════════
+
+1. Abra a pasta de sua sincronização
+
+2. Procure pelo arquivo: sync_geotab.log
+
+3. Abra com bloco de notas e procure por:
+   ✅ "SINCRONIZAÇÃO COMPLETA COM SUCESSO!"
+
+4. Veja a data/hora da última sincronização
+
+Se não vir dados recentes:
+   • Acione a tarefa manualmente clicando em "Executar"
+   • Verifique o .env (credenciais)
+   • Verifique se MyGeotab Adapter está rodando
+
+
+PARAR A AUTOMAÇÃO
+════════════════════════════════════════════════════════════════
+
+Se quiser parar:
+   1. Abra Task Scheduler (Windows + R → taskschd.msc)
+   2. Encontre "SincronizarGeotab"
+   3. Clique com botão direito
+   4. Clique em "Desabilitar"
+
+Para deletar:
+   1. Clique com botão direito
+   2. Clique em "Deletar"
+   3. Confirme
+
+
+DICAS IMPORTANTES
+════════════════════════════════════════════════════════════════
+
+⚠️  MyGeotab Adapter deve estar rodando
+   └─ Instale como Serviço Windows para que rode sempre
+   └─ Veja: https://github.com/Geotab/mygeotab-api-adapter
+
+⚠️  Máquina deve estar ligada
+   └─ A sincronização não roda se o PC está desligado
+   └─ Use um computador sempre ligado (servidor/NAS)
+
+⚠️  Python deve estar no PATH
+   └─ Se erro, use caminho absoluto
+   └─ Exemplo: C:\Users\seu_usuario\AppData\Local\Programs\Python\Python311\python.exe
+
+✅ Log fica em: sync_geotab.log
+   └─ Monitore este arquivo para verificar execuções
+
+════════════════════════════════════════════════════════════════

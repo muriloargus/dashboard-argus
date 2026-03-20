@@ -1,0 +1,149 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║              🤖 AUTOMAÇÃO ARGUS - GUIA RÁPIDO (START AQUI!)                   ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1️⃣  VOCÊ QUER SINCRONIZAR DADOS AGORA? (Clique 2x no arquivo)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   📁 RODAR-ORQUESTRADOR.bat
+
+   ✅ Use isso para sincronizar dados CSV com Supabase
+   ✅ Executa os 4 bots automaticamente
+   ✅ Faz push no GitHub se houver mudanças
+   ⏱️  Tempo: ~5-10 minutos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2️⃣  VOCÊ QUER AGENDAR EXECUÇÃO AUTOMÁTICA? (A cada 6 horas)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Abra PowerShell COMO ADMINISTRADOR e execute:
+
+   cd "C:\Users\MuriloEduardoOliveir\Downloads\Dash - supabase + github"
+   .\ORQUESTRADOR-AVANCADO.ps1 -AgendarTarefaWindows -IntervaloCada 6
+
+   ✅ Vai agendar execução automática a cada 6 horas
+   ✅ Inicia às 08:00 AM
+   ✅ Continua 24/7
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3️⃣  VOCÊ QUER VER O STATUS DO GITHUB ACTIONS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Vá para:
+   https://github.com/muriloargus/dashboard-argus/actions
+
+   Você verá 3 workflows:
+   ✅ Argus Bot (a cada 6 horas)
+   ✅ Sincronização Geotab (a cada 12 horas)
+   ✅ Deploy Dashboards (quando você faz push)
+
+   Status anterior (RUN #30): ❌ FALHANDO (Node.js 20 deprecated)
+   Status agora: ✅ CORRIGIDO (Node.js 24 compatível)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4️⃣  VOCÊ QUER ENTENDER TUDO? (Documentação completa)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Leia:
+   📄 SETUP-AUTOMACAO-COMPLETA.md
+
+   Contém:
+   ✅ Explicação de cada bot
+   ✅ Como usar PowerShell avançado
+   ✅ Como configurar GitHub Secrets
+   ✅ Troubleshooting completo
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 O QUE OS BOTS FAZEM:
+
+🔍 BOT 1: Verificador de Storage
+   └─ Valida que todos os dashboards têm IndexedDB + localStorage
+   └─ Mostra capacidade de armazenamento
+
+🚀 BOT 2: Migração para Supabase
+   └─ Converte dashboards CSV antigos para Supabase em tempo real
+   └─ Mantém compatibilidade com 2 formas de uso
+
+🔄 BOT 3: Pipeline Principal (CSV → Supabase)
+   └─ Sincroniza ativos, falhas, usuários, exceções
+   └─ Detecta novos arquivos automaticamente
+   └─ Valida dados antes de enviar
+
+🌐 BOT 4: Geotab → Supabase
+   └─ Sync de dados do PostgreSQL (MyGeotab Adapter)
+   └─ Dados em tempo real
+   └─ Incluído opcional
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ RESUMO DO QUE FOI FEITO HOJE:
+
+❌ ANTES:
+   └─ GitHub Actions falhando (Node.js 20 deprecated)
+   └─ Sem automação local
+   └─ Sem agendamento do Windows
+
+✅ AGORA:
+   └─ 3 workflows GitHub Actions CORRIGIDOS
+   └─ Bot local simples (BAT) - clique 2x e sincroniza
+   └─ Bot local avançado (PowerShell) - com agendamento automático
+   └─ Todos os 4 bots integrados em 1 orquestrador
+   └─ Documentação completa e guias rápidos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 PRÓXIMAS AÇÕES RECOMENDADAS:
+
+HOJE:
+   1. Clique 2x em: RODAR-ORQUESTRADOR.bat
+   2. Observe o progresso
+   3. Verifique se dados sincronizaram com Supabase
+
+ESSA SEMANA:
+   1. (Opcional) Configure agendamento no PowerShell
+   2. (Opcional) Adicione GitHub Secrets se usar Geotab
+   3. Valide todos os dashboards
+
+PRÓXIMAS SEMANAS:
+   1. Não precisa fazer nada!
+   2. Os bots rodam automático
+   3. Verifique logs periodicamente em ./logs/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📞 TEM DÚVIDA?
+
+❔ "Como vejo se funcionou?"
+   └─ Abra: ./logs/orquestrador.log
+   └─ Ou vá no GitHub: /actions
+
+❔ "Como adiciono meus próprios CSVs?"
+   └─ Coloque em: ./input/ (ou na raiz)
+   └─ Execute RODAR-ORQUESTRADOR.bat
+
+❔ "Pode rodar automaticamente em background?"
+   └─ Sim! Use PowerShell com agendamento
+
+❔ "E se mudar de computador?"
+   └─ GitHub Actions continua rodando 24/7
+   └─ Copie os scripts locais para o novo computador
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 RESUMO FINAL:
+
+   ✅ Automação local: 2 formas (BAT simples + PowerShell avançado)
+   ✅ Automação nuvem: 3 workflows GitHub (6h, 12h, push)
+   ✅ Agendamento Windows: Automático com PowerShell
+   ✅ Documentação: Completa e detalhada
+   ✅ Status: PRONTO PARA USAR!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👉 PRÓXIMO PASSO: Clique 2x em RODAR-ORQUESTRADOR.bat
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

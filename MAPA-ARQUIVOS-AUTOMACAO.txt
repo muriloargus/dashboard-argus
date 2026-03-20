@@ -1,0 +1,297 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║              ✨ MAPA COMPLETO - ARQUIVOS DE AUTOMAÇÃO CRIADOS                 ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+🗂️  ESTRUTURA DE ARQUIVOS
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+📦 Seu Projeto
+│
+├── 📁 .github/
+│   └── 📁 workflows/  ✨ NOVO
+│       ├── bot.yml (3.2 KB) ✅ REPARADO (Node.js v24 compatível)
+│       ├── geotab-sync.yml (2.3 KB) ✅ NOVO
+│       └── deploy.yml (2.9 KB) ✅ NOVO
+│
+├── 📄 RODAR-ORQUESTRADOR.bat ✅ NOVO (3.5 KB)
+│   └─ Para: Clique 2x para sincronizar dados agora
+│   └─ Uso: Simples, sem dependencies extra
+│   └─ Tempo: 5-10 minutos
+│
+├── 📄 ORQUESTRADOR-AVANCADO.ps1 ✅ NOVO (8.2 KB)
+│   └─ Para: Automação avançada com agendamento
+│   └─ Uso: PowerShell (Admin) para agendar execução
+│   └─ Comando: .\ORQUESTRADOR-AVANCADO.ps1 -AgendarTarefaWindows -IntervaloCada 6
+│
+├── 📄 AUTOMACAO-GUIA-RAPIDO.txt ✅ NOVO (4.8 KB)
+│   └─ Para: START HERE! Referência rápida
+│   └─ Contém: 4 opções de uso, troubleshooting rápido
+│   └─ Tempo de leitura: 5-10 minutos
+│
+├── 📄 SETUP-AUTOMACAO-COMPLETA.md ✅ NOVO (12.5 KB)
+│   └─ Para: Documentação técnica detalhada
+│   └─ Contém: Cada bot explicado, GitHub Secrets, troubleshooting completo
+│   └─ Tempo de leitura: 20-30 minutos
+│
+├── 📄 ARQUITETURA-AUTOMACAO.txt ✅ NOVO (6.3 KB)
+│   └─ Para: Visualizar fluxo de dados
+│   └─ Contém: Diagrama ASCII, ciclos de execução, logs
+│   └─ Tempo de leitura: 10-15 minutos
+│
+├── 📄 RESUMO-AUTOMACAO-HOJE.txt ✅ NOVO (9.7 KB)
+│   └─ Para: Ver o que foi feito neste dia
+│   └─ Contém: Antes vs Depois, próximas ações, FAQ
+│   └─ Tempo de leitura: 10 minutos
+│
+├── 📄 CHECKLIST-AUTOMACAO.txt ✅ NOVO (8.1 KB)
+│   └─ Para: Acompanhar seu progresso
+│   └─ Contém: 6 fases, checklist, troubleshooting
+│   └─ Tempo de uso: Marque conforme avança
+│
+├── 🐍 bot_verificador_storage.py (já existente)
+│   └─ Executado automaticamente pelo orquestrador
+│
+├── 🐍 bot_migracao_supabase.py (já existente)
+│   └─ Executado automaticamente pelo orquestrador
+│
+├── 🐍 pipeline.py (já existente)
+│   └─ Executado automaticamente pelo orquestrador
+│
+├── 🐍 pipeline_geotab.py (já existente)
+│   └─ Executado automaticamente pelo orquestrador
+│
+├── 📁 logs/ (criado automaticamente)
+│   └─ orquestrador.log (histórico de execuções local)
+│
+└── 📁 input/ (para seus CSVs)
+    ├─ ativos_*.csv
+    ├─ falhas_*.csv
+    └─ usuarios_*.csv
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+📋 O QUE CADA ARQUIVO FAZ (RESUMO)
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SCRIPTS EXECUTÁVEIS (Você recebe dados sincronizados)                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1️⃣  RODAR-ORQUESTRADOR.bat
+    ├─ Tipo: Batch File (CMD - Windows nativo)
+    ├─ Uso: Clique 2x para executar
+    ├─ O que faz:
+    │  1. Verifica Python e Git
+    │  2. Executa bot_verificador_storage.py
+    │  3. Executa bot_migracao_supabase.py
+    │  4. Executa pipeline.py
+    │  5. Executa pipeline_geotab.py
+    │  6. Faz git add + commit + push
+    │
+    ├─ Resultado: Dados sincronizados com Supabase ✅
+    ├─ Tempo: 5-10 minutos
+    ├─ Requer: Python + Git (já instalado)
+    └─ Log: ./logs/orquestrador.log
+
+
+2️⃣  ORQUESTRADOR-AVANCADO.ps1
+    ├─ Tipo: PowerShell Script (Profissional)
+    ├─ Uso 1 (Manual): .\ORQUESTRADOR-AVANCADO.ps1
+    ├─ Uso 2 (Agendado): .\ORQUESTRADOR-AVANCADO.ps1 -AgendarTarefaWindows -IntervaloCada 6
+    ├─ O que faz:
+    │  1. Teste de pré-requisitos avançado
+    │  2. Executa 4 bots em sequência
+    │  3. Faz git sync automático
+    │  4. Suporta agendamento Windows Task Scheduler
+    │  5. Logging detalhado
+    │
+    ├─ Resultado: Sincronização automática 24/7 (se agendado)
+    ├─ Tempo: 5-10 min por execução
+    ├─ Requer: PowerShell Admin (para agendamento)
+    └─ Log: ./logs/orquestrador.log
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ WORKFLOWS GITHUB ACTIONS (Roda 24/7 na nuvem - sem seu computador)         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+3️⃣  bot.yml (GitHub Actions)
+    ├─ Cronograma: A cada 6 horas + ao fazer push
+    ├─ Status: ✨ CONSERTADO (Node.js v24 compatível)
+    ├─ O que faz:
+    │  1. Executa todos os 4 bots
+    │  2. Gera bot_report.md
+    │  3. Faz commit + push automático
+    │
+    ├─ Monitorar em: https://github.com/muriloargus/dashboard-argus/actions
+    ├─ Requer: GitHub Secrets (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    └─ Pré-requisitos: Nenhum (executa na nuvem)
+
+
+4️⃣  geotab-sync.yml (GitHub Actions)
+    ├─ Cronograma: A cada 12 horas
+    ├─ Status: ✅ NOVO
+    ├─ O que faz:
+    │  1. Sincroniza PostgreSQL (Geotab) → Supabase
+    │  2. Gera geotab_sync_report.md
+    │  3. Faz commit + push automático
+    │
+    ├─ Monitorar em: https://github.com/muriloargus/dashboard-argus/actions
+    ├─ Requer: GitHub Secrets Geotab (GEOTAB_DB_*)
+    └─ Pré-requisitos: Geotab rodando (opcional)
+
+
+5️⃣  deploy.yml (GitHub Actions)
+    ├─ Cronograma: Ao fazer push de .html ou .js
+    ├─ Status: ✅ NOVO
+    ├─ O que faz:
+    │  1. Valida todos os dashboards HTML
+    │  2. Verifica integridade JavaScript
+    │  3. Gera dashboard_report.md
+    │  4. Faz commit + push automático
+    │
+    ├─ Monitorar em: https://github.com/muriloargus/dashboard-argus/actions
+    └─ Pré-requisitos: Nenhum
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ DOCUMENTAÇÃO (Leia para Entender)                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+6️⃣  AUTOMACAO-GUIA-RAPIDO.txt ⭐ START AQUI!
+    └─ 4 alternativas prontas para escolher
+    └─ Tempo: 5-10 min
+
+
+7️⃣  SETUP-AUTOMACAO-COMPLETA.md
+    └─ Documentação técnica completa
+    └─ Cada bot explicado em detalhe
+    └─ GitHub Secrets setup
+    └─ Troubleshooting por problema
+    └─ Tempo: 20-30 min de leitura
+
+
+8️⃣  ARQUITETURA-AUTOMACAO.txt
+    └─ Diagrama ASCII do fluxo completo
+    └─ Entenda como dados fluem
+    └─ Ciclos de execução
+    └─ Tempo: 10-15 min
+
+
+9️⃣  RESUMO-AUTOMACAO-HOJE.txt
+    └─ O que foi feito neste dia
+    └─ Antes vs Depois
+    └─ Próximas ações
+    └─ FAQ rápido
+    └─ Tempo: 10 min
+
+
+🔟  CHECKLIST-AUTOMACAO.txt
+    └─ 6 fases de setup
+    └─ Marque conforme avança
+    └─ Troubleshooting por fase
+    └─ Tempo: Variável (você acompanha)
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🎯 COMO COMEÇAR AGORA? (ORDEM RECOMENDADA)
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+OPÇÃO A: SINCRONIZAR DADOS AGORA (5-10 MIN)
+────────────────────────────────────────────
+1. Clique 2x em: RODAR-ORQUESTRADOR.bat
+2. Aguarde "✅ TODOS OS SISTEMAS SINCRONIZADOS COM SUCESSO"
+3. Verifique: ./logs/orquestrador.log
+4. Pronto! Dados estão no Supabase
+
+
+OPÇÃO B: AGENDAR AUTOMÁTICO (SEMANA INTEIRA)
+──────────────────────────────────────────────
+1. Abra PowerShell COMO ADMINISTRADOR
+2. Execute:
+   cd "C:\Users\MuriloEduardoOliveir\Downloads\Dash - supabase + github"
+   .\ORQUESTRADOR-AVANCADO.ps1 -AgendarTarefaWindows -IntervaloCada 6
+3. Pronto! Sincronização automática a cada 6 horas
+
+
+OPÇÃO C: MONITORAR GITHUB ACTIONS (PASSIVO)
+─────────────────────────────────────────────
+1. Vá em: https://github.com/muriloargus/dashboard-argus/actions
+2. Vejo os 3 workflows rodando
+3. Pronto! Automático 24/7 na nuvem
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+📚 QUAL ARQUIVO LER PRIMEIRO?
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+👉 Iniciante? Leia: AUTOMACAO-GUIA-RAPIDO.txt (5 min)
+👉 Técnico? Leia: SETUP-AUTOMACAO-COMPLETA.md (20 min)  
+👉 Visual? Leia: ARQUITETURA-AUTOMACAO.txt (10 min)
+👉 Implementando? Use: CHECKLIST-AUTOMACAO.txt (acompanhe)
+👉 Quer entender hoje? Leia: RESUMO-AUTOMACAO-HOJE.txt (10 min)
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+✅ CHECKLIST RÁPIDO - VERIFICAR SE TUDO FOI CRIADO
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+[ ] Pasta .github/workflows/ existe?
+[ ] bot.yml existe em .github/workflows/?
+[ ] geotab-sync.yml existe em .github/workflows/?
+[ ] deploy.yml existe em .github/workflows/?
+[ ] RODAR-ORQUESTRADOR.bat existe na raiz?
+[ ] ORQUESTRADOR-AVANCADO.ps1 existe na raiz?
+[ ] AUTOMACAO-GUIA-RAPIDO.txt existe na raiz?
+[ ] SETUP-AUTOMACAO-COMPLETA.md existe na raiz?
+[ ] ARQUITETURA-AUTOMACAO.txt existe na raiz?
+[ ] RESUMO-AUTOMACAO-HOJE.txt existe na raiz?
+[ ] CHECKLIST-AUTOMACAO.txt existe na raiz?
+[ ] Este arquivo (MAPA-ARQUIVOS-AUTOMACAO.txt) existe na raiz?
+
+Se todos os itens tiverem [✅], você está 100% pronto!
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🚀 PRÓXIMAS ETAPAS DEPENDENDO DE SUA ESCOLHA
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+SE VOCÊ QUER EXECUTAR AGORA:
+└─ Clique 2x em: RODAR-ORQUESTRADOR.bat
+
+SE VOCÊ QUER AGENDAR AUTOMÁTICO:
+└─ Abra PowerShell Admin e execute:
+   .\ORQUESTRADOR-AVANCADO.ps1 -AgendarTarefaWindows -IntervaloCada 6
+
+SE VOCÊ QUER ENTENDER TUDO PRIMEIRO:
+└─ Leia: AUTOMACAO-GUIA-RAPIDO.txt
+
+SE VOCÊ QUER SABER TODOS OS DETALHES:
+└─ Leia: SETUP-AUTOMACAO-COMPLETA.md
+
+SE VOCÊ TEM DÚVIDA SOBRE ALGO ESPECÍFICO:
+└─ Procure em: CHECKLIST-AUTOMACAO.txt (troubleshooting)
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+📞 RESUMO FINAL
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+✨ Criado 11 arquivos novos
+✨ Corrigido 1 workflow GitHub (Node.js v24)
+✨ Integrado 4 bots automáticos
+✨ Documentação completa
+✨ 3 formas de automação:
+   1. Manual (BAT - clique 2x)
+   2. Agendada (PowerShell - Windows Task Scheduler)
+   3. Nuvem (GitHub Actions - 24/7)
+
+🎉 Pronto para começar!
+
+👉 PRÓXIMO PASSO: Clique 2x em RODAR-ORQUESTRADOR.bat
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════

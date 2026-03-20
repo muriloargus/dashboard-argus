@@ -1,0 +1,379 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                    🚀 GUIA: CONVERTER PARA SHINY AGORA                        ║
+║                                                                                ║
+║              Passo a passo para ter 14 dashboards Shiny em 1-2 dias           ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+📋 FASE 1: PREPARAÇÃO (15 minutos)
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+1️⃣  Instalar R (se não tiver)
+    └─ https://www.r-project.org/
+    └─ Recomendado: RStudio (https://posit.co/download/rstudio-desktop/)
+
+2️⃣  Instalar Dependências R
+    └─ Abra RStudio e execute:
+
+    ```r
+    install.packages(c(
+      "shiny",
+      "shinydashboard",
+      "plotly",
+      "dplyr",
+      "readr",
+      "reactable"
+    ))
+    ```
+
+    └─ Aguarde conclusão das instalações
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🎁 FASE 2: USAR TEMPLATE (1 hora)
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+1️⃣  Template já está criado em: shiny/template_dashboard/
+
+2️⃣  Teste o template localmente:
+    
+    RStudio:
+    ├─ Abra: shiny/template_dashboard/app.R
+    ├─ Clique no botão "Run App" (canto superior direito)
+    └─ Dashboard aparece em http://localhost:8100 (aprox)
+    
+    Console R:
+    ```r
+    setwd("shiny/template_dashboard")
+    shiny::runApp()
+    ```
+
+3️⃣  Se funcionou, continue! Se não, verifique:
+    ├─ Pacotes instalados? (library(shiny) deve funcionar)
+    ├─ Pasta de dados existe? (input/)
+    └─ Vá em TROUBLESHOOTING no final deste arquivo
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🔄 FASE 3: CLONAR TEMPLATE PARA 14 DASHBOARDS (30 minutos)
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+OPÇÃO A: Automático (Recomendado - Linux/macOS)
+─────────────────────────────────────────────
+
+1. Abra terminal na pasta raiz do projeto
+2. Execute:
+   ```bash
+   bash shiny/criar_dashboards.sh
+   ```
+3. Script cria 14 dashboards automaticamente
+4. Pronto! Todos os dashboards criados
+
+
+OPÇÃO B: Manual (Windows/Todos)
+──────────────────────────────
+
+1. Copie pasta: shiny/template_dashboard/
+2. Cole 14 vezes com nomes:
+   ├─ dashboard_ativos/
+   ├─ dashboard_motoristas/
+   ├─ dashboard_usuarios/
+   ├─ dashboard_falhas/
+   ├─ dashboard_excecoes/
+   ├─ dashboard_comparativo/
+   ├─ dashboard_desempenho/
+   ├─ dashboard_dispositivos/
+   ├─ dashboard_timeline/
+   ├─ dashboard_risco/
+   ├─ dashboard_temporal/
+   ├─ dashboard_tv/
+   ├─ dashboard_ativos_supabase/
+   └─ dashboard_falhas_supabase/
+
+3. Edite cada app.R:
+   ```r
+   DASHBOARD_TITLE <- "seu titulo aqui"
+   CSV_PATH <- "../../../input/seu_arquivo.csv"
+   SUPABASE_TABLE <- "sua_tabela"
+   ```
+
+4. Pronto!
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🎨 FASE 4: CUSTOMIZAR CADA DASHBOARD (1 hora por dashboard)
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Para cada dashboard, edite:
+
+1. TITULO & DESCRIÇÃO (no topo de app.R)
+   ```r
+   DASHBOARD_TITLE <- "Dashboard Ativos"
+   DASHBOARD_SUBTITLE <- "Rastreamento da Frota Ambev"
+   DASHBOARD_ICON <- "truck"
+   ```
+
+2. DADOS (CSV ou Supabase)
+   
+   Para CSV:
+   ```r
+   DATA_SOURCE <- "local"
+   CSV_PATH <- "../../../input/ativos_23-02.csv"
+   ```
+   
+   Para Supabase:
+   ```r
+   DATA_SOURCE <- "supabase"
+   SUPABASE_TABLE <- "ativos"
+   ```
+
+3. GRÁFICOS (funções output$chart_1, output$chart_2, etc)
+   
+   Edite as funções renderPlotly para plotar SEUS dados:
+   
+   ```r
+   output$chart_1 <- renderPlotly({
+     df <- dados()
+     
+     plot_ly(
+       df,
+       x = ~coluna_x,          # Mudar: qual coluna do seu CSV
+       y = ~coluna_y,          # Mudar: qual coluna do seu CSV
+       type = "scatter",       # Mudar: tipo de gráfico
+       marker = list(color = PRIMARY_COLOR)
+     )
+   })
+   ```
+
+4. KPIs (caixas no topo)
+   
+   ```r
+   output$kpi_1 <- renderInfoBox({
+     df <- dados()
+     
+     infoBox(
+       title = "Total de Registros",
+       value = nrow(df),       # Mudar: pela métrica que quiser
+       icon = icon("database"),
+       color = "blue"
+     )
+   })
+   ```
+
+5. TESTAR LOCALMENTE
+   ```r
+   shiny::runApp("shiny/dashboard_ativos")
+   ```
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🚀 FASE 5: DEPLOY NO POSIT CLOUD (30 minutos)
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+1. Criar conta Posit Cloud
+   └─ https://posit.cloud (use email/GitHub/Google)
+
+2. Setup rsconnect
+   
+   No RStudio console:
+   ```r
+   install.packages("rsconnect")
+   
+   rsconnect::setAccountInfo(
+     account = "seu_usuario",
+     token = "seu_token",
+     secret = "seu_secret"
+   )
+   ```
+   
+   (Copie token/secret do Posit Cloud → Account)
+
+3. Deploy um dashboard
+   
+   ```r
+   rsconnect::deployApp("shiny/dashboard_ativos")
+   ```
+   
+   Aguarde... será publicado em: usuario.shinyapps.io/dashboard-ativos
+
+4. Deploy dos 13 restantes
+   
+   ```r
+   # Repetir para cada:
+   rsconnect::deployApp("shiny/dashboard_motoristas")
+   rsconnect::deployApp("shiny/dashboard_usuarios")
+   # ... etc
+   ```
+   
+   Ou automático com GitHub Actions (ver FASE 6)
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+⚙️  FASE 6: AUTOMAÇÃO COM GITHUB ACTIONS (30 minutos)
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Arquivo: .github/workflows/deploy_shiny.yml
+
+1. Crie arquivo .github/workflows/deploy_shiny.yml
+
+2. Adicione GitHub Secrets:
+   ├─ POSIT_ACCOUNT_NAME
+   ├─ POSIT_TOKEN
+   └─ POSIT_SECRET
+
+3. Ao fazer push, todos os 14 dashboards são deployados automaticamente!
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+📊 ESTRUTURA FINAL
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Depois de completo:
+
+shiny/
+├── template_dashboard/                  # Referência (não mexer)
+│
+├── dashboard_ativos/
+│   └── app.R                           # Customizado para Ativos
+│
+├── dashboard_motoristas/
+│   └── app.R                           # Customizado para Motoristas
+│
+└── ... (12 mais)
+
+
+Posit Cloud (Online):
+├── usuario.shinyapps.io/dashboard-ativos
+├── usuario.shinyapps.io/dashboard-motoristas
+├── usuario.shinyapps.io/dashboard-usuarios
+└── ... (11 mais)
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🕐 CRONOGRAMA SUGERIDO
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+DIA 1:
+│   9:00-9:15  → FASE 1 (Preparação)
+│   9:15-10:00 → FASE 2 (Template)
+│   10:00-10:30 → FASE 3 (Clonar)
+│   10:30-12:00 → FASE 4 (Customizar primeiros 3 dashboards)
+│   12:00-13:00 → ALMOÇO
+│   13:00-17:00 → FASE 4 (Customizar 11 restantes)
+│
+DIA 2:
+│   9:00-10:00  → FASE 5 (Deploy Posit Cloud)
+│   10:00-11:00 → FASE 6 (Setup GitHub Actions)
+│   11:00-12:00 → Testes
+│   PRONTO! 🎉
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🆘 TROUBLESHOOTING
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+❌ "Error: object 'dados' not found"
+   └─ Solução: Verifique se load_data() retorna dataframe, não NULL
+
+❌ "CSV not found"
+   └─ Solução: Caminho CSV está correto? Arquivo existe em input/?
+
+❌ "Supabase connection failed"
+   └─ Solução: Variáveis SUPABASE_URL e KEY estão configuradas?
+   
+   ```r
+   Sys.getenv("SUPABASE_URL")
+   Sys.getenv("SUPABASE_SERVICE_ROLE_KEY")
+   ```
+
+❌ "Plotly não renderiza"
+   └─ Solução: Dados vazios? Adicione:
+   
+   ```r
+   if (nrow(df) == 0) return(plotly_empty(type = "scatter"))
+   ```
+
+❌ "RStudio não reconhece 'shiny'"
+   └─ Solução: Reinstale:
+   
+   ```r
+   install.packages("shiny", dependencies = TRUE)
+   ```
+
+❌ "rsconnect::deployApp() não encontra arquivo"
+   └─ Solução: Certifique-se que struct está correto
+   
+   ```r
+   setwd("seu_projeto")
+   rsconnect::deployApp("shiny/nome_dashboard")
+   ```
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+🔗 RECURSOS IMPORTANTES
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+📚 Documentação:
+   ├─ Shiny: https://shiny.posit.co
+   ├─ shinydashboard: https://rstudio.github.io/shinydashboard
+   ├─ Plotly R: https://plotly.com/r
+   └─ Posit Cloud: https://posit.cloud/docs
+
+📁 Estrutura no Projeto:
+   ├─ PLANO-CONVERSAO-SHINY.md
+   ├─ shiny/template_dashboard/app.R
+   ├─ shiny/template_dashboard/README.md
+   └─ shiny/criar_dashboards.sh
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+✅ CHECKLIST FINAL
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+GERAL:
+  [ ] R instalado?
+  [ ] RStudio instalado?
+  [ ] Dependências instaladas (shiny, plotly, etc)?
+  [ ] Posit Cloud conta criada?
+
+TEMPLATE:
+  [ ] Template testado localmente?
+  [ ] Rodou sem erros?
+
+CLONAGEM:
+  [ ] 14 dashboards clonados?
+  [ ] Cada um em sua pasta?
+
+CUSTOMIZAÇÃO:
+  [ ] Cada app.R personalizado com título?
+  [ ] CSVs ou Supabase configurados?
+  [ ] Gráficos customizados?
+  [ ] KPIs customizados?
+  [ ] Todos testaram localmente?
+
+DEPLOY:
+  [ ] rsconnect configurado?
+  [ ] Primeiros 3 dashboards deployados?
+  [ ] Links funcionam?
+  [ ] Restante deployado?
+
+AUTOMAÇÃO:
+  [ ] GitHub Actions setup?
+  [ ] Secrets configurados?
+  [ ] Deploy automático funciona?
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+🎉 SE CHEGOU AQUI E TUDO FUNCIONA:
+
+   ✅ 14 dashboards Shiny rodando localmente
+   ✅ 14 dashboards publicados no Posit Cloud
+   ✅ Deploy automático ativado
+   ✅ Dados sincronizados de CSV + Supabase
+   ✅ PROJETO COMPLETO!
+
+Parabéns! Seu projeto está escalado! 🚀
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════

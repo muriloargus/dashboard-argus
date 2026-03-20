@@ -1,0 +1,46 @@
+╔════════════════════════════════════════════════════════════════╗
+║  🚀 COMECE AQUI! INSTALAÇÃO EM 2 PASSOS                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+PASSO 1: INSTALAR DEPENDÊNCIAS
+════════════════════════════════════════════════════════════════
+
+Abra o PowerShell NESTA PASTA e execute:
+
+    pip install -r requirements.txt
+
+
+Pronto! Isso instala:
+  • psycopg2-binary (conexão PostgreSQL)
+  • supabase (conexão Supabase)
+  • python-dotenv (lê arquivo .env)
+  • pandas (processa dados)
+  • requests (HTTP requests)
+  • logging (registra eventos)
+
+
+PASSO 2: CONFIGURAR .env
+════════════════════════════════════════════════════════════════
+
+1. Abra seu arquivo .env existente
+
+2. ADICIONE NO FINAL:
+
+    GEOTAB_DB_HOST=localhost
+    GEOTAB_DB_PORT=5432
+    GEOTAB_DB_NAME=mygeotab_adapter
+    GEOTAB_DB_USER=postgres
+    GEOTAB_DB_PASSWORD=sua_senha_postgres_aqui
+
+3. Salve o arquivo
+
+
+DEPOIS, LEIA:
+════════════════════════════════════════════════════════════════
+
+✓ INDICE-GEOTAB.txt        (índice de tudo)
+✓ README-GEOTAB.txt        (resumo executivo)
+✓ GUIA-GEOTAB-PASSO-A-PASSO.txt (instruções completas)
+
+
+════════════════════════════════════════════════════════════════

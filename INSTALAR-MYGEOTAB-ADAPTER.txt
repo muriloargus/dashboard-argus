@@ -1,0 +1,365 @@
+╔════════════════════════════════════════════════════════════════╗
+║   🚀 INSTALAR MYGEOTAB API ADAPTER - GUIA COMPLETO            ║
+║     Tudo explicado passo-a-passo (Windows)                    ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+📋 RESUMO - O QUE VOCÊ VAI FAZER:
+════════════════════════════════════════════════════════════════
+
+1. Baixar MyGeotab API Adapter
+2. Instalar .NET 9.0 (se não tiver)
+3. Instalar/configurar PostgreSQL
+4. Clonar o repositório
+5. Configurar credenciais MyGeotab
+6. Executar o adapter
+7. Sincronizar com Supabase
+
+
+⏱️  TEMPO TOTAL: 30-45 minutos
+
+
+════════════════════════════════════════════════════════════════
+PASSO 1: VERIFICAR REQUISITOS
+════════════════════════════════════════════════════════════════
+
+Abra o PowerShell e execute:
+
+    dotnet --version
+
+Se retornar versão 9.0+ → ✅ Pronto!
+Se retornar erro → Continue para PASSO 2
+
+
+════════════════════════════════════════════════════════════════
+PASSO 2: INSTALAR .NET 9.0 (se necessário)
+════════════════════════════════════════════════════════════════
+
+1. Acesse: https://dotnet.microsoft.com/download
+
+2. Clique em "Download .NET 9.0" (SDK - para desenvolvimento)
+
+3. Escolha versão Windows (seu computador)
+
+4. Clique 2x no arquivo baixado e instale
+
+5. Reinicie o computador
+
+6. Abra PowerShell e teste:
+    dotnet --version
+
+deve mostrar: 9.0.xxxx
+
+
+════════════════════════════════════════════════════════════════
+PASSO 3: INSTALAR POSTGRESQL (se não tiver)
+════════════════════════════════════════════════════════════════
+
+3A. BAIXAR POSTGRESQL:
+
+1. Acesse: https://www.postgresql.org/download/windows/
+
+2. Procure por "Interactive installer by EDB"
+
+3. Clique na versão mais recente (16+)
+
+4. Clique 2x e instale
+
+DURANTE INSTALAÇÃO:
+  • Password: anote a senha que escolher (vai usar depois!)
+  • Port: 5432 (padrão)
+  • Locale: Portuguese (Brazil)
+
+Exemplo de senha simples: "password" ou "geotab123"
+
+
+3B. TESTAR POSTGRESQL:
+
+1. Abra PowerShell
+
+2. Execute:
+    psql -U postgres -h localhost
+
+3. Digite a senha que colocou na instalação
+
+4. Se entrar no shell do PostgreSQL → ✅ Funcionando!
+
+5. Digite: \q (para sair)
+
+
+════════════════════════════════════════════════════════════════
+PASSO 4: CLONAR MYGEOTAB API ADAPTER
+════════════════════════════════════════════════════════════════
+
+4A. ABRA POWERSHELL
+
+1. Navegue para pasta onde quer instalar:
+    cd C:\Users\seu_usuario\Documents
+
+ou qualquer outra pasta
+
+
+4B. CLONE O REPOSITÓRIO:
+
+    git clone https://github.com/Geotab/mygeotab-api-adapter.git
+
+Isso vai baixar ~200MB de código
+
+
+4C. ENTRE NA PASTA:
+
+    cd mygeotab-api-adapter
+
+
+════════════════════════════════════════════════════════════════
+PASSO 5: COMPILAR O PROJETO
+════════════════════════════════════════════════════════════════
+
+Na pasta do MyGeotab Adapter, execute:
+
+    dotnet build
+
+Isso vai demorar alguns minutos compilando...
+Aguarde até ver: ✅ "Build succeeded" ou "Build successful"
+
+
+════════════════════════════════════════════════════════════════
+PASSO 6: CONFIGURAR CREDENCIAIS (ARQUIVO appsettings.json)
+════════════════════════════════════════════════════════════════
+
+6A. ABRA O ARQUIVO:
+
+    C:\Users\seu_usuario\Documents\mygeotab-api-adapter\appsettings.json
+
+(Use Bloco de Notas ou VS Code)
+
+
+6B. PROCURE POR SEÇÃO "MyGeotabAPI":
+
+Você vai ver algo assim:
+
+    "MyGeotabAPI": {
+      "UserName": "seu.usuario@meugeo.com",
+      "Password": "sua_senha",
+      "Database": "seu-database"
+    }
+
+
+6C. PREENCHA COM SUAS CREDENCIAIS:
+
+IMPORTANTE: Você precisa de:
+  • Uma conta MyGeotab (usuário e senha)
+  • Nome do seu banco de dados MyGeotab
+
+Se não tiver credenciais:
+  1. Acesse: mygeotab.geotab.com
+  2. Crie uma conta ou use a existente
+  3. Anote usuário, senha e nome do banco
+
+Exemplo preenchido:
+
+    "MyGeotabAPI": {
+      "UserName": "seu.email@empresa.com.br",
+      "Password": "sua_senha_mygeotab",
+      "Database": "seu-database-name"
+    }
+
+
+6D. PROCURE TAMBÉM POR "ConnectionStrings":
+
+Vai ter algo tipo:
+
+    "ConnectionStrings": {
+      "AdapterDatabase": "Host=localhost;Port=5432;Database=mygeotab_adapter;Username=postgres;Password=password;SSL Mode=Disable"
+    }
+
+MUDE A SENHA para a que você colocou no PostgreSQL:
+
+Exemplo:
+    "AdapterDatabase": "Host=localhost;Port=5432;Database=mygeotab_adapter;Username=postgres;Password=sua_senha_postgres;SSL Mode=Disable"
+
+
+6E. SALVE O ARQUIVO
+
+
+════════════════════════════════════════════════════════════════
+PASSO 7: CRIAR BANCO DE DADOS
+════════════════════════════════════════════════════════════════
+
+Abra PowerShell e execute:
+
+    psql -U postgres -h localhost -c "CREATE DATABASE mygeotab_adapter;"
+
+Digite sua senha PostgreSQL quando pedir
+
+Se aparecer: CREATE DATABASE → ✅ Banco criado!
+
+
+════════════════════════════════════════════════════════════════
+PASSO 8: EXECUTAR MYGEOTAB ADAPTER
+════════════════════════════════════════════════════════════════
+
+8A. PRIMEIRA EXECUÇÃO (TESTE):
+
+Na pasta do projeto, execute:
+
+    dotnet run
+
+Você vai ver muitas linhas de log...
+Procure por: ✅ "Started service" ou "Server started"
+
+Se aparecer sem erros → ✅ Funcionando!
+
+Deixe rodando...
+
+
+8B. PRIMEIRA SINCRONIZAÇÃO:
+
+Isso vai demorar!
+Na primeira vez, ele:
+  • Conecta ao MyGeotab
+  • Baixa TODOS os dados históricos
+  • Preenche o PostgreSQL
+  
+Pode levar de 5 minutos a 1 hora dependendo volume
+
+
+8C. MONITORAR PROGRESSO:
+
+Procure na tela por mensagens tipo:
+  ✅ "Downloaded X devices"
+  ✅ "Downloaded X status records"
+  ✅ "Sync completed"
+
+
+════════════════════════════════════════════════════════════════
+PASSO 9: DEIXAR RODANDO SEMPRE (OPCIONAL)
+════════════════════════════════════════════════════════════════
+
+Para deixar o adapter rodando sempre como serviço Windows:
+
+9A. PUBLICAR (BUILD RELEASE):
+
+    dotnet publish -c Release
+
+Isso cria arquivo para instalar como serviço
+
+
+9B. INSTALAR COMO SERVIÇO:
+
+(Mais complexo, ver documentação oficial)
+
+Ou deixe rodando em uma janela PowerShell aberta
+
+
+════════════════════════════════════════════════════════════════
+PASSO 10: SINCRONIZAR COM SUPABASE
+════════════════════════════════════════════════════════════════
+
+Agora que MyGeotab Adapter está rodando:
+
+1. Volte para pasta do projeto Argus
+2. Execute:
+    python sync_geotab_to_supabase.py
+
+3. Você vai ver:
+    ✅ Conectado ao MyGeotab Adapter: localhost:5432
+    ✅ 45 dispositivos sincronizados
+    ✅ 1250 registros de status sincronizados
+    ... etc
+
+✅ PRONTO! Dados fluindo para Supabase!
+
+
+════════════════════════════════════════════════════════════════
+⚠️  TROUBLESHOOTING - ERROS COMUNS
+════════════════════════════════════════════════════════════════
+
+❌ "dotnet: The term 'dotnet' is not recognized"
+   → .NET não está instalado
+   → Instale conforme PASSO 2
+
+❌ "connection refused localhost:5432"
+   → PostgreSQL não está rodando
+   → Abra PostgreSQL ou reinicie o PC
+
+❌ "Invalid MyGeotab credentials"
+   → Usuário/senha errados no appsettings.json
+   → Verifique credenciais MyGeotab
+
+❌ "Database mygeotab_adapter does not exist"
+   → Não criou o banco de dados
+   → Execute: psql -U postgres -c "CREATE DATABASE mygeotab_adapter;"
+
+❌ "git: The term 'git' is not recognized"
+   → Git não instalado
+   → Instale em: https://git-scm.com/download/win
+   → Ou baixe ZIP direto do GitHub
+
+❌ "Timeout connecting to MyGeotab"
+   → Internet lenta ou MyGeotab fora
+   → Verifique internet
+   → Acesse mygeotab.geotab.com manualmente
+
+
+════════════════════════════════════════════════════════════════
+📋 CHECKLIST RESUMIDO
+════════════════════════════════════════════════════════════════
+
+☐ .NET 9.0 instalado
+☐ PostgreSQL instalado e rodando
+☐ MyGeotab Adapter clonado
+☐ Projeto compilado sem erros
+☐ appsettings.json preenchido com credenciais
+☐ Banco de dados mygeotab_adapter criado
+☐ Adapter rodando (dotnet run)
+☐ Primeira sincronização concluída
+☐ sync_geotab_to_supabase.py executado com sucesso
+☐ Dados no Supabase verificado
+
+
+════════════════════════════════════════════════════════════════
+🎯 PRÓXIMAS AÇÕES
+════════════════════════════════════════════════════════════════
+
+1. HOJE:
+   ☐ Instalar .NET 9.0
+   ☐ Instalar PostgreSQL
+   ☐ Clonar MyGeotab Adapter
+
+2. AMANHÃ:
+   ☐ Compilar projeto
+   ☐ Configurar credenciais
+   ☐ Testar primeira execução
+
+3. PRÓXIMO PASSO:
+   ☐ Executar sync_geotab_to_supabase.py
+   ☐ Ver dados no Supabase
+   ☐ Criar dashboards
+
+
+════════════════════════════════════════════════════════════════
+🔗 LINKS ÚTEIS
+════════════════════════════════════════════════════════════════
+
+MyGeotab API Adapter:
+  https://github.com/Geotab/mygeotab-api-adapter
+
+.NET 9.0 Download:
+  https://dotnet.microsoft.com/download
+
+PostgreSQL Download:
+  https://www.postgresql.org/download/windows/
+
+MyGeotab Login:
+  https://mygeotab.geotab.com
+
+Documentação Oficial:
+  https://github.com/Geotab/mygeotab-api-adapter/blob/master/README.md
+
+
+════════════════════════════════════════════════════════════════
+
+Dúvidas? Volte aqui e avisa qual passo deu erro!
+
+════════════════════════════════════════════════════════════════

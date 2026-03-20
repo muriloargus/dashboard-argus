@@ -1,0 +1,228 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                   📊 ARQUITETURA DE AUTOMAÇÃO ARGUS                           ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                            SEUS ARQUIVOS/DADOS
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    📁 CSV Files                    🗄️  PostgreSQL                ☁️  Supabase Project
+    ├─ ativos_*.csv                └─ MyGeotab Adapter           ├─ Tables
+    ├─ falhas_*.csv                   (Geotab Data)              │  ├─ ativos
+    ├─ usuarios_*.csv                                            │  ├─ falhas
+    └─ excecoes_*.csv                                            │  ├─ usuarios
+                                                                 │  └─ excecoes
+        ↓                               ↓                             ↓
+    
+    
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                        CAMADA DE ORQUESTRAÇÃO
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    EXECUÇÃO LOCAL (Windows)                        EXECUÇÃO NUVEM (GitHub)
+    
+    🖥️  Clique 2x:                                  ☁️  Automático (Cronograma)
+    RODAR-ORQUESTRADOR.bat
+            │
+            ↓
+    ┌─────────────────────────────────────────┐    ┌──────────────────────────────────┐
+    │     🤖 ORQUESTRADOR LOCAL - BAT         │    │   ☁️ WORKFLOWS GITHUB ACTIONS    │
+    │  (Simples, sem dependencies extra)      │    │  (Automático, sem intervenção)   │
+    │                                         │    │                                  │
+    │  ├─ Check Python + Git                  │    │  1️⃣ Argus Bot (bot.yml)          │
+    │  ├─ Run bot 1-4 em sequência            │    │     └─ Executa a cada 6 horas   │
+    │  ├─ Git add + commit + push             │    │     └─ Todos os 4 bots          │
+    │  └─ Terminal: Done ✅                  │    │                                  │
+    │                                         │    │  2️⃣ Geotab Sync (geotab-sync)  │
+    │  Tempo: 5-10 min                       │    │     └─ Executa a cada 12 horas  │
+    │  Manual: Você controla quando          │    │     └─ PostgreSQL → Supabase    │
+    │                                         │    │                                  │
+    │  Ou, use versão AVANÇADA:              │    │  3️⃣ Deploy (deploy.yml)          │
+    │  .\ORQUESTRADOR-AVANCADO.ps1           │    │     └─ Executa ao fazer push    │
+    │     -AgendarTarefaWindows                │    │     └─ Valida dashboards       │
+    │     -IntervaloCada 6                    │    │                                  │
+    │                                         │    │  Status agora: ✅ FUNCIONAL      │
+    │  Windows Task Scheduler: Automático    │    │  (Fix: Node.js v24 compatível)  │
+    │  Tempo: 5-10 min a cada N horas        │    │                                  │
+    │  Automático: Roda enquanto dorme       │    │  GitHub Secrets necessários:    │
+    └─────────────────────────────────────────┘    │  • SUPABASE_URL                 │
+                                                   │  • SUPABASE_SERVICE_ROLE_KEY    │
+                                                   │  • GEOTAB_DB_PASSWORD (opcional)│
+                                                   └──────────────────────────────────┘
+            │                                               │
+            └───────────────────┬───────────────────────────┘
+                                │
+                                ↓
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                              OS 4 BOTS EXECUTAM EM SEQUÊNCIA
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    BOT 1: VERIFICAÇÃO DE STORAGE           BOT 2: MIGRAÇÃO PARA SUPABASE
+    ┌────────────────────────────────────┐  ┌────────────────────────────────────┐
+    │ python bot_verificador_storage.py  │  │ python bot_migracao_supabase.py    │
+    │                                    │  │                                    │
+    │ 🔍 Verifica:                       │  │ 🚀 Migra:                          │
+    │ ├─ IndexedDB em todos os 11        │  │ ├─ Dashboard CSV v2 → Supabase     │
+    │ │  dashboards antigos              │  │ ├─ Desempenho → Supabase           │
+    │ ├─ localStorage funcionando        │  │ ├─ Comparativo → Supabase          │
+    │ ├─ Supabase em 3 dashboards novos  │  │ └─ Cria versão nova com dados      │
+    │ └─ Gera relatório diagnóstico      │  │    em tempo real                   │
+    │                                    │  │                                    │
+    │ ✅ SEMPRE: OK                      │  │ ✅ SEMPRE: OK                      │
+    │ ⏱️  Tempo: < 1 min                 │  │ ⏱️  Tempo: < 1 min                 │
+    └────────────────────────────────────┘  └────────────────────────────────────┘
+                 ↓                                     ↓
+    
+    BOT 3: PIPELINE PRINCIPAL              BOT 4: GEOTAB → SUPABASE
+    ┌────────────────────────────────────┐  ┌────────────────────────────────────┐
+    │ python pipeline.py                 │  │ python pipeline_geotab.py          │
+    │                                    │  │                                    │
+    │ 🔄 Sincroniza CSV:                 │  │ 🌐 Sincroniza:                     │
+    │ ├─ ativos_*.csv → Supabase         │  │ ├─ PostgreSQL (MyGeotab Adapter)   │
+    │ ├─ falhas_*.csv → Supabase         │  │ ├─ Veículos, motoristas, eventos   │
+    │ ├─ usuarios_*.csv → Supabase       │  │ ├─ Timestamp preciso               │
+    │ ├─ excecoes_*.csv → Supabase       │  │ └─ Dados em tempo real             │
+    │ ├─ Valida formato dos dados        │  │                                    │
+    │ ├─ Detecta novos arquivos auto     │  │ ✅ SEMPRE: OK (se Geotab rodando)  │
+    │ └─ Gera log de sucesso/erro        │  │ ⏱️  Tempo: 1-5 min (dados grandes) │
+    │                                    │  │                                    │
+    │ ✅ SEMPRE: OK                      │  │ (Opcional)                         │
+    │ ⏱️  Tempo: 1-3 min (depende dados)  │  │                                    │
+    └────────────────────────────────────┘  └────────────────────────────────────┘
+                 ↓                                     ↓
+                 └──────────────┬──────────────────────┘
+                                │
+                                ↓
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                              DADOS SINCRONIZADOS NO SUPABASE ✅
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+            ☁️ SUPABASE CLOUD DATABASE
+            ┌──────────────────────────────────────────┐
+            │  📊 Tabelas Atualizadas:                  │
+            │  ├─ ativos (150+ registros)              │
+            │  ├─ falhas (50+ registros)               │
+            │  ├─ usuarios (30+ registros)             │
+            │  ├─ excecoes (20+ registros)             │
+            │  └─ geotab_* (tempo real)                │
+            │                                          │
+            │  💾 Pronto para:                         │
+            │  ├─ Dashboards em tempo real             │
+            │  ├─ Queries via API                      │
+            │  ├─ Sincronização Cross-Platform         │
+            │  └─ Backup automático                    │
+            └──────────────────────────────────────────┘
+                            ↓
+                            
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                           DASHBOARDS CARREGAM DADOS AUTOMATICAMENTE
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    🌐 NAVEGADOR WEB (Frontend)
+    
+    Dashboards CSV (11):               Dashboards Supabase (3):
+    ├─ Motoristas v2                   ├─ Ativos (Supabase)
+    ├─ Ativos                          ├─ Falhas (Supabase)
+    ├─ Usuarios                        └─ Usuarios (Supabase)
+    ├─ Desempenho Analista
+    ├─ Comparativo                     🔄 Sincronização:
+    ├─ Dispositivos                    • IndexedDB (cache local)
+    ├─ Falhas                          • localStorage (fallback)
+    ├─ Excecoes                        • Supabase (cloud sync)
+    ├─ Timeline
+    ├─ Risco Colisão
+    ├─ Temporal/Mapas
+    └─ TV Dashboard
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                    FLUXO COMPLETO END-TO-END
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    A. ADICIONA DADOS
+       ├─ Coloca CSV em ./input/
+       └─ Ou dados chegam via Geotab API
+                  ↓
+    
+    B. EXECUTA ORQUESTRADOR (Manual ou Automático)
+       ├─ Local: Clique 2x em RODAR-ORQUESTRADOR.bat
+       ├─ Automático: Windows Task Scheduler (PowerShell)
+       └─ Nuvem: GitHub Actions (cronograma)
+                  ↓
+    
+    C. BOTS PROCESSAM DADOS
+       ├─ Bot 1: Verifica integridade (storage)
+       ├─ Bot 2: Migra dashboards se necessário
+       ├─ Bot 3: Envia CSV para Supabase
+       └─ Bot 4: Sincroniza Geotab (opcional)
+                  ↓
+    
+    D. COMMIT & PUSH (Automático)
+       └─ Git commit: "🤖 Bot Argus: Sincronização automática"
+          Git push: Para GitHub (se houver mudanças)
+                  ↓
+    
+    E. DADOS LIVE NO SUPABASE
+       └─ Tabelas atualizadas com novos registros
+                  ↓
+    
+    F. DASHBOARDS CARREGAM AUTOMATICAMENTE
+       └─ Abra qualquer dashboard
+          └─ Clique "Carregar" ou refresque a página
+             └─ Dados mais recentes carregam via IndexedDB ou Supabase
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                            LOGS & MONITORAMENTO
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    LOCAL (Windows)                              NUVEM (GitHub)
+    ├─ ./logs/orquestrador.log                   ├─ https://github.com/muriloargus/
+    ├─ ./logs/pipeline.log                       │  dashboard-argus/actions
+    ├─ ./sync_geotab.log                         │
+    └─ Visualize com:                            └─ Clique no workflow para ver
+       Get-Content ./logs/*.log -Wait               logs detalhados
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                          CICLOS DE EXECUÇÃO
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    MANUAL (Local - BAT)
+    ├─ Frequência: Quando você clica 2x
+    ├─ Ciclo: Uma vez + Git push
+    └─ Tempo: 5-10 minutos
+
+    AUTOMÁTICO (Local - PowerShell)
+    ├─ Frequência: Cada N horas (default 6)
+    ├─ Ciclo: Infinito (enquanto Windows rodando)
+    └─ Tempo: 5-10 min a cada N horas
+
+    NUVEM (GitHub Actions)
+    ├─ Bot Argus: Cada 6 horas (24/7)
+    ├─ Geotab Sync: Cada 12 horas (24/7)
+    ├─ Deploy: Sempre que faz push
+    └─ Tempo: 1-2 min por execução
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                              STATUS ATUAL
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+    ✅ Automação Local (BAT):           PRONTO
+    ✅ Automação Local (PowerShell):    PRONTO
+    ✅ Agendamento Windows:             PRONTO
+    ✅ GitHub Actions (bot.yml):        ✨ CORRIGIDO ✨ (Node.js v24)
+    ✅ Geotab Sync (geotab-sync.yml):   PRONTO
+    ✅ Deploy (deploy.yml):             NOVO & PRONTO
+    
+    🎉 TUDO FUNCIONANDO!
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════

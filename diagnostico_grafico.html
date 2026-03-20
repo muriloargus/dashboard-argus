@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Gráfico 1</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #63a3d8;
+        }
+        .console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .log-success {
+            color: #4ec9b0;
+        }
+        .log-error {
+            color: #f48771;
+        }
+        .log-info {
+            color: #9cdcfe;
+        }
+        #chartContainer {
+            margin-top: 20px;
+            border: 2px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            height: 400px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #63a3d8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #4a8fb8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Diagnóstico do Gráfico 1</h1>
+        
+        <div class="test-section">
+            <h2>Teste 1: Disponibilidade do ApexCharts</h2>
+            <button onclick="testeApexCharts()">Executar Teste</button>
+            <div class="console-output" id="log1"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Teste 2: Elemento #g1 no DOM</h2>
+            <button onclick="testeElemento()">Executar Teste</button>
+            <div class="console-output" id="log2"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Teste 3: Renderizar Gráfico Simples</h2>
+            <button onclick="testeGraficoSimples()">Executar Teste</button>
+            <div id="chartContainer"></div>
+            <div class="console-output" id="log3"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Teste 4: Gráfico com Dados (Simulado)</h2>
+            <button onclick="testeGraficoComDados()">Executar Teste</button>
+            <div id="chartContainer2"></div>
+            <div class="console-output" id="log4"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const logEl = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            let prefix = '';
+            let className = '';
+            
+            if (type === 'success') {
+                prefix = '✅';
+                className = 'log-success';
+            } else if (type === 'error') {
+                prefix = '❌';
+                className = 'log-error';
+            } else {
+                prefix = 'ℹ️';
+                className = 'log-info';
+            }
+            
+            const line = `${prefix} [${timestamp}] ${message}`;
+            logEl.innerHTML += `<span class="${className}">${line}</span>\n`;
+            console.log(line);
+        }
+
+        function testeApexCharts() {
+            const logId = 'log1';
+            document.getElementById(logId).innerHTML = '';
+            
+            log(logId, 'Iniciando teste de ApexCharts...', 'info');
+            
+            if (typeof ApexCharts !== 'undefined') {
+                log(logId, 'ApexCharts está disponível', 'success');
+                log(logId, `Versão: ${ApexCharts.version || 'desconhecida'}`, 'info');
+            } else {
+                log(logId, 'ApexCharts NÃO está definido no escopo global', 'error');
+            }
+            
+            if (typeof window.ApexCharts !== 'undefined') {
+                log(logId, 'window.ApexCharts está acessível', 'success');
+            } else {
+                log(logId, 'window.ApexCharts NÃO está acessível', 'error');
+            }
+        }
+
+        function testeElemento() {
+            const logId = 'log2';
+            document.getElementById(logId).innerHTML = '';
+            
+            log(logId, 'Procurando por elemento #g1...', 'info');
+            
+            const el = document.querySelector('#g1');
+            if (el) {
+                log(logId, 'Elemento #g1 encontrado!', 'success');
+                log(logId, `Tag: ${el.tagName}`, 'info');
+                log(logId, `Class: ${el.className}`, 'info');
+                log(logId, `ID: ${el.id}`, 'info');
+                log(logId, `Width: ${el.offsetWidth}px`, 'info');
+                log(logId, `Height: ${el.offsetHeight}px`, 'info');
+            } else {
+                log(logId, 'Elemento #g1 NÃO encontrado no DOM', 'error');
+                log(logId, 'Procurando por algum elemento div...', 'info');
+                const divs = document.querySelectorAll('div');
+                log(logId, `Total de divs na página: ${divs.length}`, 'info');
+            }
+        }
+
+        function testeGraficoSimples() {
+            const logId = 'log3';
+            document.getElementById(logId).innerHTML = '';
+            
+            const containerId = 'chartContainer';
+            log(logId, 'Criando gráfico simples...', 'info');
+            
+            try {
+                // Limpar container anterior
+                document.getElementById(containerId).innerHTML = '';
+                
+                const options = {
+                    chart: {
+                        type: 'donut',
+                        height: 300
+                    },
+                    series: [10, 20, 30],
+                    labels: ['A', 'B', 'C']
+                };
+                
+                log(logId, 'Configuração criada', 'success');
+                log(logId, `Series: ${JSON.stringify(options.series)}`, 'info');
+                log(logId, `Labels: ${JSON.stringify(options.labels)}`, 'info');
+                
+                const chart = new ApexCharts(document.getElementById(containerId), options);
+                log(logId, 'Instância ApexCharts criada', 'success');
+                
+                chart.render();
+                log(logId, 'Gráfico renderizado com sucesso!', 'success');
+                
+            } catch(e) {
+                log(logId, `Erro: ${e.message}`, 'error');
+                log(logId, `Stack: ${e.stack}`, 'error');
+            }
+        }
+
+        function testeGraficoComDados() {
+            const logId = 'log4';
+            document.getElementById(logId).innerHTML = '';
+            
+            const containerId = 'chartContainer2';
+            log(logId, 'Criando gráfico com dados simulados...', 'info');
+            
+            try {
+                document.getElementById(containerId).innerHTML = '';
+                
+                // Simular dados como no comparativo
+                const motoristas = [
+                    { transportadora: 'TRS_LOGGI', unidade: 'UNI_SP' },
+                    { transportadora: 'TRS_LOGGI', unidade: 'UNI_SP' },
+                    { transportadora: 'TRS_RAPIDÃO', unidade: 'UNI_RJ' },
+                    { transportadora: 'TRS_RAPIDÃO', unidade: 'UNI_RJ' },
+                    { transportadora: 'TRS_RAPIDÃO', unidade: 'UNI_RJ' },
+                ];
+                
+                // Processar dados
+                const porTransp = {};
+                motoristas.forEach(x => {
+                    if (!porTransp[x.transportadora]) {
+                        porTransp[x.transportadora] = { motoristas: 0 };
+                    }
+                    porTransp[x.transportadora].motoristas++;
+                });
+                
+                log(logId, `Total de motoristas: ${motoristas.length}`, 'info');
+                log(logId, `Transportadoras encontradas: ${Object.keys(porTransp).length}`, 'info');
+                
+                let transpLabels = Object.keys(porTransp)
+                    .sort((a, b) => porTransp[b].motoristas - porTransp[a].motoristas)
+                    .slice(0, 5);
+                
+                log(logId, `Labels selecionados: ${JSON.stringify(transpLabels)}`, 'info');
+                
+                const series = transpLabels.map(t => porTransp[t].motoristas);
+                const labels = transpLabels.map(t => t.replace('TRS_', ''));
+                
+                log(logId, `Series: ${JSON.stringify(series)}`, 'info');
+                log(logId, `Labels: ${JSON.stringify(labels)}`, 'info');
+                
+                const options = {
+                    chart: {
+                        type: 'donut',
+                        height: 300
+                    },
+                    series: series,
+                    labels: labels,
+                    colors: ['#0033A0', '#FF6B35', '#10b981', '#FF9800', '#8B0000']
+                };
+                
+                const chart = new ApexCharts(document.getElementById(containerId), options);
+                log(logId, 'Gráfico criado', 'success');
+                
+                chart.render();
+                log(logId, 'Gráfico renderizado com sucesso!', 'success');
+                
+            } catch(e) {
+                log(logId, `Erro: ${e.message}`, 'error');
+                log(logId, `Stack: ${e.stack}`, 'error');
+            }
+        }
+
+        // Executar testes automaticamente ao carregar
+        window.addEventListener('load', function() {
+            console.log('Página carregada. Abre o console (F12) para ver mais detalhes.');
+            testeApexCharts();
+            testeElemento();
+        });
+    </script>
+</body>
+</html>
