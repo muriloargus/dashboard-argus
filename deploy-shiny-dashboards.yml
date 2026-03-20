@@ -1,32 +1,24 @@
 name: Deploy Shiny Dashboards
-
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup R
-        uses: r-lib/setup-r@v2
+      - uses: actions/checkout@v4
+      - uses: r-lib/setup-r@v2
         with:
-          r-version: '4.3.0'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
-
-      - name: Install R packages
-        run: |
-          install.packages(c('shiny', 'shinydashboard', 'plotly', 'dplyr', 'readr', 'reactable', 'rsconnect', 'lubridate'), quiet=TRUE)
-        shell: Rscript {0}
+          r-version: 4.3.0
+      - run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+      - run: Rscript -e "install.packages(c('shiny','shinydashboard','plotly','dplyr','readr','reactable','rsconnect'))"
+      - run: Rscript -e "rsconnect::setAccountInfo(name='${{ secrets.POSIT_ACCOUNT_NAME }}', token='${{ secrets.POSIT_TOKEN }}', secret='${{ secrets.POSIT_SECRET }}')"
+      - run: |
+          Rscript << 'EOFR'
+          apps <- c('dashboard_menu','dashboard_ativos','dashboard_usuarios','dashboard_motoristas','dashboard_falhas','dashboard_dispositivos','dashboard_excecoes','dashboard_timeline','dashboard_temporal_mapas','dashboard_risco_colisao','dashboard_desempenho_analista','dashboard_comparativo','dashboard_ativos_supabase','dashboard_falhas_supabase','dashboard_usuarios_supabase')
+          for(app in apps) { rsconnect::deployApp(appDir=paste0('shiny/',app), appName=app, forceUpdate=TRUE) }
+          EOFR
 
       - name: Configure rsconnect
         env:
