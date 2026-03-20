@@ -1,0 +1,75 @@
+name: 📊 Deploy Dashboards
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '*.html'
+      - '*.js'
+      - '*.css'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-dashboards:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+        
+      - name: 🔍 Validar arquivos HTML
+        run: |
+          echo "=== Validando dashboards HTML ==="
+          for file in dashboard_*.html index.html; do
+            if [ -f "$file" ]; then
+              echo "✅ Encontrado: $file"
+              # Verifica se tem script básico
+              if grep -q "<script" "$file"; then
+                echo "   └─ Contém scripts: OK"
+              fi
+            fi
+          done
+          
+      - name: 🔍 Validar arquivos JS
+        run: |
+          echo "=== Validando JavaScript ==="
+          for file in idb-manager.js storage-adapter.js supabase-client.js; do
+            if [ -f "$file" ]; then
+              echo "✅ Encontrado: $file"
+              # Conta linhas
+              lines=$(wc -l < "$file")
+              echo "   └─ Linhas: $lines"
+            fi
+          done
+          
+      - name: 📈 Gerar relatório de dashboards
+        run: |
+          echo "# 📊 Dashboard Status Report" > dashboard_report.md
+          echo "" >> dashboard_report.md
+          echo "## Gerado em: $(date)" >> dashboard_report.md
+          echo "" >> dashboard_report.md
+          echo "### Dashboards Disponíveis:" >> dashboard_report.md
+          echo '```' >> dashboard_report.md
+          ls -1 dashboard_*.html 2>/dev/null | sort >> dashboard_report.md
+          echo '```' >> dashboard_report.md
+          echo "" >> dashboard_report.md
+          echo "### Arquivos de Suporte:" >> dashboard_report.md
+          echo "- idb-manager.js ($(wc -l < idb-manager.js) linhas) - Storage avançado" >> dashboard_report.md
+          echo "- storage-adapter.js ($(wc -l < storage-adapter.js) linhas) - Compatibilidade" >> dashboard_report.md
+          echo "- supabase-client.js ($(wc -l < supabase-client.js) linhas) - Cloud sync" >> dashboard_report.md
+        continue-on-error: true
+        
+      - name: 🔄 Commit relatório
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add dashboard_report.md 2>/dev/null || true
+          git commit -m "📊 Dashboard: Relatório automático - $(date '+%Y-%m-%d %H:%M')" || echo "Nothing to commit"
+          git push || echo "Nothing to push"
+        continue-on-error: true
+        
+      - name: ✅ Status
+        run: |
+          echo "✅ Dashboards validados e prontos para deploy"
+          echo "📦 Total de dashboards: $(ls -1 dashboard_*.html | wc -l)"

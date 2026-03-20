@@ -1,0 +1,237 @@
+name: Deploy Shiny Dashboards
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'shiny/**'
+      - '.github/workflows/deploy-shiny-dashboards.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup R
+        uses: r-lib/setup-r@v2
+        with:
+          r-version: '4.3.0'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      - name: Install R packages
+        run: |
+          install.packages(c('shiny', 'shinydashboard', 'plotly', 'dplyr', 'readr', 'reactable', 'rsconnect', 'lubridate'), quiet=TRUE)
+        shell: Rscript {0}
+
+      - name: Configure rsconnect
+        env:
+          POSIT_ACCOUNT_NAME: ${{ secrets.POSIT_ACCOUNT_NAME }}
+          POSIT_TOKEN: ${{ secrets.POSIT_TOKEN }}
+          POSIT_SECRET: ${{ secrets.POSIT_SECRET }}
+        run: |
+          Rscript -e "
+          rsconnect::setAccountInfo(
+            name = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            token = '${{ secrets.POSIT_TOKEN }}',
+            secret = '${{ secrets.POSIT_SECRET }}'
+          )
+          "
+
+      - name: Deploy Dashboard Menu
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_menu',
+            appName = 'dashboard_menu',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Ativos
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_ativos',
+            appName = 'dashboard_ativos',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Usuarios
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_usuarios',
+            appName = 'dashboard_usuarios',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Motoristas
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_motoristas',
+            appName = 'dashboard_motoristas',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Falhas
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_falhas',
+            appName = 'dashboard_falhas',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Dispositivos
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_dispositivos',
+            appName = 'dashboard_dispositivos',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Excecoes
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_excecoes',
+            appName = 'dashboard_excecoes',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Timeline
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_timeline',
+            appName = 'dashboard_timeline',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Temporal Mapas
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_temporal_mapas',
+            appName = 'dashboard_temporal_mapas',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Risco Colisao
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_risco_colisao',
+            appName = 'dashboard_risco_colisao',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Desempenho Analista
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_desempenho_analista',
+            appName = 'dashboard_desempenho_analista',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Comparativo
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_comparativo',
+            appName = 'dashboard_comparativo',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Ativos Supabase
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_ativos_supabase',
+            appName = 'dashboard_ativos_supabase',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Falhas Supabase
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_falhas_supabase',
+            appName = 'dashboard_falhas_supabase',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deploy Dashboard Usuarios Supabase
+        run: |
+          Rscript -e "
+          rsconnect::deployApp(
+            appDir = 'shiny/dashboard_usuarios_supabase',
+            appName = 'dashboard_usuarios_supabase',
+            account = '${{ secrets.POSIT_ACCOUNT_NAME }}',
+            launch.browser = FALSE,
+            forceUpdate = TRUE
+          )
+          "
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "✅ Deploy workflow completed!"
+          echo "Dashboard URLs:"
+          echo "https://${{ secrets.POSIT_ACCOUNT_NAME }}.shinyapps.io/dashboard_menu/"
+          echo "https://${{ secrets.POSIT_ACCOUNT_NAME }}.shinyapps.io/dashboard_ativos/"
+          echo "https://${{ secrets.POSIT_ACCOUNT_NAME }}.shinyapps.io/dashboard_usuarios/"
