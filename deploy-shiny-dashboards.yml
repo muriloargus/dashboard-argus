@@ -1,8 +1,12 @@
 name: Deploy Shiny Dashboards
+
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
   workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,10 +21,9 @@ jobs:
       - run: |
           Rscript << 'EOFR'
           apps <- c('dashboard_menu','dashboard_ativos','dashboard_usuarios','dashboard_motoristas','dashboard_falhas','dashboard_dispositivos','dashboard_excecoes','dashboard_timeline','dashboard_temporal_mapas','dashboard_risco_colisao','dashboard_desempenho_analista','dashboard_comparativo','dashboard_ativos_supabase','dashboard_falhas_supabase','dashboard_usuarios_supabase')
-          for(app in apps) { rsconnect::deployApp(appDir=paste0('shiny/',app), appName=app, forceUpdate=TRUE) }
+          for(app in apps) { cat(paste0('Deploying ',app,'...\n')); rsconnect::deployApp(appDir=paste0('shiny/',app), appName=app, forceUpdate=TRUE) }
           EOFR
-
-      - name: Configure rsconnect
+      - run: echo "✅ All dashboards deployed!"
         env:
           POSIT_ACCOUNT_NAME: ${{ secrets.POSIT_ACCOUNT_NAME }}
           POSIT_TOKEN: ${{ secrets.POSIT_TOKEN }}
