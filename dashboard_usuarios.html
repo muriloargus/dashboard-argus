@@ -1099,6 +1099,9 @@ body.dark .pagination button.active {
                     }
                 }
 
+                // INICIALIZAR GRÁFICOS ANTES DE CARREGAR DADOS
+                initCharts();
+
                 // Carregar dados persistidos (com tratamento de erro para privacy/ITP)
                 let savedData = null;
                 try {
@@ -1131,8 +1134,7 @@ body.dark .pagination button.active {
                     console.error('Elementos uploadBtn ou csvFileInput não encontrados');
                 }
             
-            initCharts();
-        });
+            });
         
         function initCharts() {
             // IMPORTANTE: Destruir charts antigos antes de recrear
@@ -1518,6 +1520,13 @@ body.dark .pagination button.active {
 
 
         function updateChartsWithFilteredData() {
+            // Proteção: verificar se gráficos foram inicializados
+            if (!transportadoraChart || !designacaoChart || !unidadeChart) {
+                console.warn('⚠️ Gráficos ainda não inicializados, aguardando inicCharts()...');
+                setTimeout(() => updateChartsWithFilteredData(), 100);
+                return;
+            }
+
             const dataSource = filteredData.length > 0 ? filteredData : userData;
             
             document.getElementById('totalUsers').textContent = dataSource.length;
