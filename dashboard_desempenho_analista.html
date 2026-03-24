@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="persistence-manager.js"></script>
     <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -956,11 +957,19 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
                     Papa.parse(e.target.result, {
                         header: true,
                         skipEmptyLines: true,
-                        complete: function(results) {
+                        complete: async function(results) {
                             console.log('CSV carregado:', results.data);
-                            localStorage.setItem('desempenhoData', JSON.stringify(results.data));
-                            console.log('Dados salvos no localStorage');
-                            alert('✅ Arquivo CSV carregado com sucesso! (' + results.data.length + ' registros)');
+                            
+                            // Salvar com novo sistema (localStorage + IndexedDB)
+                            const saved = await PersistenceManager_instance.save('desempenhoData', results.data);
+                            
+                            if (saved) {
+                                console.log('✅ Dados salvos com sucesso!');
+                                alert('✅ Arquivo CSV carregado com sucesso! (' + results.data.length + ' registros)\n👍 Os dados foram salvos e serão recuperados quando você voltar.');
+                            } else {
+                                console.warn('⚠️ Dados salvos apenas em memória');
+                                alert('✅ Arquivo CSV carregado! (' + results.data.length + ' registros)\n⚠️ Nota: Arquivo muito grande, dados apenas em memória.');
+                            }
                         },
                         error: function(error) {
                             alert('❌ Erro ao carregar CSV: ' + error.message);
@@ -989,23 +998,16 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
                 }
             }
 
-            // Carregar dados persistidos (com tratamento ITP)
-            let savedData = null;
-            try {
-                savedData = localStorage.getItem('desempenhoData');
-            } catch(e) {
-                console.warn('Storage access denied');
-            }
-            
-            if (savedData) {
-                const analistas_loaded = safeParseJSON(savedData);
-                if (analistas_loaded && Array.isArray(analistas_loaded)) {
-                    analistas = analistas_loaded;
-                    console.log('✅ Dados carregados do localStorage');
+            // Carregar dados persistidos usando novo sistema
+            (async function() {
+                const savedData = await PersistenceManager_instance.load('desempenhoData');
+                
+                if (savedData && Array.isArray(savedData) && savedData.length > 0) {
+                    console.log('✅ Dados carregados do armazenamento (localStorage/IndexedDB)');
                 } else {
-                    console.warn('⚠️ Dados persistidos inválidos');
+                    console.warn('⚠️ Nenhum dado persistido encontrado, será usado dados padrão');
                 }
-            }
+            })();
             
             setTimeout(function() {
                 atualizarDataAtual();
@@ -1322,79 +1324,88 @@ body.dark .stat-item { background: rgba(255,255,255,0.05); }
         };
         
         function carregarDados() {
-            // Carregar dados persistidos do localStorage ou usar dados padrão
-            let analistas = {};
-            const savedData = localStorage.getItem('desempenhoData');
-            
-            if (savedData) {
-                try {
-                    const parsedData = JSON.parse(savedData);
-                    if (Array.isArray(parsedData) && parsedData.length > 0) {
-                        // Processar dados do CSV
-                        parsedData.forEach(row => {
-                            const nome = row.nome || row.Analista || row.analista || 'Unknown';
-                            analistas[nome] = {
-                                atividades: parseInt(row.atividades || row.Atividades || 0) || 0,
-                                taxa: parseInt(row.taxa || row.Taxa || 0) || 0,
-                                tempo: parseFloat(row.tempo || row.Tempo || 0) || 0,
-                                qualidade: parseInt(row.qualidade || row.Qualidade || 0) || 0
-                            };
-                        });
-                    }
-                } catch(e) {
-                    console.log('Erro ao processar dados persistidos');
-                }
-            }
-            
-            // Se não houver dados persistidos, usar dados padrão/amostra
-            if (Object.keys(analistas).length === 0) {
-                analistas = {
-                    'Gabriel Faria': {
-                        atividades: 127,
-                        taxa: 85,
-                        tempo: 3.5,
-                        qualidade: 92
-                    },
-                    'Murilo Anjos': {
-                        atividades: 145,
-                        taxa: 88,
-                        tempo: 3.2,
-                        qualidade: 95
-                    },
-                    'Ellen Ferreira': {
-                        atividades: 158,
-                        taxa: 92,
-                        tempo: 3.0,
-                        qualidade: 96
-                    },
-                    'Angelica Luz': {
-                        atividades: 131,
-                        taxa: 80,
-                        tempo: 3.8,
-                        qualidade: 88
-                    }
-                };
-            }
-            
-            // Atualizar cards dos analistas
-            Object.keys(analistas).forEach(analista => {
-                const id = analista.toLowerCase().split(' ')[0]; // Usar apenas primeiro nome
-                const dados = analistas[analista];
+            // Carregar dados persistidos do novo sistema (localStorage + IndexedDB)
+            (async function() {
+                let analistas = {};
                 
-                document.getElementById(id + '-atividades').textContent = dados.atividades;
-                document.getElementById(id + '-taxa').textContent = dados.taxa + '%';
-                document.getElementById(id + '-tempo').textContent = dados.tempo + 'h';
-                document.getElementById(id + '-qualidade').textContent = dados.qualidade + '%';
-            });
-            
-            // Atualizar métricas gerais
-            const totalAtividades = Object.values(analistas).reduce((sum, a) => sum + a.atividades, 0);
-            document.getElementById('total-concluidas').textContent = Math.floor(totalAtividades * 0.7);
-            document.getElementById('total-andamento').textContent = Math.floor(totalAtividades * 0.3);
-            document.getElementById('produtividade-media').textContent = Math.floor(Object.values(analistas).reduce((sum, a) => sum + a.taxa, 0) / 4) + '%';
-            
-            // Atualizar gráficos
-            atualizarGraficos(analistas);
+                // Tentar carregar do novo sistema de persistência
+                const savedData = await PersistenceManager_instance.load('desempenhoData');
+                
+                if (savedData && Array.isArray(savedData) && savedData.length > 0) {
+                    // Processar dados do CSV
+                    savedData.forEach(row => {
+                        const nome = row.nome || row.Analista || row.analista || row.NOME || row.Nome || 'Unknown';
+                        analistas[nome] = {
+                            atividades: parseInt(row.atividades || row.Atividades || row.ATIVIDADES || 0) || 0,
+                            taxa: parseInt(row.taxa || row.Taxa || row.TAXA || 0) || 0,
+                            tempo: parseFloat(row.tempo || row.Tempo || row.TEMPO || 0) || 0,
+                            qualidade: parseInt(row.qualidade || row.Qualidade || row.QUALIDADE || 0) || 0
+                        };
+                    });
+                    console.log('✅ Dados restaurados:', Object.keys(analistas).length, 'analistas');
+                } else {
+                    console.log('ℹ️ Nenhum dado persistido, usando valores padrão');
+                }
+                
+                // Se não houver dados persistidos, usar dados padrão/amostra
+                if (Object.keys(analistas).length === 0) {
+                    analistas = {
+                        'Gabriel Faria': {
+                            atividades: 127,
+                            taxa: 85,
+                            tempo: 3.5,
+                            qualidade: 92
+                        },
+                        'Murilo Anjos': {
+                            atividades: 145,
+                            taxa: 88,
+                            tempo: 3.2,
+                            qualidade: 95
+                        },
+                        'Ellen Ferreira': {
+                            atividades: 158,
+                            taxa: 92,
+                            tempo: 3.0,
+                            qualidade: 96
+                        },
+                        'Angelica Luz': {
+                            atividades: 131,
+                            taxa: 80,
+                            tempo: 3.8,
+                            qualidade: 88
+                        }
+                    };
+                }
+                
+                // Atualizar cards dos analistas
+                Object.keys(analistas).forEach(analista => {
+                    const id = analista.toLowerCase().split(' ')[0]; // Usar apenas primeiro nome
+                    const dados = analistas[analista];
+                    
+                    const ativEl = document.getElementById(id + '-atividades');
+                    const taxaEl = document.getElementById(id + '-taxa');
+                    const tempoEl = document.getElementById(id + '-tempo');
+                    const qualEl = document.getElementById(id + '-qualidade');
+                    
+                    if (ativEl) ativEl.textContent = dados.atividades;
+                    if (taxaEl) taxaEl.textContent = dados.taxa + '%';
+                    if (tempoEl) tempoEl.textContent = dados.tempo + 'h';
+                    if (qualEl) qualEl.textContent = dados.qualidade + '%';
+                });
+                
+                // Atualizar métricas gerais
+                const totalAtividades = Object.values(analistas).reduce((sum, a) => sum + a.atividades, 0);
+                const el1 = document.getElementById('total-concluidas');
+                const el2 = document.getElementById('total-andamento');
+                const el3 = document.getElementById('produtividade-media');
+                
+                if (el1) el1.textContent = Math.floor(totalAtividades * 0.7);
+                if (el2) el2.textContent = Math.floor(totalAtividades * 0.3);
+                if (el3) el3.textContent = Math.floor(Object.values(analistas).reduce((sum, a) => sum + a.taxa, 0) / Object.keys(analistas).length) + '%';
+                
+                // Atualizar gráficos
+                atualizarGraficos(analistas);
+            })();
         }
         
         function generateInsightsAnalista(analistas) {
