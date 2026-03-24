@@ -1099,42 +1099,32 @@ body.dark .pagination button.active {
                     }
                 }
 
-                // Carregar dados persistidos (com tratamento de erro para privacy/ITP)
-                let savedData = null;
-                try {
-                    savedData = localStorage.getItem('usuariosData');
-                } catch(e) {
-                    console.warn('Storage access denied (ITP/Privacy), usando dados padrão');
-                }
+                console.log('📦 Iniciando carregamento de dados...');
                 
-                if (savedData) {
-                    const userData_loaded = safeParseJSON(savedData);
-                    if (userData_loaded && Array.isArray(userData_loaded)) {
-                        userData = userData_loaded;
-                        filteredData = [...userData];
-                        populateFilterSelects();
-                        initCharts();
-                        updateCharts(filteredData);
-                        console.log('✅ Dados carregados do localStorage');
-                    } else {
-                        console.warn('⚠️ Dados persistidos inválidos, usando dados padrão');
-                        loadSampleData();
-                    }
-                } else {
-                    loadSampleData();
-                }
+                // PASSO 1: SEMPRE inicializar gráficos PRIMEIRO
+                console.log('PASSO 1: Inicializando gráficos...');
+                initCharts();
+                console.log('PASSO 1: ✅ Gráficos prontos!');
 
+                // PASSO 2: Carregar dados
+                console.log('PASSO 2: Carregando dados...');
+                loadSampleData();
+                console.log('PASSO 2: ✅ Dados carregados!');
+
+                // PASSO 3: Registrar listeners
+                console.log('PASSO 3: Registrando listeners...');
                 if (uploadBtn && csvFileInput) {
                     uploadBtn.addEventListener('click', () => csvFileInput.click());
                     csvFileInput.addEventListener('change', handleFileSelect);
                 } else {
                     console.error('Elementos uploadBtn ou csvFileInput não encontrados');
                 }
+                console.log('✅ INICIALIZAÇÃO COMPLETA!');
             
-            initCharts();
-        });
+            });
         
         function initCharts() {
+            console.log('🎯 initCharts() chamado');
             // IMPORTANTE: Destruir charts antigos antes de recrear
             if (typeof window.transportadoraChart !== 'undefined' && window.transportadoraChart) {
                 try { window.transportadoraChart.destroy(); } catch(e) {}
@@ -1151,8 +1141,9 @@ body.dark .pagination button.active {
             const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
             const tooltipBg = isDarkMode ? 'rgba(13, 27, 42, 0.9)' : 'rgba(0, 0, 0, 0.9)';
             
-            const transportadoraCtx = document.getElementById('transportadoraChart').getContext('2d');
-            transportadoraChart = new Chart(transportadoraCtx, {
+            try {
+                const transportadoraCtx = document.getElementById('transportadoraChart').getContext('2d');
+                transportadoraChart = new Chart(transportadoraCtx, {
                 type: 'bar',
                 data: { 
                     labels: [], 
@@ -1282,6 +1273,11 @@ body.dark .pagination button.active {
                     }
                 }
             });
+            } catch(err) {
+                console.error('❌ Erro ao inicializar gráficos:', err);
+                console.error('Stack:', err.stack);
+            }
+            console.log('✅ initCharts() completado');
         }
         
         function handleFileSelect(event) {
@@ -1518,7 +1514,20 @@ body.dark .pagination button.active {
 
 
         function updateChartsWithFilteredData() {
+            // Proteção: verificar se gráficos foram inicializados
+            if (!transportadoraChart || !designacaoChart || !unidadeChart) {
+                console.warn('⚠️ Gráficos ainda não inicializados!');
+                console.log(`   transportadoraChart: ${typeof transportadoraChart}`);
+                console.log(`   designacaoChart: ${typeof designacaoChart}`);
+                console.log(`   unidadeChart: ${typeof unidadeChart}`);
+                console.warn('  Aguardando inicCharts()...');
+                setTimeout(() => updateChartsWithFilteredData(), 200);
+                return;
+            }
+
+            console.log('✅ updateChartsWithFilteredData iniciado');
             const dataSource = filteredData.length > 0 ? filteredData : userData;
+            console.log(`   Dados para atualizar: ${dataSource.length} registros`);
             
             document.getElementById('totalUsers').textContent = dataSource.length;
             document.getElementById('totalTransportadoras').textContent = new Set(dataSource.map(u => u.transportadora).filter(Boolean)).size;
