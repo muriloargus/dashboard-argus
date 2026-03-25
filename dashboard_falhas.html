@@ -870,6 +870,7 @@ body.dark .insight-section li {
 
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <script src="persistence-manager.js"></script>
+    <script src="data-loader.js"></script>
     <script>
         const DEFAULT_COLORS = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600','#63a3d8','#28a745','#e60000','#ffc107'];
         let rawData = [];
@@ -1414,9 +1415,17 @@ body.dark .insight-section li {
         }
         
         // Carregar preferência dark mode ao iniciar
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             activateCurrentLink();
-            const darkMode = localStorage.getItem('darkMode');
+            
+                // AUTO-LOAD: Carregar dataset automático da URL
+                const autoLoadResult = await autoLoadDataset('dashboard_falhas.html');
+                if (autoLoadResult && autoLoadResult.data) {
+                    console.log(`✅ Dataset carregado: ${autoLoadResult.registros} registros`);
+                    // Dados carregados e estarão disponíveis para o restante do script
+                }
+                
+                const darkMode = localStorage.getItem('darkMode');
             console.log('Carregando dark mode:', darkMode);
             if (darkMode === 'true') {
                 document.body.classList.add('dark');
