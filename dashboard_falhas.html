@@ -869,6 +869,7 @@ body.dark .insight-section li {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="persistence-manager.js"></script>
     <script>
         const DEFAULT_COLORS = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600','#63a3d8','#28a745','#e60000','#ffc107'];
         let rawData = [];
@@ -1325,7 +1326,10 @@ body.dark .insight-section li {
                             return;
                         }
                         rawData = res.data.map(normalizeRow);
-                        try { localStorage.setItem('falhasData', JSON.stringify(res.data)); } catch(e) {}
+                        try { (async () => {
+                        const saved = await PersistenceManager_instance.save('falhasData', res.data);
+                        if (!saved) console.warn('⚠️ Arquivo muito grande, dados apenas em memória');
+                    })(); } catch(e) {}
                         currentPage = 1;
                         populateFilters();
                         buildCharts();
@@ -1361,7 +1365,10 @@ body.dark .insight-section li {
                     'Controlador': i%3 ? 'Body controller' : 'Engine controller'
                 });
             }
-            localStorage.setItem('falhasData', JSON.stringify(sample));
+            (async () => {
+                        const saved = await PersistenceManager_instance.save('falhasData', sample);
+                        if (!saved) console.warn('⚠️ Arquivo muito grande, dados apenas em memória');
+                    })();
             alert('Amostra salva em localStorage');
         });
 
