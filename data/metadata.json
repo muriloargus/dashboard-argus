@@ -3,7 +3,7 @@
   "lastUpdated": "2026-03-25",
   "datasets": {
     "ativos-24-03": {
-      "file": "data/ativos 24-03.json",
+      "file": "data/ativos-24-03.json",
       "dashboard": "dashboard_ativos.html",
       "nome": "Ativos - Março 2024",
       "descricao": "Ativos cadastrados no sistema",
@@ -12,7 +12,7 @@
       "storageKey": "ativosData"
     },
     "usuarios-driver-24-03": {
-      "file": "data/usuarios driver 24-03.json",
+      "file": "data/usuarios-driver-24-03.json",
       "dashboard": "dashboard_usuarios.html",
       "nome": "Usuários Driver - Março 2024",
       "descricao": "Usuários com perfil driver",
@@ -21,7 +21,7 @@
       "storageKey": "usuariosData"
     },
     "usuarios-ambev-24-03": {
-      "file": "data/usuarios ambev 24-03.json",
+      "file": "data/usuarios-ambev-24-03.json",
       "dashboard": "dashboard_usuarios.html",
       "nome": "Usuários Ambev - Março 2024",
       "descricao": "Usuários Ambev",
@@ -30,7 +30,7 @@
       "storageKey": "usuariosData"
     },
     "falhas-fevereiro": {
-      "file": "data/falhas - fechamento fevereiro.json",
+      "file": "data/falhas-fevereiro.json",
       "dashboard": "dashboard_falhas.html",
       "nome": "Falhas - Fevereiro",
       "descricao": "Falhas detectadas no período de fevereiro",
@@ -39,7 +39,7 @@
       "storageKey": "falhasData"
     },
     "status-frota-24-03": {
-      "file": "data/status frota 24-03.json",
+      "file": "data/status-frota-24-03.json",
       "dashboard": "status_frota.html",
       "nome": "Status da Frota - Março 2024",
       "descricao": "Status operacional da frota",
@@ -48,7 +48,7 @@
       "storageKey": "statusFrotaData"
     },
     "dispositivos-sem-vinculo": {
-      "file": "data/dispositivos sem vinculo - rodando 16-02 à 22-02.json",
+      "file": "data/dispositivos-sem-vinculo.json",
       "dashboard": "dashboard_dispositivos.html",
       "nome": "Dispositivos Sem Vínculo",
       "descricao": "Dispositivos sem vínculo cadastrado (16-02 à 22-02)",
@@ -57,7 +57,7 @@
       "storageKey": "dispositivosData"
     },
     "risco-colisao-fevereiro": {
-      "file": "data/risco de colisão - fechamento fevereiro.json",
+      "file": "data/risco-colisao-fevereiro.json",
       "dashboard": "dashboard_risco_colisao.html",
       "nome": "Risco de Colisão - Fevereiro",
       "descricao": "Eventos de risco de colisão (fechamento fevereiro)",
