@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-03-25",
+  "datasets": {
+    "ativos-24-03": {
+      "file": "data/ativos 24-03.json",
+      "dashboard": "dashboard_ativos.html",
+      "nome": "Ativos - Março 2024",
+      "descricao": "Ativos cadastrados no sistema",
+      "registros": 1764,
+      "dataTag": "24-03",
+      "storageKey": "ativosData"
+    },
+    "usuarios-driver-24-03": {
+      "file": "data/usuarios driver 24-03.json",
+      "dashboard": "dashboard_usuarios.html",
+      "nome": "Usuários Driver - Março 2024",
+      "descricao": "Usuários com perfil driver",
+      "registros": 40298,
+      "dataTag": "24-03",
+      "storageKey": "usuariosData"
+    },
+    "usuarios-ambev-24-03": {
+      "file": "data/usuarios ambev 24-03.json",
+      "dashboard": "dashboard_usuarios.html",
+      "nome": "Usuários Ambev - Março 2024",
+      "descricao": "Usuários Ambev",
+      "registros": 480,
+      "dataTag": "24-03",
+      "storageKey": "usuariosData"
+    },
+    "falhas-fevereiro": {
+      "file": "data/falhas - fechamento fevereiro.json",
+      "dashboard": "dashboard_falhas.html",
+      "nome": "Falhas - Fevereiro",
+      "descricao": "Falhas detectadas no período de fevereiro",
+      "registros": 179278,
+      "dataTag": "fevereiro",
+      "storageKey": "falhasData"
+    },
+    "status-frota-24-03": {
+      "file": "data/status frota 24-03.json",
+      "dashboard": "status_frota.html",
+      "nome": "Status da Frota - Março 2024",
+      "descricao": "Status operacional da frota",
+      "registros": 1803,
+      "dataTag": "24-03",
+      "storageKey": "statusFrotaData"
+    },
+    "dispositivos-sem-vinculo": {
+      "file": "data/dispositivos sem vinculo - rodando 16-02 à 22-02.json",
+      "dashboard": "dashboard_dispositivos.html",
+      "nome": "Dispositivos Sem Vínculo",
+      "descricao": "Dispositivos sem vínculo cadastrado (16-02 à 22-02)",
+      "registros": 2409,
+      "dataTag": "16-02_22-02",
+      "storageKey": "dispositivosData"
+    },
+    "risco-colisao-fevereiro": {
+      "file": "data/risco de colisão - fechamento fevereiro.json",
+      "dashboard": "dashboard_risco_colisao.html",
+      "nome": "Risco de Colisão - Fevereiro",
+      "descricao": "Eventos de risco de colisão (fechamento fevereiro)",
+      "registros": 901,
+      "dataTag": "fevereiro",
+      "storageKey": "riscoColisaoData"
+    }
+  },
+  "dashboards": {
+    "dashboard_ativos.html": {
+      "nome": "Ativos",
+      "defaultDataset": "ativos-24-03",
+      "storageKey": "ativosData",
+      "csvColumns": ["Dispositivo", "TRANSPORTADORA", "UNIDADE", "REGIAO", "FABRICANTE"]
+    },
+    "dashboard_usuarios.html": {
+      "nome": "Usuários",
+      "defaultDataset": "usuarios-driver-24-03",
+      "storageKey": "usuariosData",
+      "csvColumns": ["NOME COMPLETO", "E-mail", "Designação", "CPF", "Grupo"]
+    },
+    "dashboard_falhas.html": {
+      "nome": "Falhas",
+      "defaultDataset": "falhas-fevereiro",
+      "storageKey": "falhasData",
+      "csvColumns": ["Data", "Veículo", "Tipo", "Descrição"]
+    },
+    "status_frota.html": {
+      "nome": "Status da Frota",
+      "defaultDataset": "status-frota-24-03",
+      "storageKey": "statusFrotaData",
+      "csvColumns": ["Veículo", "Status", "Data", "Localização"]
+    },
+    "dashboard_dispositivos.html": {
+      "nome": "Dispositivos",
+      "defaultDataset": "dispositivos-sem-vinculo",
+      "storageKey": "dispositivosData",
+      "csvColumns": ["Id", "Tipo", "Status"]
+    },
+    "dashboard_risco_colisao.html": {
+      "nome": "Risco de Colisão",
+      "defaultDataset": "risco-colisao-fevereiro",
+      "storageKey": "riscoColisaoData",
+      "csvColumns": ["Data", "Veículo", "Tipo", "Severidade"]
+    }
+  }
+}
