@@ -835,26 +835,25 @@ body.dark .pagination button.active {
         <!-- Main Content -->
         <main class="main-content" id="mainContent">
             <header class="header">
-                <div class="logo-container">
+                <div class="header-branding">
                     <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
                     <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
                 </div>
                 <div class="titulo">
-                    Telemetria CCO
-                    <small>Usuários do Sistema</small>
+                    Usuários do Sistema
+                    <small>Gerenciamento de Usuários</small>
                 </div>
-                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
-            </header>
-            
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom: 20px;">
+                <div style="display:flex; align-items:center; gap:8px;">
                 <button class="btn-upload" id="uploadBtn">
                     <i class="bi bi-cloud-upload"></i> 📤 Carregar CSV
                 </button>
                 <button class="btn-upload" id="exportBtn" onclick="exportUsuariosData()" title="Exportar dados">
                     <i class="bi bi-download"></i> 📥 Exportar
                 </button>
+                <button class="btn-toggle" id="toggleDarkBtn" onclick="toggleDarkModeGlobal()">🌙 Dark / ☀️ Light</button>
+                </div>
                 <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
-            </div>
+            </header>
             
             <!-- Summary Cards -->
             <section class="summary-cards" id="summaryCards">
@@ -1085,7 +1084,7 @@ body.dark .pagination button.active {
                 
                 // NOVO: Tentar carregar dataset automático da URL
                 console.log('🔗 Verificando parâmetros de dataset...');
-                //const autoLoadResult = await autoLoadDataset('dashboard_usuarios.html');
+                const autoLoadResult = await autoLoadDataset('dashboard_usuarios.html');
                 if (autoLoadResult && autoLoadResult.data) {
                     console.log(`✅ Dataset carregado automaticamente: ${autoLoadResult.registros} registros`);
                     userData = autoLoadResult.data;
