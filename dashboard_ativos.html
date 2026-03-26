@@ -724,23 +724,16 @@ body.dark .chart-legend {
         </nav>
 
   <div class="main-wrapper" id="mainContent">
-  <header>
-    <div class="logos">
-      <div class="logo argus">
-        <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" />
-      </div>
-      <div class="logo ambev">
-        <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" />
-      </div>
+  <header class="topo">
+    <div class="logo-container">
+      <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
+      <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
     </div>
     <div class="titulo">
       Telemetria CCO
       <small>Ativos Cadastrados</small>
     </div>
-    <div style="display: flex; gap: 10px;">
-      <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
-      <button class="btn-toggle" onclick="clearCache()" title="Limpar dados em cache do localStorage">🗑️ Limpar Cache</button>
-    </div>
+    <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
   </header>
   <div class="container">
     <div class="filters">
