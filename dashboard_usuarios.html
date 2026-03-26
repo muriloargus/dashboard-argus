@@ -834,26 +834,27 @@ body.dark .pagination button.active {
         
         <!-- Main Content -->
         <main class="main-content" id="mainContent">
-            <header class="header">
-                <div class="header-branding">
+            <header class="topo">
+                <div class="logo-container">
                     <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
                     <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
                 </div>
                 <div class="titulo">
-                    Usuários do Sistema
-                    <small>Gerenciamento de Usuários</small>
+                    Telemetria CCO
+                    <small>Usuários do Sistema</small>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+            </header>
+            
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom: 20px;">
                 <button class="btn-upload" id="uploadBtn">
                     <i class="bi bi-cloud-upload"></i> 📤 Carregar CSV
                 </button>
                 <button class="btn-upload" id="exportBtn" onclick="exportUsuariosData()" title="Exportar dados">
                     <i class="bi bi-download"></i> 📥 Exportar
                 </button>
-                <button class="btn-toggle" id="toggleDarkBtn" onclick="toggleDarkModeGlobal()">🌙 Dark / ☀️ Light</button>
-                </div>
                 <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
-            </header>
+            </div>
             
             <!-- Summary Cards -->
             <section class="summary-cards" id="summaryCards">
