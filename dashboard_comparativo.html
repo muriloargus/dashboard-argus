@@ -10,6 +10,7 @@
   <script src="idb-manager.js"></script>
   <script src="storage-adapter.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="persistence-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
@@ -918,6 +919,28 @@ body.dark .sidebar-menu a.active {
       </table>
     </div>
 
+    <div class="table-container">
+      <h3 class="table-title">👥 Detalhamento de Motoristas</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome Completo</th>
+            <th>CPF</th>
+            <th>Transportadora</th>
+            <th>Unidade</th>
+            <th>Status NFC</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-motoristas">
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 40px; color: var(--muted);">
+              Carregue os arquivos CSV para iniciar a análise
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="footer">
       <p>Dashboard Comparativo CCO - Atualizado em <span id="dataAtual"></span></p>
       <p style="margin-top: 10px; font-size: 12px; opacity: 0.8;">
@@ -1380,6 +1403,7 @@ body.dark .sidebar-menu a.active {
       document.getElementById('insightsContainer').style.display = motFiltrados.length > 0 && ativosFiltrados.length > 0 ? 'block' : 'none';
       atualizarGraficos(motFiltrados, ativosFiltrados);
       atualizarTabela(motFiltrados, ativosFiltrados);
+      atualizarTabelaMotoristas(motFiltrados, ativosFiltrados);
     }
 
     function atualizarGraficos(motoristas, ativos) {
@@ -1629,14 +1653,16 @@ body.dark .sidebar-menu a.active {
 
       tbody.innerHTML = Object.values(porTranspUnit).map(row => {
         const pctNFC = row.motoristas > 0 ? Math.round((row.nfc / row.motoristas) * 100) : 0;
-        // Definir status sem exibir diretamente a razão
-        let status = '<span class="ok">✅ OK</span>';
-        if (row.ativos === 0 && row.motoristas > 0) status = '<span class="alert">❌ Sem ativos</span>';
-        else if (row.ativos > 0) {
-          const ratio = row.motoristas / row.ativos;
-          if (ratio > 1.5) status = '<span class="warning">⚠️ Excesso</span>';
-          else if (ratio < 0.8) status = '<span class="alert">❌ Falta</span>';
-        }
+        // Obter placas dessa transportadora e unidade
+        const placasPorTranspUnit = {};
+        ativos.forEach(x => {
+          const key = `${x.transportadora}|${x.unidade}`;
+          if (!placasPorTranspUnit[key]) placasPorTranspUnit[key] = [];
+          placasPorTranspUnit[key].push(x.placa);
+        });
+        const key = `${row.transportadora}|${row.unidade}`;
+        const placas = placasPorTranspUnit[key] || [];
+        const placasStr = placas.length > 0 ? placas.join(', ') : '-';
 
         return `
           <tr>
@@ -1645,7 +1671,44 @@ body.dark .sidebar-menu a.active {
             <td>${row.motoristas}</td>
             <td><span class="${pctNFC >= 80 ? 'ok' : 'alert'}">${row.nfc}</span></td>
             <td>${pctNFC}%</td>
-            <td>${row.ativos}</td>
+            <td><small style="color: var(--muted); word-break: break-word;">${placasStr}</small></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function atualizarTabelaMotoristas(motoristas, ativos) {
+      const tbody = document.getElementById('tabela-motoristas');
+      
+      if (motoristas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">Nenhum motorista encontrado com os filtros selecionados</td></tr>';
+        return;
+      }
+
+      // Criar mapa de placas por unidade para vincular motoristas a ativos
+      const placasPorUnidade = {};
+      ativos.forEach(x => {
+        if (!placasPorUnidade[x.unidade]) placasPorUnidade[x.unidade] = [];
+        placasPorUnidade[x.unidade].push(x.placa);
+      });
+
+      // Gerar linhas da tabela
+      tbody.innerHTML = motoristas.map(mot => {
+        // Determinar status NFC
+        const statusNFC = nfcOk(mot.nfc) 
+          ? '<span class="ok">✅ Válido</span>'
+          : '<span class="alert">❌ Inválido/Ausente</span>';
+        
+        // Formatar CPF (remover caracteres especiais e exibir)
+        const cpfFormatado = mot.cpf || '-';
+
+        return `
+          <tr>
+            <td>${mot.nome}</td>
+            <td>${cpfFormatado}</td>
+            <td>${mot.transportadora}</td>
+            <td>${mot.unidade}</td>
+            <td>${statusNFC}</td>
           </tr>
         `;
       }).join('');
