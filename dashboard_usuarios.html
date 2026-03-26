@@ -1085,7 +1085,7 @@ body.dark .pagination button.active {
                 
                 // NOVO: Tentar carregar dataset automático da URL
                 console.log('🔗 Verificando parâmetros de dataset...');
-                const autoLoadResult = await autoLoadDataset('dashboard_usuarios.html');
+                //const autoLoadResult = await autoLoadDataset('dashboard_usuarios.html');
                 if (autoLoadResult && autoLoadResult.data) {
                     console.log(`✅ Dataset carregado automaticamente: ${autoLoadResult.registros} registros`);
                     userData = autoLoadResult.data;
