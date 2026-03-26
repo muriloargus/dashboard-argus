@@ -730,13 +730,19 @@ body.dark .insight-section li {
         </nav>
 
         <main class="main-content" id="mainContent">
-            <div class="logo-ambev">
-                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
-                <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" style="height: 40px; width: auto; object-fit: contain;">
-            </div>
+            <header class="topo">
+                <div class="logo-container">
+                    <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
+                    <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
+                </div>
+                <div class="titulo">
+                    Telemetria CCO
+                    <small>Dashboard de Falhas</small>
+                </div>
+                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+            </header>
 
             <div class="container">
-                <h1><i class="bi bi-bug"></i> Dashboard de Falhas</h1>
 
                 <div class="controls">
                     <label class="btn-upload" for="csvFile" style="cursor:pointer"><i class="bi bi-upload"></i> Selecionar CSV</label>
