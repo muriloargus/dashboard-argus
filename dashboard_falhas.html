@@ -6,9 +6,6 @@
     <title>Telemetria CCO - Falhas</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
-    <script src="persistence-manager.js"></script>
-    <script src="data-loader.js"></script>
     <script src="dashboard-shared.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -733,19 +730,13 @@ body.dark .insight-section li {
         </nav>
 
         <main class="main-content" id="mainContent">
-            <header class="header">
-                <div class="logo-container">
-                    <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
-                    <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
-                </div>
-                <div class="titulo">
-                    Telemetria CCO
-                    <small>Dashboard de Falhas</small>
-                </div>
-                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
-            </header>
+            <div class="logo-ambev">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
+                <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" style="height: 40px; width: auto; object-fit: contain;">
+            </div>
 
             <div class="container">
+                <h1><i class="bi bi-bug"></i> Dashboard de Falhas</h1>
 
                 <div class="controls">
                     <label class="btn-upload" for="csvFile" style="cursor:pointer"><i class="bi bi-upload"></i> Selecionar CSV</label>
@@ -877,6 +868,9 @@ body.dark .insight-section li {
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="persistence-manager.js"></script>
+    <script src="data-loader.js"></script>
     <script>
         const DEFAULT_COLORS = ['#003f5c','#2f4b7c','#665191','#a05195','#d45087','#f95d6a','#ff7c43','#ffa600','#63a3d8','#28a745','#e60000','#ffc107'];
         let rawData = [];
@@ -1425,7 +1419,7 @@ body.dark .insight-section li {
             activateCurrentLink();
             
                 // AUTO-LOAD: Carregar dataset automático da URL
-                //const autoLoadResult = await autoLoadDataset('dashboard_falhas.html');
+                const autoLoadResult = await autoLoadDataset('dashboard_falhas.html');
                 if (autoLoadResult && autoLoadResult.data) {
                     console.log(`✅ Dataset carregado: ${autoLoadResult.registros} registros`);
                     // Dados carregados e estarão disponíveis para o restante do script
