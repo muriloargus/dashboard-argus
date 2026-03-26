@@ -7,8 +7,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="persistence-manager.js"></script>
-  <script src="data-loader.js"></script>
+    <script src="persistence-manager.js"></script>
+    <script src="data-loader.js"></script>
   <script src="dashboard-shared.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest"></script>
   <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet">
@@ -724,16 +724,23 @@ body.dark .chart-legend {
         </nav>
 
   <div class="main-wrapper" id="mainContent">
-  <header class="header">
-    <div class="logo-container">
-      <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
-      <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
+  <header>
+    <div class="logos">
+      <div class="logo argus">
+        <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" />
+      </div>
+      <div class="logo ambev">
+        <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" />
+      </div>
     </div>
     <div class="titulo">
       Telemetria CCO
       <small>Ativos Cadastrados</small>
     </div>
-    <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+      <button class="btn-toggle" onclick="clearCache()" title="Limpar dados em cache do localStorage">🗑️ Limpar Cache</button>
+    </div>
   </header>
   <div class="container">
     <div class="filters">
