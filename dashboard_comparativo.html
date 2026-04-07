@@ -1348,6 +1348,10 @@ body.dark .sidebar-menu a.active {
 
       const periodoInicio = periodos[0];
       const periodoFim = periodos[periodos.length - 1];
+      
+      // ✅ DEBUG: Verificar quais períodos estão sendo processados
+      console.log(`📊 Períodos carregados para processamento:`, periodos);
+      console.log(`📊 Intervalo: ${periodoInicio} a ${periodoFim}`);
 
       // ✅ CORRIGIR: Combinar dados de todos os períodos nas variáveis globais
       motoristas = [];
@@ -1374,14 +1378,18 @@ body.dark .sidebar-menu a.active {
 
     function gerarGraficosTempo(periodoInicio, periodoFim) {
       const isDark = document.body.classList.contains('dark');
-      const periodos = Object.keys(dadosTemporal)
-        .filter(p => p >= periodoInicio && p <= periodoFim)
-        .sort();
-
+      
+      // ✅ IMPORTANTE: Usar APENAS os períodos que realmente possuem dados
+      // Não criar um intervalo contínuo, apenas períodos carregados
+      const periodos = Object.keys(dadosTemporal).sort();
+      
       if (periodos.length < 1) {
-        console.warn('Nenhum período encontrado no intervalo');
+        console.warn('⚠️ Nenhum período com dados encontrado');
         return;
       }
+      
+      // ✅ Validação: garantir que estamos usando apenas dados carregados
+      console.log(`📊 Períodos com dados para gráficos:`, periodos);
 
       // Ler filtros de transportadora e unidade
       const ft_filtro = document.getElementById('transportadora').value;
@@ -2155,6 +2163,29 @@ body.dark .sidebar-menu a.active {
       document.getElementById('file-multiplos').onchange = e => {
         const files = e.target.files;
         if (files.length === 0) return;
+
+        // ✅ LIMPAR dados temporais antigos quando novos arquivos são selecionados
+        dadosTemporal = {};
+        console.log('🧹 Dados temporais antigos limpos. Iniciando novo carregamento...');
+        
+        // ✅ Limpar localStorage para não restaurar dados antigos
+        try {
+          window.saveDataSafely('comparativoDataTemporal', {});
+        } catch(e) {
+          console.warn('Não foi possível limpar localStorage:', e);
+        }
+        
+        // ✅ Destruir gráficos antigos
+        const chartsAntigosIds = ['chart4', 'chart5', 'chart6', 'chart7', 'chart8', 'chart9', 'chart10', 'chart11', 'chart12'];
+        chartsAntigosIds.forEach(chartId => {
+          if (window[chartId]) {
+            try {
+              window[chartId].destroy();
+            } catch(e) {
+              console.warn(`Erro ao destruir ${chartId}:`, e);
+            }
+          }
+        });
 
         // Processar cada arquivo
         let motoristasCount = 0, ativosCount = 0;
