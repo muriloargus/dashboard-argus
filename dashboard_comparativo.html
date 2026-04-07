@@ -436,10 +436,10 @@
       margin: 0 12px !important;
       padding: 6px 10px !important;
       border-radius: 4px;
-      background: #f0f4f8 !important;
+      background: #e8f0f8 !important;
       display: flex !important;
       align-items: center !important;
-      border: 1px solid #d0dce8 !important;
+      border: 1px solid #b0c4de !important;
     }
 
     body.dark .apexcharts-legend-series {
@@ -448,27 +448,29 @@
     }
 
     .apexcharts-legend-text {
-      color: #000 !important;
+      color: #1a3a52 !important;
       font-weight: 700 !important;
       margin-left: 8px !important;
       font-size: 14px !important;
     }
 
     body.dark .apexcharts-legend-text {
-      color: #fff !important;
+      color: #e8f0f8 !important;
     }
 
     /* Force legend text color even with inline styles */
     .apexcharts-svg .apexcharts-legend-text,
     .apexcharts-legend-text {
-      fill: #000 !important;
-      color: #000 !important;
+      fill: #1a3a52 !important;
+      color: #1a3a52 !important;
+      text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.1) !important;
     }
 
     body.dark .apexcharts-svg .apexcharts-legend-text,
     body.dark .apexcharts-legend-text {
-      fill: #fff !important;
-      color: #fff !important;
+      fill: #e8f0f8 !important;
+      color: #e8f0f8 !important;
+      text-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.5) !important;
     }
 
     .apexcharts-legend-marker {
@@ -715,31 +717,6 @@
       }
     }
   </style>
-  <!-- Force legend colors for ApexCharts -->
-  <style>
-    /* Legends em light mode ficam pretas */
-    .apexcharts-legend-text {
-      color: #000 !important;
-      fill: #000 !important;
-    }
-    
-    /* Legends em dark mode ficam brancas */
-    body.dark .apexcharts-legend-text {
-      color: #fff !important;
-      fill: #fff !important;
-    }
-
-    /* Força adicional nos textos das legendas */
-    .apexcharts-svg .apexcharts-legend-text {
-      color: #000 !important;
-      fill: #000 !important;
-    }
-
-    body.dark .apexcharts-svg .apexcharts-legend-text {
-      color: #fff !important;
-      fill: #fff !important;
-    }
-  </style>
 </head>
 <style>
 /* Dark mode aprimorado (injetado automaticamente) */
@@ -811,30 +788,30 @@ body.dark .sidebar-menu a.active {
   </header>
 
   <div class="container">
+    <!-- Nova Seção: Upload Múltiplo Temporal -->
+    <div style="background: rgba(99, 163, 216, 0.08); padding: 20px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid var(--primary-color);">
+      <h3 style="color: var(--primary-color); margin-top: 0;">📅 Comparativo Mês a Mês</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+        <div>
+          <label style="font-size: 12px; font-weight: 600; color: var(--primary-color);">Adicionar CSVs de Múltiplos Períodos</label>
+          <input type="file" id="file-multiplos" accept=".csv" placeholder="Selecione CSVs" multiple style="margin-top: 8px;">
+          <small style="display: block; margin-top: 6px; color: var(--muted);">💡 Suporta vários arquivos. Detecta período automaticamente pelo nome (ex: ativos 06-04, ativos 05-04)</small>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 8px;">
+          <button onclick="limparHistorico()" style="flex: 1; background: rgba(239, 68, 68, 0.8); border-color: #ef4444; border-radius: 10px; padding: 10px 16px;">🗑️ Limpar Histórico</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros por Período (apenas temporal) -->
     <div class="filters">
-      <input type="file" id="file-motoristas" accept=".csv" placeholder="Motoristas CSV">
-      <input type="file" id="file-ativos" accept=".csv" placeholder="Ativos CSV">
       <select id="transportadora">
         <option value="">Todas Transportadoras</option>
       </select>
       <select id="unidade">
         <option value="">Todas Unidades</option>
       </select>
-    </div>
-
-    <div class="cards">
-      <div class="card">
-        <span>👤 Total Motoristas</span>
-        <h2 id="card1">0</h2>
-      </div>
-      <div class="card">
-        <span>🚚 Total Ativos</span>
-        <h2 id="card2">0</h2>
-      </div>
-      <div class="card">
-        <span>✅ Motoristas com NFC</span>
-        <h2 id="card4">0%</h2>
-      </div>
+      <input type="text" id="pesquisa" placeholder="🔍 Pesquisar Motorista, NFC..." style="padding: 8px; border: 1px solid var(--primary-color); border-radius: 6px; background: white; color: #333; font-weight: 600; flex: 1; max-width: 300px;">
     </div>
 
     <h2 style="color: var(--primary-color); margin: 24px 0 16px; font-size: 20px;">📊 Análise Comparativa</h2>
@@ -874,26 +851,96 @@ body.dark .sidebar-menu a.active {
       <button onclick="abrirAjuda()" style="padding: 10px 16px; background: rgba(255, 215, 0, 0.2); border: 2px solid var(--accent-color); border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--primary-color); transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255, 215, 0, 0.3)'" onmouseout="this.style.background='rgba(255, 215, 0, 0.2)'">❓ Como Atualizar Dados?</button>
     </div>
 
-    <!-- Gráficos -->
-    <div class="grid" style="grid-template-columns: 1fr;">
-      <div class="box">
-        <h3>1️⃣ Motoristas vs Ativos</h3>
-        <div id="g1"></div>
+    <!-- NOVOS GRÁFICOS TEMPORAIS -->
+    <div style="margin-top: 40px; padding-top: 30px; border-top: 3px solid var(--accent-color);">
+      <h2 style="color: var(--primary-color); margin: 0 0 24px 0; font-size: 22px;">📈 Análise Temporal (Mês a Mês)</h2>
+      
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Evolução de Motoristas</h3>
+          <div id="g4"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Evolução de Ativos</h3>
+          <div id="g5"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Cobertura NFC % (Evolução)</h3>
+          <div id="g6"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Comparativo por Transportadora - total de motoristas</h3>
+          <div id="g7"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Comparativo por Unidade - total de motoristas</h3>
+          <div id="g8"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Comparativo por Transportadora - NFC Válido</h3>
+          <div id="g9"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Comparativo por Unidade - NFC Válido</h3>
+          <div id="g10"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Comparativo por Transportadora - Total de Ativos</h3>
+          <div id="g11"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns: 1fr;">
+        <div class="box">
+          <h3>Comparativo por Unidade - Total de Ativos</h3>
+          <div id="g12"></div>
+        </div>
       </div>
     </div>
 
-    <div class="grid" style="grid-template-columns: 1fr;">
-      <div class="box">
-        <h3>2️⃣ Distribuição por Unidade</h3>
-        <div id="g2"></div>
-      </div>
-    </div>
-
-    <div class="grid" style="grid-template-columns: 1fr;">
-      <div class="box">
-        <h3>3️⃣ Cobertura NFC (Quantidade)</h3>
-        <div id="g3"></div>
-      </div>
+    <div class="table-container">
+      <h3 class="table-title">📊 Análise de Variação (Mês a Mês)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Motoristas</th>
+            <th>Var. Motorista ↑↓</th>
+            <th>Ativos</th>
+            <th>Var. Ativos ↑↓</th>
+            <th>Cobertura NFC</th>
+            <th>Var. NFC ↑↓</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-variacao">
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">
+              Carregue múltiplos CSVs para visualizar a análise temporal
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="table-container">
@@ -912,6 +959,29 @@ body.dark .sidebar-menu a.active {
         <tbody id="tabela-corpo">
           <tr>
             <td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">
+              Carregue os arquivos CSV para iniciar a análise
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-container">
+      <h3 class="table-title">👥 Detalhamento de Motoristas</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome Completo</th>
+            <th>CPF</th>
+            <th>Transportadora</th>
+            <th>Unidade</th>
+            <th>NFC</th>
+            <th>Status NFC</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-motoristas">
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 40px; color: var(--muted);">
               Carregue os arquivos CSV para iniciar a análise
             </td>
           </tr>
@@ -1053,8 +1123,10 @@ body.dark .sidebar-menu a.active {
     }
 
     let motoristas = [], ativos = [];
-    let chart1, chart2, chart3;
+    let chart1, chart2, chart3, chart4, chart5, chart6, chart7;
+    let dadosTemporal = {}; // { "2026-04": { motoristas: [...], ativos: [...] }, ... }
 
+    // ===== DEFINIÇÃO DE FUNÇÕES HELPER =====
     const nfcOk = n => {
       if (!n) return false;
       const trimmed = n.trim();
@@ -1062,6 +1134,964 @@ body.dark .sidebar-menu a.active {
       // Aceita NFC com 14+ dígitos (formato novo: numérico) ou hexadecimal com 12+ caracteres (formato antigo)
       return (trimmed.length > 14 && /^[0-9]+$/.test(trimmed)) || (trimmed.length >= 12 && /^[0-9a-fA-F]+$/.test(trimmed));
     };
+
+    // ===== FUNÇÕES TEMPORAIS =====
+    const mesParaNumero = {
+      'janeiro': '01', 'jan': '01',
+      'fevereiro': '02', 'fev': '02',
+      'março': '03', 'mar': '03',
+      'abril': '04', 'abr': '04',
+      'maio': '05', 'mai': '05',
+      'junho': '06', 'jun': '06',
+      'julho': '07', 'jul': '07',
+      'agosto': '08', 'ago': '08',
+      'setembro': '09', 'set': '09',
+      'outubro': '10', 'out': '10',
+      'novembro': '11', 'nov': '11',
+      'dezembro': '12', 'dez': '12'
+    };
+
+    function extrairPeriodoDoArquivo(nomeArquivo) {
+      // Padrões:
+      // 1. Antigo: "ativos 06-04" → 2026-06 ou "usuarios driver 05-04" → 2026-05
+      // 2. Com ano: "dados 2026-03" → 2026-03
+      // 3. NOVO: "ativos - março 2026" → 2026-03, "usuarios driver - abril 2026" → 2026-04
+      
+      const nomeMinusculo = nomeArquivo.toLowerCase();
+      
+      // Padrão 3: Mês em português + ano (ex: "março 2026")
+      for (const [mes, numero] of Object.entries(mesParaNumero)) {
+        if (nomeMinusculo.includes(mes)) {
+          // Procurar ano (2020-2099)
+          const anoMatch = nomeArquivo.match(/20\d{2}/);
+          if (anoMatch) {
+            const ano = anoMatch[0];
+            console.log(`✅ Período detectado: ${mes.toUpperCase()} de ${ano} → ${ano}-${numero}`);
+            return `${ano}-${numero}`;
+          }
+        }
+      }
+      
+      // Padrão 2: YYYY-MM (ex: "2026-03")
+      const regex2 = /(\d{4})-(\d{2})/;
+      let match = nomeArquivo.match(regex2);
+      if (match) {
+        console.log(`✅ Período detectado: ${match[1]}-${match[2]}`);
+        return `${match[1]}-${match[2]}`;
+      }
+      
+      // Padrão 1: DD-MM (ex: "06-04")
+      const regex1 = /(\d{1,2})-(\d{1,2})(?:\.|$)/;
+      match = nomeArquivo.match(regex1);
+      if (match) {
+        const dia = parseInt(match[1]);
+        const mes = parseInt(match[2]);
+        // Assumir ano 2026
+        const ano = 2026;
+        const periodoFormatado = `${ano}-${String(mes).padStart(2, '0')}`;
+        console.log(`✅ Período detectado: ${dia}-${mes} → ${periodoFormatado}`);
+        return periodoFormatado;
+      }
+      
+      console.warn(`❌ Período não detectado em: "${nomeArquivo}"`);
+      return null;
+    }
+
+    function processarArquivoTemporal(tipo, file, callback) {
+      if (!file) return;
+      
+      const periodo = extrairPeriodoDoArquivo(file.name);
+      if (!periodo) {
+        alert(`⚠️ Não consegui detectar o período do arquivo "${file.name}"\n\nFormatos aceitos:\n✓ "dados 06-04" ou "dados 05-04"\n✓ "dados 2026-04"\n✓ "ativos - março 2026" ou "usuarios driver - abril 2026"`);
+        if (callback) callback();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const primeiraLinha = (text || '').split(/\r\n|\n/)[0] || '';
+        
+        let delim = ';';
+        if (primeiraLinha.split(',').length > primeiraLinha.split(';').length) delim = ',';
+        if (primeiraLinha.split('\t').length > primeiraLinha.split(delim).length) delim = '\t';
+
+        Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          delimiter: delim,
+          dynamicTyping: false,
+          complete: r => {
+            // Inicializar período se não existir
+            if (!dadosTemporal[periodo]) {
+              dadosTemporal[periodo] = { motoristas: [], ativos: [] };
+            }
+
+            if (tipo === 'motoristas') {
+              dadosTemporal[periodo].motoristas = r.data.map(x => {
+                const nomeCol = Object.keys(x).find(k => k.toLowerCase().includes('nome')) || '';
+                const cpfCol = Object.keys(x).find(k => k.toLowerCase().includes('cpf')) || '';
+                const nfcCol = Object.keys(x).find(k => k.toLowerCase().includes('nfc')) || '';
+                const grupoCol = Object.keys(x).find(k => k.toLowerCase().includes('grupo')) || '';
+                
+                const grupo = (x[grupoCol] || "").trim();
+                const transportadora = (x.TRANSPORTADORA || x.transportadora || extrairTransportadora(grupo) || "").trim();
+                const unidade = (x.UNIDADE || x.unidade || extrairUnidade(grupo) || "").trim();
+                return {
+                  nome: (x[nomeCol] || "").trim(),
+                  cpf: (x[cpfCol] || "").trim(),
+                  transportadora: transportadora,
+                  unidade: unidade,
+                  nfc: String(x[nfcCol] || "").trim()
+                };
+              }).filter(x => x.nome);
+            } else {
+              // DEBUG: Log das colunas encontradas
+              console.log(`🔍 Colunas do CSV de ATIVOS:`, Object.keys(r.data[0] || {}));
+              
+              dadosTemporal[periodo].ativos = r.data.map(x => {
+                const dispositivoCol = Object.keys(x).find(k => 
+                  k.toLowerCase().includes('dispositivo') && !k.toLowerCase().includes('grupo')
+                ) || '';
+                const grupoCol = Object.keys(x).find(k => 
+                  k.toLowerCase().includes('grupo de dispositivo') || 
+                  (k.toLowerCase().includes('grupo') && !k.toLowerCase().includes('nome'))
+                ) || '';
+                const placaCol = Object.keys(x).find(k => k.toLowerCase().includes('placa')) || '';
+                const fabricanteCol = Object.keys(x).find(k => k.toLowerCase().includes('fabricante')) || '';
+                const tipoCol = Object.keys(x).find(k => 
+                  k.toLowerCase().includes('tipo de veiculo') || k.toLowerCase().includes('tipo veiculo')
+                ) || '';
+                
+                // FALLBACKS ADICIONAIS - em caso de colunas com nomes não padrão
+                const placaFallback = Object.keys(x).find(k => 
+                  /^(placa|dispositivo|vehicle|asset|id)$/i.test(k.trim())
+                ) || '';
+                
+                const grupo = (x[grupoCol] || "").trim();
+                const grupoData = extrairGrupoAtivos(grupo);
+                
+                // Tentar encontrar placa em múltiplas colunas
+                let placa = (x[dispositivoCol] || "").trim();
+                if (!placa) placa = (x[placaCol] || "").trim();
+                if (!placa) placa = (x[placaFallback] || "").trim();
+                if (!placa && tipo === 'ativos') {
+                  // Se for arquivo de ativos mas não achou, pegar primeira coluna não vazia
+                  placa = Object.values(x).find(v => v && String(v).trim().length > 0) || "";
+                }
+                
+                const transportadora = (x.TRANSPORTADORA || x.transportadora || x.Transportadora || grupoData.transportadora || "").trim();
+                const unidade = (x.UNIDADE || x.unidade || x.Unidade || grupoData.unidade || "").trim();
+                const tipoVeiculo = (x[tipoCol] || grupoData.tipo || "").trim();
+                const fabricante = (x[fabricanteCol] || grupoData.fabricante || "").trim();
+                
+                return {
+                  placa: placa.trim(),
+                  transportadora: transportadora,
+                  unidade: unidade,
+                  tipo: tipoVeiculo,
+                  fabricante: fabricante
+                };
+              }).filter(x => x.placa && x.placa.length > 0);
+              
+              console.log(`✅ ATIVOS extraídos (${periodo}):`, dadosTemporal[periodo].ativos.length, 'registros');
+            }
+
+            window.saveDataSafely('comparativoDataTemporal', dadosTemporal);
+            alert(`✅ ${tipo.toUpperCase()} (${periodo}) carregado: ${(tipo === 'motoristas' ? dadosTemporal[periodo].motoristas : dadosTemporal[periodo].ativos).length} registros`);
+            carregarFiltrosTemporal();
+            
+            console.log(`📄 Dados temporais atualizados:`, Object.keys(dadosTemporal));
+            
+            // Chamar callback quando o arquivo terminar de processar
+            if (callback) callback();
+          },
+          error: (error) => {
+            console.error('Erro ao parsear CSV:', error);
+            alert(`❌ Erro ao carregar ${tipo} (${periodo}): ${error.message}`);
+            if (callback) callback();
+          }
+        });
+      };
+      reader.onerror = function() {
+        alert('❌ Erro ao ler o arquivo');
+      };
+      reader.readAsText(file);
+    }
+
+    function carregarFiltrosTemporal() {
+      // Atualizar filtros com based nos dados temporais
+      const todosPeriodos = Object.keys(dadosTemporal).sort();
+      if (todosPeriodos.length < 2) {
+        // Se há dados tradicionais, usá-los
+        if (motoristas.length > 0 || ativos.length > 0) {
+          carregarFiltros();
+        }
+        return;
+      }
+
+      // ===== PERÍODOS CARREGADOS (visualizar em Insights) =====
+      // Armazenar meses para exibição nos insights
+      window.mesesCarregados = Object.keys(dadosTemporal).sort();
+      console.log('📅 Períodos carregados:', window.mesesCarregados);
+    }
+
+
+    function processarTemporal() {
+      // Usar todos os períodos disponíveis em dadosTemporal (não há mais seletores de período)
+      const periodos = Object.keys(dadosTemporal).sort();
+
+      if (periodos.length === 0) {
+        console.log('⏳ Carregue dados temporais primeiro');
+        return;
+      }
+
+      const periodoInicio = periodos[0];
+      const periodoFim = periodos[periodos.length - 1];
+
+      // ✅ CORRIGIR: Combinar dados de todos os períodos nas variáveis globais
+      motoristas = [];
+      ativos = [];
+      
+      periodos.forEach(p => {
+        if (dadosTemporal[p]) {
+          motoristas = motoristas.concat(dadosTemporal[p].motoristas || []);
+          ativos = ativos.concat(dadosTemporal[p].ativos || []);
+        }
+      });
+
+      console.log(`📊 Período ${periodoInicio} a ${periodoFim}: ${motoristas.length} motoristas, ${ativos.length} ativos`);
+
+      // Atualizar filtros baseado nos dados combinados
+      carregarFiltros();
+      processar(); // ← Isso vai atualizar as tabelas!
+
+      // Gerar gráficos temporais
+      gerarGraficosTempo(periodoInicio, periodoFim);
+      gerarInsightsTempo(periodoInicio, periodoFim);
+      atualizarTabelaVariacao(periodoInicio, periodoFim);
+    }
+
+    function gerarGraficosTempo(periodoInicio, periodoFim) {
+      const isDark = document.body.classList.contains('dark');
+      const periodos = Object.keys(dadosTemporal)
+        .filter(p => p >= periodoInicio && p <= periodoFim)
+        .sort();
+
+      if (periodos.length < 1) {
+        console.warn('Nenhum período encontrado no intervalo');
+        return;
+      }
+
+      // Ler filtros de transportadora e unidade
+      const ft_filtro = document.getElementById('transportadora').value;
+      const fu_filtro = document.getElementById('unidade').value;
+
+      // Calcular dados para cada período aplicando filtros
+      const dadosPeriodos = periodos.map(p => {
+        let motor = dadosTemporal[p].motoristas || [];
+        let atvo = dadosTemporal[p].ativos || [];
+
+        // Aplicar filtros de transportadora e unidade
+        if (ft_filtro && ft_filtro !== 'Todas' && ft_filtro !== 'undefined') {
+          motor = motor.filter(m => m.transportadora === ft_filtro);
+          atvo = atvo.filter(a => a.transportadora === ft_filtro);
+        }
+
+        if (fu_filtro && fu_filtro !== 'Todas' && fu_filtro !== 'undefined') {
+          motor = motor.filter(m => m.unidade === fu_filtro);
+          atvo = atvo.filter(a => a.unidade === fu_filtro);
+        }
+
+        const nfcValidos = motor.filter(x => nfcOk(x.nfc)).length;
+        const pctNFC = motor.length > 0 ? Math.round((nfcValidos / motor.length) * 100) : 0;
+
+        return {
+          periodo: p,
+          motoristas: motor.length,
+          ativos: atvo.length,
+          nfc: nfcValidos,
+          pctNFC: pctNFC
+        };
+      });
+
+      // G4: Evolução de Motoristas
+      if (window.chart4) window.chart4.destroy();
+      const options4 = {
+        chart: {
+          type: 'line',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 350
+        },
+        series: [{ name: 'Motoristas', data: dadosPeriodos.map(d => d.motoristas) }],
+        xaxis: {
+          categories: dadosPeriodos.map(d => d.periodo),
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' } }
+        },
+        yaxis: {
+          labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } }
+        },
+        colors: ['#0033A0'],
+        stroke: { width: 3, curve: 'smooth' },
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) { return val.toLocaleString('pt-BR'); },
+          style: { fontSize: '12px', fontWeight: 'bold' }
+        },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: {
+          enabled: true,
+          theme: isDark ? 'dark' : 'light',
+          y: { formatter: function(val) { return val.toLocaleString('pt-BR'); } }
+        }
+      };
+      const g4Element = document.querySelector('#g4');
+      if (g4Element) {
+        window.chart4 = new ApexCharts(g4Element, options4);
+        window.chart4.render();
+      }
+
+      // G5: Evolução de Ativos
+      if (window.chart5) window.chart5.destroy();
+      const options5 = {
+        chart: {
+          type: 'line',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 350
+        },
+        series: [{ name: 'Ativos', data: dadosPeriodos.map(d => d.ativos) }],
+        xaxis: {
+          categories: dadosPeriodos.map(d => d.periodo),
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' } }
+        },
+        yaxis: {
+          labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } }
+        },
+        colors: ['#FF6B35'],
+        stroke: { width: 3, curve: 'smooth' },
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) { return val.toLocaleString('pt-BR'); },
+          style: { fontSize: '12px', fontWeight: 'bold' }
+        },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: {
+          enabled: true,
+          theme: isDark ? 'dark' : 'light',
+          y: { formatter: function(val) { return val.toLocaleString('pt-BR'); } }
+        }
+      };
+      const g5Element = document.querySelector('#g5');
+      if (g5Element) {
+        window.chart5 = new ApexCharts(g5Element, options5);
+        window.chart5.render();
+      }
+
+      // G6: Cobertura NFC % (Evolução)
+      if (window.chart6) window.chart6.destroy();
+      const options6 = {
+        chart: {
+          type: 'line',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 350
+        },
+        series: [{ name: 'Cobertura NFC %', data: dadosPeriodos.map(d => d.pctNFC) }],
+        xaxis: {
+          categories: dadosPeriodos.map(d => d.periodo),
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' } }
+        },
+        yaxis: {
+          min: 0,
+          max: 100,
+          labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } }
+        },
+        colors: ['#10b981'],
+        stroke: { width: 3, curve: 'smooth' },
+        dataLabels: {
+          enabled: true,
+          formatter: function(val) { return val + '%'; },
+          style: { fontSize: '12px', fontWeight: 'bold' }
+        },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: {
+          enabled: true,
+          theme: isDark ? 'dark' : 'light',
+          y: { formatter: function(val) { return val + '%'; } }
+        }
+      };
+      const g6Element = document.querySelector('#g6');
+      if (g6Element) {
+        window.chart6 = new ApexCharts(g6Element, options6);
+        window.chart6.render();
+      }
+
+      // G7: Comparativo por Transportadora (TODOS OS PERÍODOS, ordenado DECRESCENTE)
+      if (window.chart7) window.chart7.destroy();
+      const ft_g7 = document.getElementById('transportadora').value;
+      const fu_g7 = document.getElementById('unidade').value;
+      
+      const aplicarFiltroTransp7 = (ft) => ft && ft !== 'Todas' && ft !== 'Todas Transportadoras' && ft !== 'undefined';
+      const aplicarFiltroUnidade7 = (fu) => fu && fu !== 'Todas' && fu !== 'Todas Unidades' && fu !== 'undefined';
+      
+      // Contar motoristas por transportadora
+      const transpCounts = {};
+      periodos.forEach(p => {
+        (dadosTemporal[p].motoristas || []).forEach(m => {
+          // Aplicar filtro de transportadora se necessário
+          if (aplicarFiltroTransp7(ft_g7) && m.transportadora !== ft_g7) return;
+          // Aplicar filtro de unidade se necessário
+          if (aplicarFiltroUnidade7(fu_g7) && m.unidade !== fu_g7) return;
+          
+          if (!transpCounts[m.transportadora]) transpCounts[m.transportadora] = 0;
+          transpCounts[m.transportadora]++;
+        });
+      });
+      
+      // Ordenar DECRESCENTE (maior para menor) e manter top 10
+      const transpArray = Object.entries(transpCounts)
+        .filter(([t]) => t && t !== 'Sem cadastro' && t !== '')
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([t]) => t);
+      
+      const dataSeries = periodos.map(p => ({
+        name: p,
+        data: transpArray.map(t => {
+          let motor = (dadosTemporal[p].motoristas || []).filter(m => m.transportadora === t);
+          if (aplicarFiltroUnidade7(fu_g7)) motor = motor.filter(m => m.unidade === fu_g7);
+          return motor.length;
+        })
+      }));
+
+      const options7 = {
+        chart: {
+          type: 'bar',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 400
+        },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '65%'
+          }
+        },
+        series: dataSeries,
+        xaxis: {
+          categories: transpArray,
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' }, rotate: -45 }
+        },
+        yaxis: {
+          labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } }
+        },
+        colors: ['#0033A0', '#FF6B35', '#10b981', '#f59e0b'],
+        dataLabels: { enabled: true, formatter: function(val) { return val > 0 ? val : ''; } },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: { enabled: true, theme: isDark ? 'dark' : 'light' }
+      };
+      const g7Element = document.querySelector('#g7');
+      if (g7Element) {
+        window.chart7 = new ApexCharts(g7Element, options7);
+        window.chart7.render();
+      }
+
+      // G8: Comparativo por Unidade (ordenado DECRESCENTE)
+      if (window.chart8) window.chart8.destroy();
+      const ft_g8 = document.getElementById('transportadora').value;
+      const fu_g8 = document.getElementById('unidade').value;
+      
+      // Função auxiliar para verificar se filtro deve ser aplicado
+      const aplicarFiltroTransp8 = (ft) => ft && ft !== 'Todas' && ft !== 'Todas Transportadoras' && ft !== 'undefined';
+      const aplicarFiltroUnidade8 = (fu) => fu && fu !== 'Todas' && fu !== 'Todas Unidades' && fu !== 'undefined';
+      
+      // Contar motoristas por unidade
+      const unidadeCounts = {};
+      periodos.forEach(p => {
+        (dadosTemporal[p].motoristas || []).forEach(m => {
+          // Aplicar filtro de transportadora se necessário
+          if (aplicarFiltroTransp8(ft_g8) && m.transportadora !== ft_g8) return;
+          // Aplicar filtro de unidade se necessário
+          if (aplicarFiltroUnidade8(fu_g8) && m.unidade !== fu_g8) return;
+          // Contar para a unidade
+          if (!unidadeCounts[m.unidade]) unidadeCounts[m.unidade] = 0;
+          unidadeCounts[m.unidade]++;
+        });
+      });
+      
+      // Ordenar DECRESCENTE (maior para menor) e manter top 10
+      const unidadeArray = Object.entries(unidadeCounts)
+        .filter(([u]) => u && u !== 'Sem UNI' && u !== '')
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([u]) => u);
+      
+      const dataSeries8 = periodos.map(p => ({
+        name: p,
+        data: unidadeArray.map(u => {
+          let motor = (dadosTemporal[p].motoristas || []).filter(m => m.unidade === u);
+          if (aplicarFiltroTransp8(ft_g8)) motor = motor.filter(m => m.transportadora === ft_g8);
+          return motor.length;
+        })
+      }));
+
+      const options8 = {
+        chart: {
+          type: 'bar',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 400
+        },
+        plotOptions: {
+          bar: {
+            horizontal: false,
+            columnWidth: '65%'
+          }
+        },
+        series: dataSeries8,
+        xaxis: {
+          categories: unidadeArray,
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' }, rotate: -45 }
+        },
+        yaxis: {
+          labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } }
+        },
+        colors: ['#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'],
+        dataLabels: { enabled: true, formatter: function(val) { return val > 0 ? val : ''; } },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: { enabled: true, theme: isDark ? 'dark' : 'light' }
+      };
+      const g8Element = document.querySelector('#g8');
+      if (g8Element) {
+        window.chart8 = new ApexCharts(g8Element, options8);
+        window.chart8.render();
+      }
+
+      // G9: NFC Válido por Transportadora (ordenado DECRESCENTE)
+      if (window.chart9) window.chart9.destroy();
+      
+      const aplicarFiltroTransp9 = (ft) => ft && ft !== 'Todas' && ft !== 'Todas Transportadoras' && ft !== 'undefined';
+      const aplicarFiltroUnidade9 = (fu) => fu && fu !== 'Todas' && fu !== 'Todas Unidades' && fu !== 'undefined';
+      
+      // Contar NFC válidos por transportadora
+      const transpNfcCounts = {};
+      periodos.forEach(p => {
+        (dadosTemporal[p].motoristas || []).forEach(m => {
+          // Aplicar filtro de transportadora se necessário
+          if (aplicarFiltroTransp9(ft_g7) && m.transportadora !== ft_g7) return;
+          // Aplicar filtro de unidade se necessário
+          if (aplicarFiltroUnidade9(fu_g7) && m.unidade !== fu_g7) return;
+          // Contar NFCs válidos
+          if (nfcOk(m.nfc)) {
+            if (!transpNfcCounts[m.transportadora]) transpNfcCounts[m.transportadora] = 0;
+            transpNfcCounts[m.transportadora]++;
+          }
+        });
+      });
+      
+      // Ordenar DECRESCENTE por NFC válidos
+      const transpArrayG9 = Object.entries(transpNfcCounts)
+        .filter(([t]) => t && t !== 'Sem cadastro' && t !== '')
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([t]) => t);
+      
+      const dataSeries9 = periodos.map(p => ({
+        name: p,
+        data: transpArrayG9.map(t => {
+          let nfcValidos = (dadosTemporal[p].motoristas || []).filter(m => m.transportadora === t && nfcOk(m.nfc));
+          if (aplicarFiltroUnidade9(fu_g7)) nfcValidos = nfcValidos.filter(m => m.unidade === fu_g7);
+          return nfcValidos.length;
+        })
+      }));
+
+      const options9 = {
+        chart: {
+          type: 'bar',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 400
+        },
+        plotOptions: { bar: { horizontal: false, columnWidth: '65%' } },
+        series: dataSeries9,
+        xaxis: {
+          categories: transpArrayG9,
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' }, rotate: -45 }
+        },
+        yaxis: { labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } } },
+        colors: ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b'],
+        dataLabels: { enabled: true, formatter: function(val) { return val > 0 ? val : ''; } },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: { enabled: true, theme: isDark ? 'dark' : 'light' }
+      };
+      const g9Element = document.querySelector('#g9');
+      if (g9Element) {
+        window.chart9 = new ApexCharts(g9Element, options9);
+        window.chart9.render();
+      }
+
+      // G10: NFC Válido por Unidade (ordenado DECRESCENTE)
+      if (window.chart10) window.chart10.destroy();
+      
+      const aplicarFiltroTransp10 = (ft) => ft && ft !== 'Todas' && ft !== 'Todas Transportadoras' && ft !== 'undefined';
+      const aplicarFiltroUnidade10 = (fu) => fu && fu !== 'Todas' && fu !== 'Todas Unidades' && fu !== 'undefined';
+      
+      // Contar NFC válidos por unidade
+      const unidadeNfcCounts = {};
+      periodos.forEach(p => {
+        (dadosTemporal[p].motoristas || []).forEach(m => {
+          // Aplicar filtro de transportadora se necessário
+          if (aplicarFiltroTransp10(ft_g8) && m.transportadora !== ft_g8) return;
+          // Aplicar filtro de unidade se necessário
+          if (aplicarFiltroUnidade10(fu_g8) && m.unidade !== fu_g8) return;
+          // Contar NFCs válidos para cada unidade
+          if (nfcOk(m.nfc)) {
+            if (!unidadeNfcCounts[m.unidade]) unidadeNfcCounts[m.unidade] = 0;
+            unidadeNfcCounts[m.unidade]++;
+          }
+        });
+      });
+      
+      // Ordenar DECRESCENTE por NFC válidos
+      const unidadeArrayG10 = Object.entries(unidadeNfcCounts)
+        .filter(([u]) => u && u !== 'Sem UNI' && u !== '')
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([u]) => u);
+      
+      const dataSeries10 = periodos.map(p => ({
+        name: p,
+        data: unidadeArrayG10.map(u => {
+          let nfcValidos = (dadosTemporal[p].motoristas || []).filter(m => m.unidade === u && nfcOk(m.nfc));
+          if (aplicarFiltroTransp10(ft_g8)) nfcValidos = nfcValidos.filter(m => m.transportadora === ft_g8);
+          return nfcValidos.length;
+        })
+      }));
+
+      const options10 = {
+        chart: {
+          type: 'bar',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 400
+        },
+        plotOptions: { bar: { horizontal: false, columnWidth: '65%' } },
+        series: dataSeries10,
+        xaxis: {
+          categories: unidadeArrayG10,
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' }, rotate: -45 }
+        },
+        yaxis: { labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } } },
+        colors: ['#ec4899', '#f59e0b', '#06b6d4', '#10b981'],
+        dataLabels: { enabled: true, formatter: function(val) { return val > 0 ? val : ''; } },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: { enabled: true, theme: isDark ? 'dark' : 'light' }
+      };
+      const g10Element = document.querySelector('#g10');
+      if (g10Element) {
+        window.chart10 = new ApexCharts(g10Element, options10);
+        window.chart10.render();
+      }
+
+      // G11: Total de Ativos por Transportadora (ordenado DECRESCENTE)
+      if (window.chart11) window.chart11.destroy();
+      
+      // Contar ativos por transportadora
+      const transpAtivosCounts = {};
+      periodos.forEach(p => {
+        (dadosTemporal[p].ativos || []).forEach(a => {
+          // Aplicar filtro de transportadora se necessário
+          if (aplicarFiltroTransp7(ft_g7) && a.transportadora !== ft_g7) return;
+          // Aplicar filtro de unidade se necessário
+          if (aplicarFiltroUnidade7(fu_g7) && a.unidade !== fu_g7) return;
+          // Contar para a transportadora
+          if (!transpAtivosCounts[a.transportadora]) transpAtivosCounts[a.transportadora] = 0;
+          transpAtivosCounts[a.transportadora]++;
+        });
+      });
+      
+      // Ordenar DECRESCENTE por ativos
+      const transpArrayG11 = Object.entries(transpAtivosCounts)
+        .filter(([t]) => t && t !== 'Sem cadastro' && t !== '')
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([t]) => t);
+      
+      const dataSeries11 = periodos.map(p => ({
+        name: p,
+        data: transpArrayG11.map(t => {
+          let totalAtivos = (dadosTemporal[p].ativos || []).filter(a => a.transportadora === t);
+          if (aplicarFiltroUnidade7(fu_g7)) totalAtivos = totalAtivos.filter(a => a.unidade === fu_g7);
+          return totalAtivos.length;
+        })
+      }));
+
+      const options11 = {
+        chart: {
+          type: 'bar',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 400
+        },
+        plotOptions: { bar: { horizontal: false, columnWidth: '65%' } },
+        series: dataSeries11,
+        xaxis: {
+          categories: transpArrayG11,
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' }, rotate: -45 }
+        },
+        yaxis: { labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } } },
+        colors: ['#ff7f50', '#20c997', '#ffc107', '#dc3545'],
+        dataLabels: { enabled: true, formatter: function(val) { return val > 0 ? val : ''; } },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: { enabled: true, theme: isDark ? 'dark' : 'light' }
+      };
+      const g11Element = document.querySelector('#g11');
+      if (g11Element) {
+        window.chart11 = new ApexCharts(g11Element, options11);
+        window.chart11.render();
+      }
+
+      // G12: Total de Ativos por Unidade (ordenado DECRESCENTE)
+      if (window.chart12) window.chart12.destroy();
+      
+      // Contar ativos por unidade
+      const unidadeAtivosCounts = {};
+      periodos.forEach(p => {
+        (dadosTemporal[p].ativos || []).forEach(a => {
+          // Aplicar filtro de transportadora se necessário
+          if (aplicarFiltroTransp8(ft_g8) && a.transportadora !== ft_g8) return;
+          // Aplicar filtro de unidade se necessário
+          if (aplicarFiltroUnidade8(fu_g8) && a.unidade !== fu_g8) return;
+          // Contar para a unidade
+          if (!unidadeAtivosCounts[a.unidade]) unidadeAtivosCounts[a.unidade] = 0;
+          unidadeAtivosCounts[a.unidade]++;
+        });
+      });
+      
+      // Ordenar DECRESCENTE por ativos
+      const unidadeArrayG12 = Object.entries(unidadeAtivosCounts)
+        .filter(([u]) => u && u !== 'Sem UNI' && u !== '')
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([u]) => u);
+      
+      const dataSeries12 = periodos.map(p => ({
+        name: p,
+        data: unidadeArrayG12.map(u => {
+          let totalAtivos = (dadosTemporal[p].ativos || []).filter(a => a.unidade === u);
+          if (aplicarFiltroTransp8(ft_g8)) totalAtivos = totalAtivos.filter(a => a.transportadora === ft_g8);
+          return totalAtivos.length;
+        })
+      }));
+
+      const options12 = {
+        chart: {
+          type: 'bar',
+          toolbar: { show: true },
+          theme: isDark ? 'dark' : 'light',
+          height: 400
+        },
+        plotOptions: { bar: { horizontal: false, columnWidth: '65%' } },
+        series: dataSeries12,
+        xaxis: {
+          categories: unidadeArrayG12,
+          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' }, rotate: -45 }
+        },
+        yaxis: { labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } } },
+        colors: ['#00d4ff', '#ff1744', '#2979f3', '#00c853'],
+        dataLabels: { enabled: true, formatter: function(val) { return val > 0 ? val : ''; } },
+        legend: { position: 'bottom', labels: { colors: isDark ? '#fff' : '#000', fontSize: 13 } },
+        tooltip: { enabled: true, theme: isDark ? 'dark' : 'light' }
+      };
+      const g12Element = document.querySelector('#g12');
+      if (g12Element) {
+        window.chart12 = new ApexCharts(g12Element, options12);
+        window.chart12.render();
+      }
+    }
+
+    function gerarInsightsTempo(periodoInicio, periodoFim) {
+      const periodos = Object.keys(dadosTemporal)
+        .filter(p => p >= periodoInicio && p <= periodoFim)
+        .sort();
+
+      if (periodos.length < 1) return;
+
+      // Ler filtros de transportadora e unidade
+      const ft = document.getElementById('transportadora').value;
+      const fu = document.getElementById('unidade').value;
+      
+      const aplicarFiltroTransp = (f) => f && f !== 'Todas' && f !== 'Todas Transportadoras' && f !== 'undefined';
+      const aplicarFiltroUnidade = (f) => f && f !== 'Todas' && f !== 'Todas Unidades' && f !== 'undefined';
+
+      // Função auxiliar para filtrar dados de um período
+      const filtrarDadosPeriodo = (motoristas, ativos) => {
+        let motFiltrados = motoristas;
+        let ativFiltrados = ativos;
+        
+        if (aplicarFiltroTransp(ft)) {
+          motFiltrados = motFiltrados.filter(m => m.transportadora === ft);
+          ativFiltrados = ativFiltrados.filter(a => a.transportadora === ft);
+        }
+        if (aplicarFiltroUnidade(fu)) {
+          motFiltrados = motFiltrados.filter(m => m.unidade === fu);
+          ativFiltrados = ativFiltrados.filter(a => a.unidade === fu);
+        }
+        
+        return { motoristas: motFiltrados, ativos: ativFiltrados };
+      };
+
+      const primeiro = dadosTemporal[periodos[0]];
+      const ultimo = dadosTemporal[periodos[periodos.length - 1]];
+
+      const firstFiltered = filtrarDadosPeriodo(primeiro.motoristas, primeiro.ativos);
+      const lastFiltered = filtrarDadosPeriodo(ultimo.motoristas, ultimo.ativos);
+
+      const motoristasInicio = firstFiltered.motoristas.length;
+      const motoristasUltimo = lastFiltered.motoristas.length;
+      const ativosInicio = firstFiltered.ativos.length;
+      const ativosUltimo = lastFiltered.ativos.length;
+
+      const nfcInicio = firstFiltered.motoristas.filter(x => nfcOk(x.nfc)).length;
+      const nfcUltimo = lastFiltered.motoristas.filter(x => nfcOk(x.nfc)).length;
+      const pctNfcInicio = motoristasInicio > 0 ? Math.round((nfcInicio / motoristasInicio) * 100) : 0;
+      const pctNfcUltimo = motoristasUltimo > 0 ? Math.round((nfcUltimo / motoristasUltimo) * 100) : 0;
+
+      const varMotor = motoristasUltimo - motoristasInicio;
+      const varAtivos = ativosUltimo - ativosInicio;
+      const varNfc = pctNfcUltimo - pctNfcInicio;
+
+      // Formatar meses carregados
+      const meses = {
+        '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Abr',
+        '05': 'Mai', '06': 'Jun', '07': 'Jul', '08': 'Ago',
+        '09': 'Set', '10': 'Out', '11': 'Nov', '12': 'Dez'
+      };
+      const mesesExibicao = periodos.map(p => {
+        const [ano, mes] = p.split('-');
+        return `${meses[mes]}/${ano.slice(-2)}`;
+      }).join(', ');
+
+      const insightPrincipal = `
+        📊 <strong>Período: ${periodos[0]} até ${periodos[periodos.length - 1]}</strong><br>
+        📅 <strong>Meses carregados:</strong> ${mesesExibicao}<br>
+        Motoristas: ${motoristasInicio} → ${motoristasUltimo} (${varMotor > 0 ? '+' : ''}${varMotor})<br>
+        Ativos: ${ativosInicio} → ${ativosUltimo} (${varAtivos > 0 ? '+' : ''}${varAtivos})<br>
+        Cobertura NFC: ${pctNfcInicio}% → ${pctNfcUltimo}% (${varNfc > 0 ? '+' : ''}${varNfc}%) <span style="color: #10b981; font-weight: 600;">[${nfcInicio} → ${nfcUltimo} com NFC válido]</span>
+      `;
+
+      const padroes = [
+        varMotor !== 0 ? `👥 Motoristas teve variação de ${varMotor > 0 ? 'crescimento' : 'redução'} de ${Math.abs(varMotor)} (${motoristasInicio > 0 ? ((Math.abs(varMotor) / motoristasInicio) * 100).toFixed(1) : 0}%)` : '👥 Motoristas mantiveram quantidade',
+        varAtivos !== 0 ? `🚛 Ativos teve variação de ${varAtivos > 0 ? 'crescimento' : 'redução'} de ${Math.abs(varAtivos)}` : '🚛 Ativos mantiveram quantidade',
+        varNfc !== 0 ? `📡 Cobertura NFC: ${varNfc > 0 ? 'Melhorou ↑' : 'Piorou ↓'} em ${Math.abs(varNfc)}%` : '📡 Cobertura NFC manteve-se estável'
+      ];
+
+      const recomendacoes = [
+        varMotor < -5 ? '⚠️ Redução significativa de motoristas - Investigar motivos' : varMotor > 10 ? '✅ Crescimento saudável de motoristas' : '📊 Motoristas estáveis',
+        pctNfcUltimo < 70 ? '🔴 Cobertura NFC abaixo de 70% - Ação urgente necessária' : pctNfcUltimo >= 90 ? '✅ Excelente cobertura NFC' : '⚠️ Melhorar cobertura NFC',
+        periodos.length > 2 ? `📈 Analisar tendência: ${periodos.length} períodos registrados` : '📝 Adicionar mais períodos para melhor análise'
+      ];
+
+      document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+      document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+      document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+      document.getElementById('insightsContainer').style.display = 'block';
+    }
+
+    function atualizarTabelaVariacao(periodoInicio, periodoFim) {
+      const periodos = Object.keys(dadosTemporal)
+        .filter(p => p >= periodoInicio && p <= periodoFim)
+        .sort();
+
+      const tbody = document.getElementById('tabela-variacao');
+      
+      // Ler filtros de transportadora e unidade
+      const ft = document.getElementById('transportadora').value;
+      const fu = document.getElementById('unidade').value;
+      
+      const aplicarFiltroTransp = (f) => f && f !== 'Todas' && f !== 'Todas Transportadoras' && f !== 'undefined';
+      const aplicarFiltroUnidade = (f) => f && f !== 'Todas' && f !== 'Todas Unidades' && f !== 'undefined';
+
+      // Função auxiliar para filtrar dados de um período
+      const filtrarDadosPeriodo = (motoristas, ativos) => {
+        let motFiltrados = motoristas;
+        let ativFiltrados = ativos;
+        
+        if (aplicarFiltroTransp(ft)) {
+          motFiltrados = motFiltrados.filter(m => m.transportadora === ft);
+          ativFiltrados = ativFiltrados.filter(a => a.transportadora === ft);
+        }
+        if (aplicarFiltroUnidade(fu)) {
+          motFiltrados = motFiltrados.filter(m => m.unidade === fu);
+          ativFiltrados = ativFiltrados.filter(a => a.unidade === fu);
+        }
+        
+        return { motoristas: motFiltrados, ativos: ativFiltrados };
+      };
+      
+      const linhas = periodos.map((p, idx) => {
+        const data = dadosTemporal[p];
+        const filtered = filtrarDadosPeriodo(data.motoristas, data.ativos);
+        const motoristas = filtered.motoristas.length;
+        const ativos = filtered.ativos.length;
+        const nfcValidos = filtered.motoristas.filter(x => nfcOk(x.nfc)).length;
+        const pctNfc = motoristas > 0 ? Math.round((nfcValidos / motoristas) * 100) : 0;
+
+        let varMotor = '-', varAtv = '-', varNfc = '-';
+        
+        if (idx > 0) {
+          const dataPrev = dadosTemporal[periodos[idx - 1]];
+          const filteredPrev = filtrarDadosPeriodo(dataPrev.motoristas, dataPrev.ativos);
+          const motoristasAnteriores = filteredPrev.motoristas.length;
+          const ativosAnteriores = filteredPrev.ativos.length;
+          const nfcAnteriores = filteredPrev.motoristas.filter(x => nfcOk(x.nfc)).length;
+          const pctNfcAnterior = motoristasAnteriores > 0 ? Math.round((nfcAnteriores / motoristasAnteriores) * 100) : 0;
+
+          const diff1 = motoristas - motoristasAnteriores;
+          const diff2 = ativos - ativosAnteriores;
+          const diff3 = pctNfc - pctNfcAnterior;
+
+          varMotor = `<span class="${diff1 > 0 ? 'ok' : diff1 < 0 ? 'alert' : ''}">${diff1 > 0 ? '+' : ''}${diff1}</span>`;
+          varAtv = `<span class="${diff2 > 0 ? 'ok' : diff2 < 0 ? 'alert' : ''}">${diff2 > 0 ? '+' : ''}${diff2}</span>`;
+          varNfc = `<span class="${diff3 > 0 ? 'ok' : diff3 < 0 ? 'alert' : ''}">${diff3 > 0 ? '+' : ''}${diff3}%</span>`;
+        }
+
+        return `
+          <tr>
+            <td><strong>${p}</strong></td>
+            <td>${motoristas}</td>
+            <td>${varMotor}</td>
+            <td>${ativos}</td>
+            <td>${varAtv}</td>
+            <td>${pctNfc}%</td>
+            <td>${varNfc}</td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = linhas || '<tr><td colspan="7" style="text-align: center; padding: 40px;">Sem dados para o período selecionado</td></tr>';
+    }
+
+    function limparHistorico() {
+      if (confirm('⚠️ Deseja realmente limpar todo o histórico de dados temporais? Esta ação não pode ser desfeita.')) {
+        dadosTemporal = {};
+        window.saveDataSafely('comparativoDataTemporal', {});
+        
+        document.getElementById('tabela-variacao').innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">Histórico limpo - Carregue novos CSVs</td></tr>';
+        
+        // Limpar gráficos se existirem
+        ['chart4', 'chart5', 'chart6', 'chart7', 'chart8', 'chart9', 'chart10', 'chart11', 'chart12'].forEach(c => {
+          if (window[c]) window[c].destroy();
+        });
+
+        alert('✅ Histórico limpo com sucesso!');
+      }
+    }
+
+    // ===== FIM FUNÇÕES TEMPORAIS =====
+    
 
     // Carregar preferência dark mode ao iniciar
     document.addEventListener('DOMContentLoaded', function() {
@@ -1084,14 +2114,133 @@ body.dark .sidebar-menu a.active {
       }
 
       // Configurar event listeners
-      document.getElementById('file-motoristas').onchange = e => carregarCSV('motoristas', e.target.files[0]);
-      document.getElementById('file-ativos').onchange = e => carregarCSV('ativos', e.target.files[0]);
-      document.getElementById('transportadora').onchange = () => { atualizarUnidades(); processar(); };
-      document.getElementById('unidade').onchange = () => processar();
-      document.getElementById('filtrarSemCadastro').onchange = () => {
-        localStorage.setItem('comparativoFiltroSemCadastro', document.getElementById('filtrarSemCadastro').checked ? 'true' : 'false');
+      document.getElementById('transportadora').addEventListener('change', function() {
+        atualizarUnidades(); 
+        processar(); 
+        const periodos = Object.keys(dadosTemporal).sort();
+        if (periodos.length > 0) {
+          const periodoInicio = periodos[0];
+          const periodoFim = periodos[periodos.length - 1];
+          gerarGraficosTempo(periodoInicio, periodoFim);
+        }
+      });
+      
+      document.getElementById('unidade').addEventListener('change', function() { 
         processar();
+        const periodos = Object.keys(dadosTemporal).sort();
+        if (periodos.length > 0) {
+          const periodoInicio = periodos[0];
+          const periodoFim = periodos[periodos.length - 1];
+          gerarGraficosTempo(periodoInicio, periodoFim);
+        }
+      });
+      
+      document.getElementById('filtrarSemCadastro').addEventListener('change', function() {
+        localStorage.setItem('comparativoFiltroSemCadastro', this.checked ? 'true' : 'false');
+        processar();
+      });
+
+      // Campo de pesquisa - usar input em vez de change para melhor responsividade
+      document.getElementById('pesquisa').addEventListener('input', function() {
+        processar();
+        const periodos = Object.keys(dadosTemporal).sort();
+        if (periodos.length > 0) {
+          const periodoInicio = periodos[0];
+          const periodoFim = periodos[periodos.length - 1];
+          gerarGraficosTempo(periodoInicio, periodoFim);
+        }
+      });
+
+      // ===== NOVOS EVENT LISTENERS TEMPORAIS =====
+      document.getElementById('file-multiplos').onchange = e => {
+        const files = e.target.files;
+        if (files.length === 0) return;
+
+        // Processar cada arquivo
+        let motoristasCount = 0, ativosCount = 0;
+        let arquivosProcessados = 0;
+        const totalArquivos = files.length;
+        
+        console.log(`📁 Processando ${files.length} arquivos...`);
+        
+        // Função para regenerar gráficos quando todos os arquivos forem processados
+        const verificarFimProcessamento = () => {
+          if (arquivosProcessados === totalArquivos) {
+            console.log(`✅ Todos os ${totalArquivos} arquivo(s) processado(s)!`);
+            processarTemporal();
+            console.log('🎨 Gráficos regenerados com sucesso!');
+          }
+        };
+        
+        for (let file of files) {
+          const nome = file.name.toLowerCase();
+          console.log(`🔍 Analisando arquivo: ${file.name}`);
+          
+          // Detecção mais robusta
+          const isMotoristasFile = nome.includes('motorista') || nome.includes('driver') || nome.includes('usuario') || nome.includes('usuarios');
+          const isAtivosFile = nome.includes('ativo') || nome.includes('asset') || nome.includes('veículo') || nome.includes('veiculo') || nome.includes('dispositivo');
+          
+          if (isMotoristasFile && !isAtivosFile) {
+            console.log(`✅ Detectado como: MOTORISTAS`);
+            processarArquivoTemporal('motoristas', file, () => {
+              arquivosProcessados++;
+              verificarFimProcessamento();
+            });
+            motoristasCount++;
+          } else if (isAtivosFile && !isMotoristasFile) {
+            console.log(`✅ Detectado como: ATIVOS`);
+            processarArquivoTemporal('ativos', file, () => {
+              arquivosProcessados++;
+              verificarFimProcessamento();
+            });
+            ativosCount++;
+          } else if (isAtivosFile && isMotoristasFile) {
+            // Se tem ambos, priorizar ativos (mais específico)
+            console.log(`✅ Detectado como: ATIVOS (ambíguo, priorizando ativos)`);
+            processarArquivoTemporal('ativos', file, () => {
+              arquivosProcessados++;
+              verificarFimProcessamento();
+            });
+            ativosCount++;
+          } else {
+            // Fallback: ordem de arquivo
+            console.log(`⚠️ Detectado como: ${motoristasCount === 0 ? 'MOTORISTAS' : 'ATIVOS'} (ordem de carregamento)`);
+            if (motoristasCount === 0) {
+              processarArquivoTemporal('motoristas', file, () => {
+                arquivosProcessados++;
+                verificarFimProcessamento();
+              });
+              motoristasCount++;
+            } else {
+              processarArquivoTemporal('ativos', file, () => {
+                arquivosProcessados++;
+                verificarFimProcessamento();
+              });
+              ativosCount++;
+            }
+          }
+        }
+        
+        console.log(`📊 Resumo: ${motoristasCount} motoristas + ${ativosCount} ativos`);
       };
+
+      // Restaurar dados temporais persistidos
+      let savedDataTemporal = null;
+      try {
+        savedDataTemporal = localStorage.getItem('comparativoDataTemporal');
+      } catch(e) {
+        console.warn('Storage access denied');
+      }
+      
+      if (savedDataTemporal) {
+        const data = safeParseJSON(savedDataTemporal);
+        if (data && Object.keys(data).length > 0) {
+          dadosTemporal = data;
+          carregarFiltrosTemporal();
+          processarTemporal();
+          console.log('✅ Dados temporais carregados do localStorage');
+        }
+      }
 
       // Atualizar data
       const hoje = new Date();
@@ -1169,95 +2318,6 @@ body.dark .sidebar-menu a.active {
       return result;
     }
 
-    function carregarCSV(tipo, file) {
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        const primeiraLinha = (text || '').split(/\r\n|\n/)[0] || '';
-        
-        // Detectar delimitador automaticamente
-        let delim = ';';
-        if (primeiraLinha.split(',').length > primeiraLinha.split(';').length) delim = ',';
-        if (primeiraLinha.split('\t').length > primeiraLinha.split(delim).length) delim = '\t';
-        
-        console.log('Delimitador detectado:', delim);
-
-        Papa.parse(text, {
-          header: true,
-          skipEmptyLines: true,
-          delimiter: delim,
-          dynamicTyping: false,
-          complete: r => {
-            console.log('CSV parseado. Total de linhas:', r.data.length);
-            if (r.data[0]) console.log('Colunas encontradas:', Object.keys(r.data[0]));
-            
-            if (tipo === 'motoristas') {
-              motoristas = r.data.map(x => {
-                // Buscar colunas case-insensitively
-                const nomeCol = Object.keys(x).find(k => k.toLowerCase().includes('nome')) || '';
-                const cpfCol = Object.keys(x).find(k => k.toLowerCase().includes('cpf')) || '';
-                const nfcCol = Object.keys(x).find(k => k.toLowerCase().includes('nfc')) || '';
-                const grupoCol = Object.keys(x).find(k => k.toLowerCase().includes('grupo')) || '';
-                
-                const grupo = (x[grupoCol] || "").trim();
-                const transportadora = (x.TRANSPORTADORA || x.transportadora || extrairTransportadora(grupo) || "").trim();
-                const unidade = (x.UNIDADE || x.unidade || extrairUnidade(grupo) || "").trim();
-                return {
-                  nome: (x[nomeCol] || "").trim(),
-                  cpf: (x[cpfCol] || "").trim(),
-                  transportadora: transportadora,
-                  unidade: unidade,
-                  nfc: String(x[nfcCol] || "").trim()
-                };
-              }).filter(x => x.nome);
-              console.log('Motoristas carregados:', motoristas.length);
-            } else {
-              ativos = r.data.map(x => {
-                // Buscar colunas case-insensitively
-                const dispositivoCol = Object.keys(x).find(k => k.toLowerCase().includes('dispositivo') && !k.toLowerCase().includes('grupo')) || '';
-                const grupoCol = Object.keys(x).find(k => k.toLowerCase().includes('grupo de dispositivo') || (k.toLowerCase().includes('grupo') && !k.toLowerCase().includes('nome'))) || '';
-                const placaCol = Object.keys(x).find(k => k.toLowerCase().includes('placa')) || '';
-                const fabricanteCol = Object.keys(x).find(k => k.toLowerCase().includes('fabricante')) || '';
-                const tipoCol = Object.keys(x).find(k => k.toLowerCase().includes('tipo de veiculo') || k.toLowerCase().includes('tipo veiculo')) || '';
-                
-                const grupo = (x[grupoCol] || "").trim();
-                const grupoData = extrairGrupoAtivos(grupo);
-                const placa = (x[dispositivoCol] || x[placaCol] || "").trim();
-                const transportadora = (x.TRANSPORTADORA || x.transportadora || grupoData.transportadora || "").trim();
-                const unidade = (x.UNIDADE || x.unidade || grupoData.unidade || "").trim();
-                const tipo = (x[tipoCol] || grupoData.tipo || "").trim();
-                const fabricante = (x[fabricanteCol] || grupoData.fabricante || "").trim();
-                
-                return {
-                  placa: placa,
-                  transportadora: transportadora,
-                  unidade: unidade,
-                  tipo: tipo,
-                  fabricante: fabricante
-                };
-              }).filter(x => x.placa);
-              console.log('Ativos carregados:', ativos.length);
-            }
-
-            carregarFiltros();
-            processar();
-            window.saveDataSafely('comparativoData', { motoristas, ativos });
-            alert(`✅ ${tipo.toUpperCase()} carregado: ${(tipo === 'motoristas' ? motoristas : ativos).length} registros`);
-          },
-          error: (error) => {
-            console.error('Erro ao parsear CSV:', error);
-            alert(`❌ Erro ao carregar ${tipo}: ${error.message}`);
-          }
-        });
-      };
-      reader.onerror = function() {
-        alert('❌ Erro ao ler o arquivo');
-      };
-      reader.readAsText(file);
-    }
-
     function carregarFiltros() {
       const todos = [...motoristas, ...ativos];
       const transportadoras = [...new Set(todos.map(x => x.transportadora).filter(Boolean))].sort();
@@ -1280,6 +2340,9 @@ body.dark .sidebar-menu a.active {
       const selectU = document.getElementById('unidade');
       selectU.innerHTML = '<option value="">Todas Unidades</option>';
       unidades.forEach(u => selectU.innerHTML += `<option>${u}</option>`);
+      
+      // IMPORTANTE: Resetar a seleção de unidades ao atualizar
+      selectU.value = '';
     }
 
     function generateInsights(motoristasData, ativosData) {
@@ -1346,12 +2409,29 @@ body.dark .sidebar-menu a.active {
       const fu = document.getElementById('unidade').value;
       const filtrarSemCadastro = document.getElementById('filtrarSemCadastro')?.checked || false;
 
-      let motFiltrados = motoristas.filter(x =>
-        (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
-      );
-      let ativosFiltrados = ativos.filter(x =>
-        (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
-      );
+      let motFiltrados, ativosFiltrados;
+      
+      // Se há dados temporais, usar apenas do último mês
+      if (Object.keys(dadosTemporal).length > 0) {
+        const periodos = Object.keys(dadosTemporal).sort();
+        const ultimoPeriodo = periodos[periodos.length - 1];
+        const ultimaData = dadosTemporal[ultimoPeriodo];
+        
+        motFiltrados = ultimaData.motoristas.filter(x =>
+          (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+        );
+        ativosFiltrados = ultimaData.ativos.filter(x =>
+          (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+        );
+      } else {
+        // Usar dados globais tradicionais
+        motFiltrados = motoristas.filter(x =>
+          (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+        );
+        ativosFiltrados = ativos.filter(x =>
+          (!ft || x.transportadora === ft) && (!fu || x.unidade === fu)
+        );
+      }
 
       // Aplicar filtro "Sem cadastro" e "Sem UNI"
       if (filtrarSemCadastro) {
@@ -1369,226 +2449,84 @@ body.dark .sidebar-menu a.active {
         });
       }
 
+      // Aplicar filtro de pesquisa
+      const pesquisa = document.getElementById('pesquisa').value.toLowerCase().trim();
+      if (pesquisa) {
+        motFiltrados = motFiltrados.filter(x => {
+          const nome = (x.nome || '').toLowerCase();
+          const nfc = (x.nfc || '').toLowerCase();
+          const cpf = (x.cpf || '').toLowerCase();
+          const placa = (x.placa || '').toLowerCase();
+          return nome.includes(pesquisa) || nfc.includes(pesquisa) || cpf.includes(pesquisa) || placa.includes(pesquisa);
+        });
+        ativosFiltrados = ativosFiltrados.filter(x => {
+          const placa = (x.placa || '').toLowerCase();
+          const nfc = (x.nfc || '').toLowerCase();
+          const cpf = (x.cpf || '').toLowerCase();
+          return placa.includes(pesquisa) || nfc.includes(pesquisa) || cpf.includes(pesquisa);
+        });
+      }
+
       const totalMotoristas = motFiltrados.length;
       const totalAtivos = ativosFiltrados.length;
       const nfcValidos = motFiltrados.filter(x => nfcOk(x.nfc)).length;
       const percentualNFC = totalMotoristas > 0 ? Math.round((nfcValidos / totalMotoristas) * 100) : 0;
-      document.getElementById('card1').textContent = totalMotoristas.toLocaleString('pt-BR');
-      document.getElementById('card2').textContent = totalAtivos.toLocaleString('pt-BR');
-      document.getElementById('card4').textContent = percentualNFC + '%';
 
-      generateInsights(motFiltrados, ativosFiltrados);
+      // Se estamos em modo temporal, usar insights temporais e atualizar tabela de variação
+      if (Object.keys(dadosTemporal).length > 0) {
+        const periodos = Object.keys(dadosTemporal).sort();
+        if (periodos.length > 0) {
+          gerarInsightsTempo(periodos[0], periodos[periodos.length - 1]);
+          atualizarTabelaVariacao(periodos[0], periodos[periodos.length - 1]); // Atualizar com filtros
+        }
+      } else {
+        generateInsights(motFiltrados, ativosFiltrados);
+      }
+      
       document.getElementById('insightsContainer').style.display = motFiltrados.length > 0 && ativosFiltrados.length > 0 ? 'block' : 'none';
       atualizarGraficos(motFiltrados, ativosFiltrados);
       atualizarTabela(motFiltrados, ativosFiltrados);
+      atualizarTabelaMotoristas(motFiltrados, ativosFiltrados);
     }
 
     function atualizarGraficos(motoristas, ativos) {
-      console.log('🔧 atualizarGraficos chamado com', motoristas.length, 'motoristas e', ativos.length, 'ativos');
-      const isDark = document.body.classList.contains('dark');
-      const filtrarIrrelevantes = document.getElementById('filtrarSemCadastro')?.checked || false;
-      
-      // ===== GRÁFICO 1: Motoristas vs Ativos =====
-      if (window.chart1) window.chart1.destroy();
-      
-      const options1 = {
-        chart: {
-          type: 'bar',
-          sparkline: { enabled: false },
-          toolbar: { show: true },
-          theme: isDark ? 'dark' : 'light',
-          height: 350
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            columnWidth: '50%',
-            dataLabels: { position: 'top' }
-          }
-        },
-        series: [
-          { name: 'Motoristas', data: [motoristas.length] },
-          { name: 'Ativos', data: [ativos.length] }
-        ],
-        xaxis: {
-          categories: ['Total'],
-          labels: { style: { fontSize: '13px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' } }
-        },
-        yaxis: {
-          labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } }
-        },
-        colors: ['#0033A0', '#FF6B35'],
-        dataLabels: {
-          enabled: true,
-          formatter: function(val) { return val.toLocaleString('pt-BR'); },
-          offsetY: -20,
-          style: { fontSize: '14px', fontWeight: 'bold', colors: ['#fff'] }
-        },
-        legend: {
-          position: 'bottom',
-          labels: { colors: isDark ? '#fff' : '#000', fontSize: 13, fontWeight: 700 }
-        },
-        tooltip: {
-          enabled: true,
-          theme: isDark ? 'dark' : 'light',
-          y: { formatter: function(val) { return val.toLocaleString('pt-BR'); } }
-        }
-      };
-
-      const g1Element = document.querySelector('#g1');
-      if (g1Element) {
-        try {
-          window.chart1 = new ApexCharts(g1Element, options1);
-          window.chart1.render()
-            .then(() => console.log('✅ Gráfico 1 renderizado!'))
-            .catch(err => console.error('❌ Erro gráfico 1:', err));
-        } catch(e) {
-          console.error('❌ Erro síncrono gráfico 1:', e);
-        }
-      }
-
-      // ===== GRÁFICO 2: Distribuição por Unidade =====
-      if (window.chart2) window.chart2.destroy();
-      
-      const porUnidade = {};
-      const ativosPorUnidade = {};
-      
-      motoristas.forEach(x => {
-        if (!porUnidade[x.unidade]) porUnidade[x.unidade] = 0;
-        porUnidade[x.unidade]++;
-      });
-
-      ativos.forEach(x => {
-        if (!ativosPorUnidade[x.unidade]) ativosPorUnidade[x.unidade] = 0;
-        ativosPorUnidade[x.unidade]++;
-      });
-
-      let unidadeLabels = Object.keys(porUnidade)
-        .sort((a, b) => porUnidade[b] - porUnidade[a])
-        .slice(0, 8);
-      
-      if (filtrarIrrelevantes) {
-        unidadeLabels = unidadeLabels.filter(u => u !== 'Sem UNI' && u !== '');
-      }
-
-      const options2 = {
-        chart: {
-          type: 'bar',
-          sparkline: { enabled: false },
-          toolbar: { show: true },
-          theme: isDark ? 'dark' : 'light',
-          height: 400
-        },
-        plotOptions: {
-          bar: {
-            horizontal: true,
-            columnWidth: '65%',
-            dataLabels: { position: 'right' }
-          }
-        },
-        series: [
-          { name: 'Motoristas', data: unidadeLabels.map(u => porUnidade[u] || 0) },
-          { name: 'Ativos', data: unidadeLabels.map(u => ativosPorUnidade[u] || 0) }
-        ],
-        xaxis: {
-          categories: unidadeLabels,
-          labels: { style: { fontSize: '12px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' } }
-        },
-        yaxis: {
-          labels: { style: { fontSize: '11px', colors: isDark ? '#ccc' : '#333' } }
-        },
-        colors: ['#0033A0', '#FF6B35'],
-        dataLabels: {
-          enabled: true,
-          formatter: function(val) { return val > 0 ? val.toLocaleString('pt-BR') : ''; },
-          style: { fontSize: '12px', fontWeight: 'bold', colors: ['#fff'] }
-        },
-        legend: {
-          position: 'bottom',
-          labels: { colors: isDark ? '#fff' : '#000', fontSize: 13, fontWeight: 700 }
-        },
-        tooltip: {
-          enabled: true,
-          theme: isDark ? 'dark' : 'light',
-          y: { formatter: function(val) { return val.toLocaleString('pt-BR'); } }
-        }
-      };
-
-      const g2Element = document.querySelector('#g2');
-      if (g2Element) {
-        try {
-          window.chart2 = new ApexCharts(g2Element, options2);
-          window.chart2.render()
-            .then(() => console.log('✅ Gráfico 2 renderizado!'))
-            .catch(err => console.error('❌ Erro gráfico 2:', err));
-        } catch(e) {
-          console.error('❌ Erro síncrono gráfico 2:', e);
-        }
-      }
-
-      // ===== GRÁFICO 3: Cobertura NFC (Quantidade) =====
-      if (window.chart3) window.chart3.destroy();
-      
-      const comNFC = motoristas.filter(x => nfcOk(x.nfc)).length;
-      const semNFC = motoristas.length - comNFC;
-
-      const options3 = {
-        chart: {
-          type: 'bar',
-          sparkline: { enabled: false },
-          toolbar: { show: true },
-          theme: isDark ? 'dark' : 'light',
-          height: 350
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            columnWidth: '50%',
-            dataLabels: { position: 'top' }
-          }
-        },
-        series: [
-          { name: 'Com NFC', data: [comNFC] },
-          { name: 'Sem NFC', data: [semNFC] }
-        ],
-        xaxis: {
-          categories: ['Motoristas'],
-          labels: { style: { fontSize: '13px', fontWeight: 600, colors: isDark ? '#ccc' : '#333' } }
-        },
-        yaxis: {
-          labels: { style: { fontSize: '12px', colors: isDark ? '#ccc' : '#333' } }
-        },
-        colors: ['#10b981', '#EF4444'],
-        dataLabels: {
-          enabled: true,
-          formatter: function(val) { return val.toLocaleString('pt-BR'); },
-          offsetY: -20,
-          style: { fontSize: '14px', fontWeight: 'bold', colors: ['#fff'] }
-        },
-        legend: {
-          position: 'bottom',
-          labels: { colors: isDark ? '#fff' : '#000', fontSize: 13, fontWeight: 700 }
-        },
-        tooltip: {
-          enabled: true,
-          theme: isDark ? 'dark' : 'light',
-          y: { formatter: function(val) { return val.toLocaleString('pt-BR'); } }
-        }
-      };
-
-      const g3Element = document.querySelector('#g3');
-      if (g3Element) {
-        try {
-          window.chart3 = new ApexCharts(g3Element, options3);
-          window.chart3.render()
-            .then(() => console.log('✅ Gráfico 3 renderizado!'))
-            .catch(err => console.error('❌ Erro gráfico 3:', err));
-        } catch(e) {
-          console.error('❌ Erro síncrono gráfico 3:', e);
-        }
-      }
+      console.log('🔧 atualizarGraficos chamado');
+      // Os gráficos 1, 2, 3 foram removidos. Apenas gráficos temporais aqui.
     }
 
+    function renderizarPaginacao(elemento, totalItems, itensPorPagina = 10) {
+      const totalPaginas = Math.ceil(totalItems / itensPorPagina);
+      if (totalPaginas <= 1) return ''; // Sem paginação se caber em 1 página
+      
+      let html = '<div style="text-align: center; margin-top: 20px; padding: 16px; background: rgba(99, 163, 216, 0.05); border-radius: 8px;">';
+      html += '<span style="margin-right: 12px; font-weight: 600; color: var(--primary-color);">Páginas:</span>';
+      
+      for (let i = 1; i <= totalPaginas; i++) {
+        html += `<button style="margin: 0 4px; padding: 6px 12px; background: ${i === 1 ? 'var(--primary-color)' : '#e8e8e8'}; color: ${i === 1 ? '#fff' : '#000'}; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;" 
+                onclick="mostrarPagina(this, ${i}, ${itensPorPagina}, '${elemento}')">${i}</button>`;
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function mostrarPagina(btnElement, numeroPagina, itensPorPagina, idTabela) {
+      const tbody = document.getElementById(idTabela);
+      const rows = tbody.querySelectorAll('tr[data-pagina]');
+      const inicio = (numeroPagina - 1) * itensPorPagina;
+      const fim = inicio + itensPorPagina;
+
+      rows.forEach((row, idx) => {
+        row.style.display = (idx >= inicio && idx < fim) ? '' : 'none';
+      });
+
+      // Estilos dos botões
+      document.querySelectorAll(`button[onclick*="mostrarPagina"]`).forEach(btn => {
+        btn.style.background = '#e8e8e8';
+        btn.style.color = '#000';
+      });
+      btnElement.style.background = 'var(--primary-color)';
+      btnElement.style.color = '#fff';
+    }
 
     function atualizarTabela(motoristas, ativos) {
       const porTranspUnit = {};
@@ -1623,33 +2561,215 @@ body.dark .sidebar-menu a.active {
       });
 
       const tbody = document.getElementById('tabela-corpo');
-      if (Object.keys(porTranspUnit).length === 0) {
+      const rows = Object.values(porTranspUnit);
+      
+      if (rows.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">Nenhum dado encontrado</td></tr>';
         return;
       }
 
-      tbody.innerHTML = Object.values(porTranspUnit).map(row => {
+      tbody.innerHTML = rows.map((row, idx) => {
         const pctNFC = row.motoristas > 0 ? Math.round((row.nfc / row.motoristas) * 100) : 0;
-        // Definir status sem exibir diretamente a razão
-        let status = '<span class="ok">✅ OK</span>';
-        if (row.ativos === 0 && row.motoristas > 0) status = '<span class="alert">❌ Sem ativos</span>';
-        else if (row.ativos > 0) {
-          const ratio = row.motoristas / row.ativos;
-          if (ratio > 1.5) status = '<span class="warning">⚠️ Excesso</span>';
-          else if (ratio < 0.8) status = '<span class="alert">❌ Falta</span>';
-        }
-
         return `
-          <tr>
+          <tr data-pagina="${idx}">
             <td>${row.transportadora}</td>
             <td>${row.unidade}</td>
             <td>${row.motoristas}</td>
-            <td><span class="${pctNFC >= 80 ? 'ok' : 'alert'}">${row.nfc}</span></td>
+            <td><span style="color: #10b981; font-weight: 600;">${row.nfc}</span></td>
             <td>${pctNFC}%</td>
             <td>${row.ativos}</td>
           </tr>
         `;
       }).join('');
+
+      // Mostrar primeira página
+      const ITENS_POR_PAGINA = 10;
+      const primeiraLote = tbody.querySelectorAll('tr[data-pagina]');
+      primeiraLote.forEach((row, idx) => {
+        row.style.display = idx < ITENS_POR_PAGINA ? '' : 'none';
+      });
+
+      // Adicionar paginação DEPOIS da tabela
+      const tabelaContainer = tbody.closest('.table-container');
+      const paginacaoExistente = tabelaContainer.querySelector('[data-paginacao="transportadora"]');
+      if (paginacaoExistente) paginacaoExistente.remove();
+
+      if (rows.length > ITENS_POR_PAGINA) {
+        const paginacaoDiv = document.createElement('div');
+        paginacaoDiv.setAttribute('data-paginacao', 'transportadora');
+        paginacaoDiv.innerHTML = renderPaginado(rows.length, ITENS_POR_PAGINA, 'tabela-corpo');
+        tabelaContainer.appendChild(paginacaoDiv);
+      }
+    }
+
+    function renderPaginado(total, itensPorPagina, idTabela) {
+      const totalPaginas = Math.ceil(total / itensPorPagina);
+      const maxBotoesExibidos = 10; // Mostrar apenas 10 botões por vez
+      let paginaAtual = 1;
+      
+      let html = '<div style="text-align: center; margin-top: 20px; padding: 16px; background: rgba(99, 163, 216, 0.05); border-radius: 8px;">';
+      html += `<span style="margin-right: 12px; font-weight: 600; color: var(--primary-color);">Página: <span class="current-page">1</span> de ${totalPaginas}</span>`;
+      
+      // Botão Anterior
+      html += `<button onclick="irParaPagina(this, 0, ${itensPorPagina}, '${idTabela}', ${totalPaginas})" style="margin: 0 4px; padding: 8px 14px; background: #e8e8e8; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; font-size: 14px;">← Anterior</button>`;
+      
+      // Calcular intervalo de páginas a exibir
+      let inicio = 1;
+      let fim = Math.min(maxBotoesExibidos, totalPaginas);
+      
+      // Números das páginas
+      for (let i = inicio; i <= fim; i++) {
+        const isActive = i === 1 ? 'true' : 'false';
+        html += `<button data-page="${i}" style="margin: 0 4px; padding: 8px 14px; background: ${i === 1 ? 'var(--primary-color)' : '#e8e8e8'}; color: ${i === 1 ? '#fff' : '#000'}; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; font-size: 14px;" 
+                onclick="mudarPaginaCompacta(this, ${i}, ${itensPorPagina}, '${idTabela}', ${totalPaginas}, ${maxBotoesExibidos})">${i}</button>`;
+      }
+      
+      // Se houver mais de maxBotoesExibidos páginas, mostrar "..."
+      if (totalPaginas > maxBotoesExibidos) {
+        html += `<span style="margin: 0 8px; color: var(--primary-color); font-weight: 600;">...</span>`;
+        html += `<button onclick="irParaPaginaFinal(this, ${totalPaginas}, ${itensPorPagina}, '${idTabela}')" style="margin: 0 4px; padding: 8px 14px; background: #e8e8e8; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; font-size: 14px;">Última (${totalPaginas})</button>`;
+      }
+      
+      // Botão Próximo
+      html += `<button onclick="irParaPagina(this, 1, ${itensPorPagina}, '${idTabela}', ${totalPaginas})" style="margin: 0 4px; padding: 8px 14px; background: #e8e8e8; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; font-size: 14px;">Próximo →</button>`;
+      
+      html += '</div>';
+      return html;
+    }
+
+    function mudarPaginaCompacta(btnElement, numeroPagina, itensPorPagina, idTabela, totalPaginas, maxBotoesExibidos) {
+      const tbody = document.getElementById(idTabela);
+      const rows = tbody.querySelectorAll('tr[data-pagina]');
+      const inicio = (numeroPagina - 1) * itensPorPagina;
+      const fim = inicio + itensPorPagina;
+
+      rows.forEach((row, idx) => {
+        row.style.display = (idx >= inicio && idx < fim) ? '' : 'none';
+      });
+
+      // Atualizar display de página atual
+      const container = btnElement.parentElement;
+      container.querySelector('.current-page').textContent = numeroPagina;
+
+      // Estilos dos botões
+      const botoes = container.querySelectorAll('button[data-page]');
+      botoes.forEach(btn => {
+        btn.style.background = '#e8e8e8';
+        btn.style.color = '#000';
+      });
+      btnElement.style.background = 'var(--primary-color)';
+      btnElement.style.color = '#fff';
+    }
+
+    function irParaPagina(btnElement, direcao, itensPorPagina, idTabela, totalPaginas) {
+      const container = btnElement.parentElement;
+      const paginaAtual = parseInt(container.querySelector('.current-page').textContent);
+      let novaPagina = paginaAtual + (direcao === 0 ? -1 : 1);
+      
+      if (novaPagina < 1) novaPagina = 1;
+      if (novaPagina > totalPaginas) novaPagina = totalPaginas;
+      
+      if (novaPagina !== paginaAtual) {
+        const botoesNumero = container.querySelectorAll('button[data-page]');
+        const botaoExistente = Array.from(botoesNumero).find(b => parseInt(b.textContent) === novaPagina);
+        
+        if (botaoExistente) {
+          mudarPaginaCompacta(botaoExistente, novaPagina, itensPorPagina, idTabela, totalPaginas, 10);
+        } else {
+          // Página está fora do range visível, mudar diretamente via função genérica
+          const tbody = document.getElementById(idTabela);
+          const rows = tbody.querySelectorAll('tr[data-pagina]');
+          const inicio = (novaPagina - 1) * itensPorPagina;
+          const fim = inicio + itensPorPagina;
+
+          rows.forEach((row, idx) => {
+            row.style.display = (idx >= inicio && idx < fim) ? '' : 'none';
+          });
+          container.querySelector('.current-page').textContent = novaPagina;
+        }
+      }
+    }
+
+    function irParaPaginaFinal(btnElement, totalPaginas, itensPorPagina, idTabela) {
+      const container = btnElement.parentElement;
+      const tbody = document.getElementById(idTabela);
+      const rows = tbody.querySelectorAll('tr[data-pagina]');
+      const inicio = (totalPaginas - 1) * itensPorPagina;
+      const fim = inicio + itensPorPagina;
+
+      rows.forEach((row, idx) => {
+        row.style.display = (idx >= inicio && idx < fim) ? '' : 'none';
+      });
+
+      container.querySelector('.current-page').textContent = totalPaginas;
+      
+      // Atualizar botões
+      const botoes = container.querySelectorAll('button[data-page]');
+      botoes.forEach(btn => {
+        btn.style.background = '#e8e8e8';
+        btn.style.color = '#000';
+      });
+    }
+
+    function atualizarTabelaMotoristas(motoristas, ativos) {
+      const tbody = document.getElementById('tabela-motoristas');
+      
+      if (motoristas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--muted);">Nenhum motorista encontrado com os filtros selecionados</td></tr>';
+        return;
+      }
+
+      // Remover duplicatas: usar Set com CPF como chave
+      const motoristasUnicos = {};
+      motoristas.forEach(mot => {
+        const key = mot.cpf || mot.nome;
+        if (!motoristasUnicos[key]) motoristasUnicos[key] = mot;
+      });
+      const motoristasLista = Object.values(motoristasUnicos);
+      
+      // Gerar linhas da tabela COM DATA ATTRIBUTE para paginação
+      tbody.innerHTML = motoristasLista.map((mot, idx) => {
+        // Determinar status NFC
+        const statusNFC = nfcOk(mot.nfc) 
+          ? '<span style="color: #10b981; font-weight: 600;">✅ Válido</span>'
+          : '<span style="color: #ef4444; font-weight: 600;">❌ Inválido/Ausente</span>';
+        
+        // Formatar CPF (garantir que seja string para preservar zeros à esquerda)
+        const cpfFormatado = String(mot.cpf || '-');
+        const nfcValor = mot.nfc && mot.nfc.trim() ? mot.nfc : '0';
+
+        return `
+          <tr data-pagina="${idx}">
+            <td>${mot.nome || '-'}</td>
+            <td style="font-family: 'Courier New', monospace; font-weight: 600;" title="${cpfFormatado}">${cpfFormatado}</td>
+            <td>${mot.transportadora || '-'}</td>
+            <td>${mot.unidade || '-'}</td>
+            <td><code style="background: rgba(99, 163, 216, 0.1); padding: 2px 6px; border-radius: 3px; font-size: 11px;">${nfcValor}</code></td>
+            <td>${statusNFC}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Adicionar paginação
+      const ITENS_POR_PAGINA = 10;
+      const rows = tbody.querySelectorAll('tr[data-pagina]');
+      
+      // Mostrar primeira página
+      rows.forEach((row, idx) => {
+        row.style.display = idx < ITENS_POR_PAGINA ? '' : 'none';
+      });
+
+      // Adicionar paginação DEPOIS da tabela
+      const tabelaContainer = tbody.closest('.table-container');
+      const paginacaoExistente = tabelaContainer.querySelector('[data-paginacao="motoristas"]');
+      if (paginacaoExistente) paginacaoExistente.remove();
+
+      if (motoristasLista.length > ITENS_POR_PAGINA) {
+        const paginacaoDiv = document.createElement('div');
+        paginacaoDiv.setAttribute('data-paginacao', 'motoristas');
+        paginacaoDiv.innerHTML = renderPaginado(motoristasLista.length, ITENS_POR_PAGINA, 'tabela-motoristas');
+        tabelaContainer.appendChild(paginacaoDiv);
+      }
     }
   
         
