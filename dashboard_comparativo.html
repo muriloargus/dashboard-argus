@@ -2057,6 +2057,7 @@ body.dark .sidebar-menu a.active {
       // Ler filtros de transportadora e unidade
       const ft = document.getElementById('transportadora').value;
       const fu = document.getElementById('unidade').value;
+      const filtrarSemCadastro = document.getElementById('filtrarSemCadastro')?.checked || false;
       
       const aplicarFiltroTransp = (f) => f && f !== 'Todas' && f !== 'Todas Transportadoras' && f !== 'undefined';
       const aplicarFiltroUnidade = (f) => f && f !== 'Todas' && f !== 'Todas Unidades' && f !== 'undefined';
@@ -2073,6 +2074,22 @@ body.dark .sidebar-menu a.active {
         if (aplicarFiltroUnidade(fu)) {
           motFiltrados = motFiltrados.filter(m => m.unidade === fu);
           ativFiltrados = ativFiltrados.filter(a => a.unidade === fu);
+        }
+        
+        // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+        if (filtrarSemCadastro) {
+          motFiltrados = motFiltrados.filter(x => {
+            const tmp = (x.transportadora || '').toString().trim();
+            const uni = (x.unidade || '').toString().trim();
+            return tmp !== 'Sem cadastro' && tmp !== 'N/A' && tmp !== '' && 
+                   uni !== 'Sem UNI' && uni !== 'N/A' && uni !== '';
+          });
+          ativFiltrados = ativFiltrados.filter(x => {
+            const tmp = (x.transportadora || '').toString().trim();
+            const uni = (x.unidade || '').toString().trim();
+            return tmp !== 'Sem cadastro' && tmp !== 'N/A' && tmp !== '' && 
+                   uni !== 'Sem UNI' && uni !== 'N/A' && uni !== '';
+          });
         }
         
         return { motoristas: motFiltrados, ativos: ativFiltrados };
