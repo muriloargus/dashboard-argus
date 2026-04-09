@@ -1394,6 +1394,9 @@ body.dark .sidebar-menu a.active {
       // Ler filtros de transportadora e unidade
       const ft_filtro = document.getElementById('transportadora').value;
       const fu_filtro = document.getElementById('unidade').value;
+      
+      // ✅ NOVO: Ler filtro "Sem cadastro" e "Sem uni"
+      const filtrarSemCadastro = document.getElementById('filtrarSemCadastro')?.checked || false;
 
       // Calcular dados para cada período aplicando filtros
       const dadosPeriodos = periodos.map(p => {
@@ -1409,6 +1412,22 @@ body.dark .sidebar-menu a.active {
         if (fu_filtro && fu_filtro !== 'Todas' && fu_filtro !== 'undefined') {
           motor = motor.filter(m => m.unidade === fu_filtro);
           atvo = atvo.filter(a => a.unidade === fu_filtro);
+        }
+        
+        // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+        if (filtrarSemCadastro) {
+          motor = motor.filter(m => {
+            const tmp = (m.transportadora || '').toString().trim();
+            const uni = (m.unidade || '').toString().trim();
+            return tmp !== 'Sem cadastro' && tmp !== 'N/A' && tmp !== '' && 
+                   uni !== 'Sem UNI' && uni !== 'N/A' && uni !== '';
+          });
+          atvo = atvo.filter(a => {
+            const tmp = (a.transportadora || '').toString().trim();
+            const uni = (a.unidade || '').toString().trim();
+            return tmp !== 'Sem cadastro' && tmp !== 'N/A' && tmp !== '' && 
+                   uni !== 'Sem UNI' && uni !== 'N/A' && uni !== '';
+          });
         }
 
         const nfcValidos = motor.filter(x => nfcOk(x.nfc)).length;
@@ -1553,6 +1572,16 @@ body.dark .sidebar-menu a.active {
           // Aplicar filtro de unidade se necessário
           if (aplicarFiltroUnidade7(fu_g7) && m.unidade !== fu_g7) return;
           
+          // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+          if (filtrarSemCadastro) {
+            const tmp = (m.transportadora || '').toString().trim();
+            const uni = (m.unidade || '').toString().trim();
+            if (tmp === 'Sem cadastro' || tmp === 'N/A' || tmp === '' || 
+                uni === 'Sem UNI' || uni === 'N/A' || uni === '') {
+              return;
+            }
+          }
+          
           if (!transpCounts[m.transportadora]) transpCounts[m.transportadora] = 0;
           transpCounts[m.transportadora]++;
         });
@@ -1623,6 +1652,17 @@ body.dark .sidebar-menu a.active {
           if (aplicarFiltroTransp8(ft_g8) && m.transportadora !== ft_g8) return;
           // Aplicar filtro de unidade se necessário
           if (aplicarFiltroUnidade8(fu_g8) && m.unidade !== fu_g8) return;
+          
+          // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+          if (filtrarSemCadastro) {
+            const tmp = (m.transportadora || '').toString().trim();
+            const uni = (m.unidade || '').toString().trim();
+            if (tmp === 'Sem cadastro' || tmp === 'N/A' || tmp === '' || 
+                uni === 'Sem UNI' || uni === 'N/A' || uni === '') {
+              return;
+            }
+          }
+          
           // Contar para a unidade
           if (!unidadeCounts[m.unidade]) unidadeCounts[m.unidade] = 0;
           unidadeCounts[m.unidade]++;
@@ -1691,6 +1731,17 @@ body.dark .sidebar-menu a.active {
           if (aplicarFiltroTransp9(ft_g7) && m.transportadora !== ft_g7) return;
           // Aplicar filtro de unidade se necessário
           if (aplicarFiltroUnidade9(fu_g7) && m.unidade !== fu_g7) return;
+          
+          // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+          if (filtrarSemCadastro) {
+            const tmp = (m.transportadora || '').toString().trim();
+            const uni = (m.unidade || '').toString().trim();
+            if (tmp === 'Sem cadastro' || tmp === 'N/A' || tmp === '' || 
+                uni === 'Sem UNI' || uni === 'N/A' || uni === '') {
+              return;
+            }
+          }
+          
           // Contar NFCs válidos
           if (nfcOk(m.nfc)) {
             if (!transpNfcCounts[m.transportadora]) transpNfcCounts[m.transportadora] = 0;
@@ -1751,9 +1802,20 @@ body.dark .sidebar-menu a.active {
       periodos.forEach(p => {
         (dadosTemporal[p].motoristas || []).forEach(m => {
           // Aplicar filtro de transportadora se necessário
-          if (aplicarFiltroTransp10(ft_g8) && m.transportadora !== ft_g8) return;
+          if (aplicarFiltroTransp10(ft_g7) && m.transportadora !== ft_g7) return;
           // Aplicar filtro de unidade se necessário
-          if (aplicarFiltroUnidade10(fu_g8) && m.unidade !== fu_g8) return;
+          if (aplicarFiltroUnidade10(fu_g7) && m.unidade !== fu_g7) return;
+          
+          // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+          if (filtrarSemCadastro) {
+            const tmp = (m.transportadora || '').toString().trim();
+            const uni = (m.unidade || '').toString().trim();
+            if (tmp === 'Sem cadastro' || tmp === 'N/A' || tmp === '' || 
+                uni === 'Sem UNI' || uni === 'N/A' || uni === '') {
+              return;
+            }
+          }
+          
           // Contar NFCs válidos para cada unidade
           if (nfcOk(m.nfc)) {
             if (!unidadeNfcCounts[m.unidade]) unidadeNfcCounts[m.unidade] = 0;
@@ -1814,6 +1876,17 @@ body.dark .sidebar-menu a.active {
           if (aplicarFiltroTransp7(ft_g7) && a.transportadora !== ft_g7) return;
           // Aplicar filtro de unidade se necessário
           if (aplicarFiltroUnidade7(fu_g7) && a.unidade !== fu_g7) return;
+          
+          // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+          if (filtrarSemCadastro) {
+            const tmp = (a.transportadora || '').toString().trim();
+            const uni = (a.unidade || '').toString().trim();
+            if (tmp === 'Sem cadastro' || tmp === 'N/A' || tmp === '' || 
+                uni === 'Sem UNI' || uni === 'N/A' || uni === '') {
+              return;
+            }
+          }
+          
           // Contar para a transportadora
           if (!transpAtivosCounts[a.transportadora]) transpAtivosCounts[a.transportadora] = 0;
           transpAtivosCounts[a.transportadora]++;
@@ -1872,6 +1945,17 @@ body.dark .sidebar-menu a.active {
           if (aplicarFiltroTransp8(ft_g8) && a.transportadora !== ft_g8) return;
           // Aplicar filtro de unidade se necessário
           if (aplicarFiltroUnidade8(fu_g8) && a.unidade !== fu_g8) return;
+          
+          // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+          if (filtrarSemCadastro) {
+            const tmp = (a.transportadora || '').toString().trim();
+            const uni = (a.unidade || '').toString().trim();
+            if (tmp === 'Sem cadastro' || tmp === 'N/A' || tmp === '' || 
+                uni === 'Sem UNI' || uni === 'N/A' || uni === '') {
+              return;
+            }
+          }
+          
           // Contar para a unidade
           if (!unidadeAtivosCounts[a.unidade]) unidadeAtivosCounts[a.unidade] = 0;
           unidadeAtivosCounts[a.unidade]++;
@@ -2019,6 +2103,9 @@ body.dark .sidebar-menu a.active {
       const ft = document.getElementById('transportadora').value;
       const fu = document.getElementById('unidade').value;
       
+      // ✅ NOVO: Ler filtro "Sem cadastro" e "Sem uni"
+      const filtrarSemCadastro = document.getElementById('filtrarSemCadastro')?.checked || false;
+      
       const aplicarFiltroTransp = (f) => f && f !== 'Todas' && f !== 'Todas Transportadoras' && f !== 'undefined';
       const aplicarFiltroUnidade = (f) => f && f !== 'Todas' && f !== 'Todas Unidades' && f !== 'undefined';
 
@@ -2034,6 +2121,22 @@ body.dark .sidebar-menu a.active {
         if (aplicarFiltroUnidade(fu)) {
           motFiltrados = motFiltrados.filter(m => m.unidade === fu);
           ativFiltrados = ativFiltrados.filter(a => a.unidade === fu);
+        }
+        
+        // ✅ NOVO: Aplicar filtro "Sem cadastro" e "Sem UNI"
+        if (filtrarSemCadastro) {
+          motFiltrados = motFiltrados.filter(m => {
+            const tmp = (m.transportadora || '').toString().trim();
+            const uni = (m.unidade || '').toString().trim();
+            return tmp !== 'Sem cadastro' && tmp !== 'N/A' && tmp !== '' && 
+                   uni !== 'Sem UNI' && uni !== 'N/A' && uni !== '';
+          });
+          ativFiltrados = ativFiltrados.filter(a => {
+            const tmp = (a.transportadora || '').toString().trim();
+            const uni = (a.unidade || '').toString().trim();
+            return tmp !== 'Sem cadastro' && tmp !== 'N/A' && tmp !== '' && 
+                   uni !== 'Sem UNI' && uni !== 'N/A' && uni !== '';
+          });
         }
         
         return { motoristas: motFiltrados, ativos: ativFiltrados };
@@ -2146,6 +2249,15 @@ body.dark .sidebar-menu a.active {
       document.getElementById('filtrarSemCadastro').addEventListener('change', function() {
         localStorage.setItem('comparativoFiltroSemCadastro', this.checked ? 'true' : 'false');
         processar();
+        
+        // ✅ IMPORTANTE: Regenerar gráficos também ao mudar este filtro
+        const periodos = Object.keys(dadosTemporal).sort();
+        if (periodos.length > 0) {
+          const periodoInicio = periodos[0];
+          const periodoFim = periodos[periodos.length - 1];
+          console.log('🔄 Regenerando gráficos com novo filtro...');
+          gerarGraficosTempo(periodoInicio, periodoFim);
+        }
       });
 
       // Campo de pesquisa - usar input em vez de change para melhor responsividade
