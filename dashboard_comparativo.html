@@ -953,7 +953,7 @@ body.dark .sidebar-menu a.active {
             <th>Motoristas</th>
             <th>Com NFC</th>
             <th>% NFC</th>
-            <th>Ativos</th>
+            <th>🚗 Placas dos Ativos</th>
           </tr>
         </thead>
         <tbody id="tabela-corpo">
@@ -1247,37 +1247,77 @@ body.dark .sidebar-menu a.active {
               }).filter(x => x.nome);
             } else {
               // DEBUG: Log das colunas encontradas
-              console.log(`🔍 Colunas do CSV de ATIVOS:`, Object.keys(r.data[0] || {}));
+              const colunasDisponiveis = Object.keys(r.data[0] || {});
+              console.log(`🔍 Colunas do CSV de ATIVOS:`, colunasDisponiveis);
               
-              dadosTemporal[periodo].ativos = r.data.map(x => {
-                const dispositivoCol = Object.keys(x).find(k => 
+              dadosTemporal[periodo].ativos = r.data.map((x, xIdx) => {
+                // 🔍 DEBUG: Log do primeiro ativo para diagnóstico
+                if (xIdx === 0) {
+                  console.log('🔍 PRIMEIRO ATIVO BRUTO:', x);
+                }
+                
+                // Procurar EXATAMENTE a coluna que contém dispositivo
+                const dispositivoCol = colunasDisponiveis.find(k => 
                   k.toLowerCase().includes('dispositivo') && !k.toLowerCase().includes('grupo')
                 ) || '';
-                const grupoCol = Object.keys(x).find(k => 
+                
+                const grupoCol = colunasDisponiveis.find(k => 
                   k.toLowerCase().includes('grupo de dispositivo') || 
                   (k.toLowerCase().includes('grupo') && !k.toLowerCase().includes('nome'))
                 ) || '';
-                const placaCol = Object.keys(x).find(k => k.toLowerCase().includes('placa')) || '';
-                const fabricanteCol = Object.keys(x).find(k => k.toLowerCase().includes('fabricante')) || '';
-                const tipoCol = Object.keys(x).find(k => 
-                  k.toLowerCase().includes('tipo de veiculo') || k.toLowerCase().includes('tipo veiculo')
+                
+                const placaCol = colunasDisponiveis.find(k => 
+                  k.toLowerCase() === 'placa' || k.toLowerCase() === 'placa/província'
                 ) || '';
                 
-                // FALLBACKS ADICIONAIS - em caso de colunas com nomes não padrão
-                const placaFallback = Object.keys(x).find(k => 
-                  /^(placa|dispositivo|vehicle|asset|id)$/i.test(k.trim())
+                const fabricanteCol = colunasDisponiveis.find(k => 
+                  k.toLowerCase().includes('fabricante')
                 ) || '';
+                
+                const tipoCol = colunasDisponiveis.find(k => 
+                  k.toLowerCase().includes('tipo de dispositivo') || 
+                  k.toLowerCase().includes('tipo de veiculo') || 
+                  k.toLowerCase().includes('tipo veiculo')
+                ) || '';
+                
+                // 📍 DEBUG para o primeiro ativo
+                if (xIdx === 0) {
+                  console.log('📍 Colunas detectadas:', {
+                    dispositivoCol,
+                    grupoCol,
+                    placaCol,
+                    tipoCol
+                  });
+                  console.log(`📍 x[dispositivoCol] = x["${dispositivoCol}"] =`, x[dispositivoCol]);
+                  console.log(`📍 x[placaCol] = x["${placaCol}"] =`, x[placaCol]);
+                }
                 
                 const grupo = (x[grupoCol] || "").trim();
                 const grupoData = extrairGrupoAtivos(grupo);
                 
-                // Tentar encontrar placa em múltiplas colunas
-                let placa = (x[dispositivoCol] || "").trim();
-                if (!placa) placa = (x[placaCol] || "").trim();
-                if (!placa) placa = (x[placaFallback] || "").trim();
-                if (!placa && tipo === 'ativos') {
-                  // Se for arquivo de ativos mas não achou, pegar primeira coluna não vazia
-                  placa = Object.values(x).find(v => v && String(v).trim().length > 0) || "";
+                // Tentar encontrar placa em múltiplas colunas com maior prioridade
+                let placa = '';
+                
+                if (x[dispositivoCol]) {
+                  placa = (x[dispositivoCol] || "").toString().trim();
+                }
+                if (!placa && x[placaCol]) {
+                  placa = (x[placaCol] || "").toString().trim();
+                }
+                if (!placa) {
+                  // Procurar em qualquer coluna com 'placa' ou 'dispositivo' no nome
+                  for (let col of colunasDisponiveis) {
+                    if ((col.toLowerCase().includes('placa') || col.toLowerCase().includes('dispositivo')) && 
+                        x[col] && String(x[col]).trim().length > 0) {
+                      placa = String(x[col]).trim();
+                      break;
+                    }
+                  }
+                }
+                
+                // 📍 DEBUG
+                if (xIdx < 3) {
+                  console.log(`📍 Ativo ${xIdx}: placa extraída = "${placa}", transportadora = "${grupoData.transportadora}", unidade = "${grupoData.unidade}"`);
                 }
                 
                 const transportadora = (x.TRANSPORTADORA || x.transportadora || x.Transportadora || grupoData.transportadora || "").trim();
@@ -1292,9 +1332,12 @@ body.dark .sidebar-menu a.active {
                   tipo: tipoVeiculo,
                   fabricante: fabricante
                 };
-              }).filter(x => x.placa && x.placa.length > 0);
+              }).filter(x => x.placa && x.placa.length > 0 && x.transportadora && x.unidade);
               
-              console.log(`✅ ATIVOS extraídos (${periodo}):`, dadosTemporal[periodo].ativos.length, 'registros');
+              console.log(`✅ ATIVOS extraídos (${periodo}):`, dadosTemporal[periodo].ativos.length, 'registros com placa válida');
+              if (dadosTemporal[periodo].ativos.length > 0) {
+                console.log('✅ Exemplos de ativos com placa:', dadosTemporal[periodo].ativos.slice(0, 3));
+              }
             }
 
             window.saveDataSafely('comparativoDataTemporal', dadosTemporal);
@@ -2671,7 +2714,76 @@ body.dark .sidebar-menu a.active {
       btnElement.style.color = '#fff';
     }
 
+    function mostrarPlacas(placas, transportadora, unidade) {
+      // Cria um modal expansível para mostrar TODAS as placas
+      const placasUniqas = [...new Set(placas)].sort();
+      const isDark = document.body.classList.contains('dark');
+      
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      `;
+      
+      const conteudo = document.createElement('div');
+      conteudo.style.cssText = `
+        background: ${isDark ? '#1a1f2e' : 'white'};
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 600px;
+        max-height: 70vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      `;
+      
+      conteudo.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0; font-size: 18px; color: ${isDark ? '#fff' : '#333'};">🚗 Placas dos Ativos</h3>
+          <button onclick="this.closest('[data-modal]').remove()" style="background: #ff4444; color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center;">×</button>
+        </div>
+        <div style="margin-bottom: 12px; padding: 12px; background: ${isDark ? 'rgba(0, 102, 204, 0.2)' : 'rgba(0, 102, 204, 0.1)'}; border-radius: 6px; font-size: 13px; border-left: 4px solid #0066cc;">
+          <strong style="color: ${isDark ? '#4db8ff' : '#0066cc'};">${transportadora}</strong> | <span style="color: ${isDark ? '#aaa' : '#666'};">${unidade}</span><br>
+          <span style="color: ${isDark ? '#99cc99' : '#117722'}; font-weight: 600;">Total: ${placasUniqas.length} placa${placasUniqas.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px;">
+          ${placasUniqas.map(placa => `
+            <div style="
+              background: #0066cc;
+              color: #000;
+              padding: 12px;
+              border-radius: 6px;
+              text-align: center;
+              font-weight: 700;
+              font-size: 13px;
+              word-break: break-word;
+              box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+            ">${placa}</div>
+          `).join('')}
+        </div>
+      `;
+      
+      modal.appendChild(conteudo);
+      modal.setAttribute('data-modal', 'true');
+      modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+      };
+      
+      document.body.appendChild(modal);
+    }
+
     function atualizarTabela(motoristas, ativos) {
+      // 🔍 DEBUG: Verificar se ativos têm placas
+      console.log('🔍 DEBUG atualizarTabela - Primeiros 5 ativos recebidos:', ativos.slice(0, 5));
+      console.log('🔍 DEBUG - Total de ativos:', ativos.length);
+      
       const porTranspUnit = {};
 
       motoristas.forEach(x => {
@@ -2682,14 +2794,16 @@ body.dark .sidebar-menu a.active {
             unidade: x.unidade,
             motoristas: 0,
             nfc: 0,
-            ativos: 0
+            ativos: 0,
+            placas: []
           };
         }
         porTranspUnit[key].motoristas++;
         if (nfcOk(x.nfc)) porTranspUnit[key].nfc++;
       });
 
-      ativos.forEach(x => {
+      // Processar ativos e coletar placas
+      ativos.forEach((x, idx) => {
         const key = `${x.transportadora}|${x.unidade}`;
         if (!porTranspUnit[key]) {
           porTranspUnit[key] = {
@@ -2697,22 +2811,59 @@ body.dark .sidebar-menu a.active {
             unidade: x.unidade,
             motoristas: 0,
             nfc: 0,
-            ativos: 0
+            ativos: 0,
+            placas: []
           };
         }
         porTranspUnit[key].ativos++;
+        
+        // Coletar TODAS as placas da unidade
+        let placa = (x.placa || x.dispositivo || x.Dispositivo || x.Placa || x.PLACA || x.DISPOSITIVO || "").toString().trim();
+        if (placa && placa !== 'null' && placa !== 'undefined' && placa.length > 0) {
+          porTranspUnit[key].placas.push(placa);
+        }
       });
 
       const tbody = document.getElementById('tabela-corpo');
       const rows = Object.values(porTranspUnit);
       
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">Nenhum dado encontrado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">Nenhum dado encontrado</td></tr>';
         return;
       }
 
+      // Renderizar HTML da tabela
       tbody.innerHTML = rows.map((row, idx) => {
         const pctNFC = row.motoristas > 0 ? Math.round((row.nfc / row.motoristas) * 100) : 0;
+        
+        // Remove duplicatas
+        const placasUniqas = [...new Set(row.placas)];
+        
+        const placasHtml = placasUniqas.length > 0
+          ? `<button 
+              class="btn-placas"
+              data-placas="${btoa(JSON.stringify(placasUniqas))}"
+              data-transportadora="${row.transportadora}"
+              data-unidade="${row.unidade}"
+              style="
+                display: inline-block;
+                background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+                color: white;
+                padding: 8px 12px;
+                border: none;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+              "
+              onmouseover="this.style.background='linear-gradient(135deg, #0052a3 0%, #003d7a 100%)'; this.style.transform='scale(1.05)';"
+              onmouseout="this.style.background='linear-gradient(135deg, #0066cc 0%, #0052a3 100%)'; this.style.transform='scale(1)';"
+            >
+              🚗 ${placasUniqas.length} placa${placasUniqas.length !== 1 ? 's' : ''}
+            </button>`
+          : '<span style="color: #999; font-size: 12px;">-</span>';
+        
         return `
           <tr data-pagina="${idx}">
             <td>${row.transportadora}</td>
@@ -2720,10 +2871,29 @@ body.dark .sidebar-menu a.active {
             <td>${row.motoristas}</td>
             <td><span style="color: #10b981; font-weight: 600;">${row.nfc}</span></td>
             <td>${pctNFC}%</td>
-            <td>${row.ativos}</td>
+            <td>${placasHtml}</td>
           </tr>
         `;
       }).join('');
+
+      // Adicionar event listeners para os botões de placas
+      document.querySelectorAll('.btn-placas').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const placasBase64 = this.getAttribute('data-placas');
+          const transportadora = this.getAttribute('data-transportadora');
+          const unidade = this.getAttribute('data-unidade');
+          
+          try {
+            const placas = JSON.parse(atob(placasBase64));
+            console.log('🎯 Abrindo modal com placas:', placas);
+            mostrarPlacas(placas, transportadora, unidade);
+          } catch(err) {
+            console.error('❌ Erro ao decodificar placas:', err);
+            alert('Erro ao carregar placas');
+          }
+        });
+      });
 
       // Mostrar primeira página
       const ITENS_POR_PAGINA = 10;
