@@ -1253,7 +1253,12 @@
                                 // Converter para array e definir primeiro e último incidente
                                 rawData = Object.values(agregado).map(item => {
                                     if (item['Dates'].length > 0) {
-                                        const datas = item['Dates'].sort();
+                                        // 🔧 CORRIGIDO: Sort cronológico (não alfabético)
+                                        const datas = item['Dates'].sort((a, b) => {
+                                            const dateA = parseDate(a);
+                                            const dateB = parseDate(b);
+                                            return dateA.getTime() - dateB.getTime();
+                                        });
                                         item['Primeiro incidente'] = datas[0];
                                         item['Último incidente'] = datas[datas.length - 1];
                                     }
