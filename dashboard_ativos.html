@@ -1294,39 +1294,39 @@ body.dark .chart-legend {
     // Adicionar evento de clique ao gráfico de unidade
     if (unidadeChartObj) {
       const chartUnidadeCanvas = document.getElementById('chartUnidade');
+      
+      // Armazenar referência para uso no listener
+      chartUnidadeCanvas.chartInstance = unidadeChartObj;
+      
       chartUnidadeCanvas.addEventListener('click', function(event) {
         try {
-          // Método simples: clicar em uma barra horizontal
-          // A posição Y do clique determina qual barra foi clicada
-          const rect = chartUnidadeCanvas.getBoundingClientRect();
-          const clickY = event.clientY - rect.top;
+          const chart = this.chartInstance;
+          if (!chart) return;
           
-          // Converter de pixel de tela para pixel do canvas (mantém proporção)
-          const canvasHeight = chartUnidadeCanvas.height;
-          const offsetHeight = chartUnidadeCanvas.offsetHeight;
-          const canvasClickY = (clickY * canvasHeight) / offsetHeight;
+          // Passar o evento nativo para o Chart.js
+          const points = chart.getElementsAtEventForMode(
+            event,
+            'nearest',
+            { intersect: true },
+            true
+          );
           
-          // Verificar se está na área do gráfico
-          if (canvasClickY >= unidadeChartObj.chartArea.top && canvasClickY <= unidadeChartObj.chartArea.bottom) {
-            // Calcular índice baseado na altura de cada barra
-            const chartAreaHeight = unidadeChartObj.chartArea.bottom - unidadeChartObj.chartArea.top;
-            const numBars = unidadeChartObj.data.labels.length;
-            const barHeight = chartAreaHeight / numBars;
+          console.log('Pontos detectados:', points.length);
+          
+          if (points.length > 0) {
+            // Obter o primeiro elemento clicado
+            const index = points[0].index;
+            const unidadeName = chart.data.labels[index];
             
-            // Posição dentro da área do gráfico
-            const positionInChart = canvasClickY - unidadeChartObj.chartArea.top;
-            const index = Math.floor(positionInChart / barHeight);
+            console.log('✓ Dashboard Ativos - Clicou em:', unidadeName, '| Índice:', index);
+            console.log('  Dados:', chart.data.labels.map((l, i) => i + ': ' + l));
             
-            // Log para debug
-            const unidadeName = unidadeChartObj.data.labels[index];
-            console.log('Dashboard Ativos - Clicou em:', unidadeName, '(índice:', index + ')');
-            
-            if (index >= 0 && index < numBars) {
-              mostrarPlacasPorUnidadeAtivos(unidadeName);
-            }
+            mostrarPlacasPorUnidadeAtivos(unidadeName);
+          } else {
+            console.log('Nenhum elemento detectado no ponto do clique');
           }
         } catch(e) {
-          console.error('Erro no clique:', e);
+          console.error('Erro no clique:', e.message);
         }
       });
     }
