@@ -1623,19 +1623,6 @@ body.dark table th { background: var(--primary-dark); }
                 }
             }
             
-            if (allFleetData.length === 0) {
-                const storedAtivosData = localStorage.getItem('ativosData');
-                if (storedAtivosData) {
-                    try {
-                        allFleetData = JSON.parse(storedAtivosData);
-                        console.log('✅ ativosData do localStorage:', allFleetData.length, 'registros');
-                        hasLocalStorage = true;
-                    } catch (error) {
-                        console.error('❌ Erro ao carregar ativosData:', error);
-                    }
-                }
-            }
-            
             // 2️⃣ Se localStorage vazio, carregar CSVs diretos
             if (allFleetData.length === 0) {
                 console.log('📂 localStorage vazio, carregando CSVs diretamente...');
@@ -1665,6 +1652,18 @@ body.dark table th { background: var(--primary-dark); }
                     updateKPIs();
                 });
                 return;
+            }
+            
+            // 3️⃣ Se data vem de localStorage, usar normalmente
+            const storedAtivosData = localStorage.getItem('ativosData');
+            if (storedAtivosData && allFleetData.length === 0) {
+                try {
+                    allFleetData = JSON.parse(storedAtivosData);
+                    console.log('⚠️ ativosData será usado como fallback:', allFleetData.length, 'registros');
+                    hasLocalStorage = true;
+                } catch (error) {
+                    console.error('❌ Erro ao carregar ativosData:', error);
+                }
             }
             
             // 3️⃣ Se temps dados em localStorage, usar normalmente
