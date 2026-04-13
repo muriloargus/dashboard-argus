@@ -1428,7 +1428,12 @@ body.dark .sidebar-menu a.active {
 
             carregarTransportadoras();
             atualizar();
-            window.saveDataSafely('motoristasData', data);
+            // Salvar dados se localStorage disponível
+            try {
+              localStorage.setItem('motoristasData', JSON.stringify(data));
+            } catch(e) {
+              console.warn('Não foi possível salvar em localStorage:', e);
+            }
             alert(`✅ Arquivo carregado com sucesso!\n${data.length} motoristas encontrados.`);
           },
           error: err => {
@@ -1712,12 +1717,16 @@ body.dark .sidebar-menu a.active {
         // Adicionar clique no gráfico para mostrar motoristas
         document.getElementById('g3').addEventListener('click', (event) => {
           const canvasPosition = Chart.helpers.getRelativePosition(event, chart3);
-          const dataX = chart3.scales.x.getValueForPixel(canvasPosition.x);
-          const datasetIndex = Math.round(dataX);
+          const meta = chart3.getDatasetMeta(0); // Primeira série (barras)
           
-          if (datasetIndex >= 0 && datasetIndex < labelsTop.length) {
-            const unidadeSelecionada = labelsTop[datasetIndex];
-            mostrarMotoristasUnidade(unidadeSelecionada);
+          // Iterar sobre as barras e checar qual foi clicada
+          for (let i = 0; i < meta.data.length; i++) {
+            const bar = meta.data[i];
+            if (canvasPosition.x >= bar.x - bar.width / 2 && canvasPosition.x <= bar.x + bar.width / 2) {
+              const unidadeSelecionada = labelsTop[i];
+              mostrarMotoristasUnidade(unidadeSelecionada);
+              break;
+            }
           }
         });
       }
