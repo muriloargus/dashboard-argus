@@ -2148,11 +2148,11 @@ body.dark .sidebar-menu a.active {
         
         const isDark = document.body.classList.contains('dark');
         const modalHtml = `
-          <div class="motoristas-modal-overlay" onclick="this.remove()">
+          <div class="motoristas-modal-overlay" id="motoristas-overlay">
             <div class="motoristas-modal" onclick="event.stopPropagation()">
               <div class="motoristas-modal-header">
                 <h2>Motoristas da Unidade: ${unidade}</h2>
-                <button class="motoristas-modal-close" onclick="this.closest('.motoristas-modal-overlay').remove()">✕</button>
+                <button class="motoristas-modal-close" onclick="document.getElementById('motoristas-overlay').remove()">✕</button>
               </div>
               <div class="motoristas-modal-content">
                 <div class="motoristas-table">
@@ -2162,6 +2162,7 @@ body.dark .sidebar-menu a.active {
                         <th>Nome</th>
                         <th>CPF</th>
                         <th>NFC</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2169,6 +2170,7 @@ body.dark .sidebar-menu a.active {
                         <tr>
                           <td>${m.nome}</td>
                           <td><strong>${m.cpf}</strong></td>
+                          <td><code>${m.nfc || '—'}</code></td>
                           <td>${nfcOk(m.nfc) ? '<span class="ok">Válido</span>' : '<span class="no">Inválido</span>'}</td>
                         </tr>
                       `).join('')}
@@ -2196,17 +2198,20 @@ body.dark .sidebar-menu a.active {
                 align-items: center;
                 justify-content: center;
                 z-index: 10000;
+                cursor: pointer;
               }
               
               .motoristas-modal {
                 background: ${isDark ? '#2d3748' : '#ffffff'};
                 border-radius: 12px;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-                max-width: 800px;
-                width: 90%;
-                max-height: 80vh;
+                max-width: 900px;
+                width: 95%;
+                max-height: 85vh;
                 overflow-y: auto;
                 animation: slideIn 0.3s ease-out;
+                cursor: default;
+                position: relative;
               }
               
               @keyframes slideIn {
@@ -2227,32 +2232,37 @@ body.dark .sidebar-menu a.active {
                 padding: 20px;
                 border-bottom: 2px solid #3498DB;
                 background: ${isDark ? '#1a202c' : '#f8f9fa'};
+                position: sticky;
+                top: 0;
               }
               
               .motoristas-modal-header h2 {
                 color: ${isDark ? '#ffffff' : '#2c3e50'};
                 margin: 0;
                 font-size: 18px;
+                flex: 1;
               }
               
               .motoristas-modal-close {
                 background: none;
-                border: none;
+                border: 2px solid #e74c3c;
                 font-size: 24px;
                 cursor: pointer;
                 color: #e74c3c;
-                padding: 0;
-                width: 30px;
-                height: 30px;
+                padding: 5px 12px;
+                width: auto;
+                height: auto;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border-radius: 4px;
-                transition: background 0.2s;
+                border-radius: 6px;
+                transition: all 0.2s;
+                font-weight: bold;
               }
               
               .motoristas-modal-close:hover {
                 background: rgba(231, 76, 60, 0.1);
+                border-color: #c0392b;
               }
               
               .motoristas-modal-content {
@@ -2262,11 +2272,14 @@ body.dark .sidebar-menu a.active {
               .motoristas-table {
                 margin-bottom: 20px;
                 overflow-x: auto;
+                border-radius: 8px;
+                border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb'};
               }
               
               .motoristas-table table {
                 width: 100%;
                 border-collapse: collapse;
+                font-size: 13px;
               }
               
               .motoristas-table th {
@@ -2275,6 +2288,11 @@ body.dark .sidebar-menu a.active {
                 padding: 12px;
                 text-align: left;
                 font-weight: 600;
+                border-right: 1px solid rgba(255,255,255,0.1);
+              }
+              
+              .motoristas-table th:last-child {
+                border-right: none;
               }
               
               .motoristas-table td {
@@ -2283,12 +2301,27 @@ body.dark .sidebar-menu a.active {
                 color: ${isDark ? '#e0e0e0' : '#333'};
               }
               
+              .motoristas-table tr:last-child td {
+                border-bottom: none;
+              }
+              
               .motoristas-table tr:hover {
                 background: ${isDark ? 'rgba(99, 163, 216, 0.1)' : '#f9fafb'};
               }
               
-              .motoristas-modal strong {
-                font-family: monospace;
+              .motoristas-table code {
+                font-family: 'Courier New', monospace;
+                font-weight: 700;
+                letter-spacing: 1px;
+                background: ${isDark ? 'rgba(255,255,255,0.05)' : '#f0f0f0'};
+                padding: 3px 6px;
+                border-radius: 3px;
+                color: ${isDark ? '#FFD700' : '#0033A0'};
+                font-size: 11px;
+              }
+              
+              .motoristas-table strong {
+                font-family: 'Courier New', monospace;
                 font-weight: 700;
                 letter-spacing: 1px;
               }
@@ -2305,8 +2338,13 @@ body.dark .sidebar-menu a.active {
           document.head.insertAdjacentHTML('beforeend', styles);
         }
         
-        // Inserir modal no DOM
+        // Fechar modal ao clicar fora
         document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.getElementById('motoristas-overlay').addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.remove();
+          }
+        });
       }
 
       function atualizarTabela(filtrados) {
