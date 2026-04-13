@@ -1296,44 +1296,54 @@ body.dark .chart-legend {
       const chartUnidadeCanvas = document.getElementById('chartUnidade');
       chartUnidadeCanvas.addEventListener('click', function(event) {
         try {
-          // Usar o método nativo do Chart.js - funciona para qualquer tipo de gráfico
-          const canvasRect = chartUnidadeCanvas.getBoundingClientRect();
-          const pixelX = event.clientX - canvasRect.left;
-          const pixelY = event.clientY - canvasRect.top;
+          // Usar método nativo do Chart.js - mais confiável
+          const canvasPosition = Chart.helpers.getRelativePosition(event, unidadeChartObj);
+          const dataX = unidadeChartObj.scales.x.getValueForPixel(canvasPosition.x);
+          const dataY = unidadeChartObj.scales.y.getValueForPixel(canvasPosition.y);
           
-          // Criar um click sintético no evento para o Chart.js processar
-          const clickEvent = new MouseEvent('click', {
-            clientX: canvasRect.left + pixelX,
-            clientY: canvasRect.top + pixelY
-          });
-          
-          // Obter elementos no ponto clicado
-          const dataX = unidadeChartObj.scales.x.getValueForPixel(pixelX);
-          const dataY = unidadeChartObj.scales.y.getValueForPixel(pixelY);
-          
-          // Verificar qual barra foi clicada iterando pelo dataset
+          // Iterar sobre os elementos do dataset para encontrar qual barra foi clicada
           const meta = unidadeChartObj.getDatasetMeta(0);
-          let clickedIndex = -1;
-          
           for (let i = 0; i < meta.data.length; i++) {
             const bar = meta.data[i];
-            // Verificar se o clique está dentro da barra
-            if (pixelX >= bar.x - bar.width / 2 && pixelX <= bar.x + bar.width / 2 &&
-                pixelY >= bar.y - bar.height / 2 && pixelY <= bar.y + bar.height / 2) {
-              clickedIndex = i;
-              break;
+            if (!bar) continue;
+            
+            // Para gráfico de barras vertical: comparar com X
+            if (canvasPosition.x >= bar.x - bar.width / 2 && 
+                canvasPosition.x <= bar.x + bar.width / 2 &&
+                canvasPosition.y >= bar.y &&
+                canvasPosition.y <= bar.y + bar.height) {
+              
+              const unidadeName = unidadeChartObj.data.labels[i];
+              console.log('✓ Clicou em:', unidadeName);
+              mostrarPlacasPorUnidadeAtivos(unidadeName);
+              return;
             }
           }
           
-          if (clickedIndex >= 0 && clickedIndex < unidadeChartObj.data.labels.length) {
-            const unidadeName = unidadeChartObj.data.labels[clickedIndex];
-            console.log('✓ Clicou em:', unidadeName, 'índice:', clickedIndex);
-            mostrarPlacasPorUnidadeAtivos(unidadeName);
-          } else {
-            console.log('Clique fora das barras ou sem detecção');
-          }
+          console.log('Clique não detectou barra');
         } catch(e) {
-          console.error('Erro no clique:', e.message);
+          console.error('Erro:', e.message);
+          // Fallback simples
+          try {
+            const rect = chartUnidadeCanvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const canvasWidth = chartUnidadeCanvas.width;
+            const rectWidth = rect.width;
+            const scaledX = (x * canvasWidth) / rectWidth;
+            
+            const meta = unidadeChartObj.getDatasetMeta(0);
+            for (let i = 0; i < meta.data.length; i++) {
+              const bar = meta.data[i];
+              if (scaledX >= bar.x - bar.width / 2 && scaledX <= bar.x + bar.width / 2) {
+                const unidadeName = unidadeChartObj.data.labels[i];
+                console.log('✓ Fallback - Clicou em:', unidadeName);
+                mostrarPlacasPorUnidadeAtivos(unidadeName);
+                return;
+              }
+            }
+          } catch(e2) {
+            console.error('Fallback também falhou:', e2.message);
+          }
         }
       });
     }
