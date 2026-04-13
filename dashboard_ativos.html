@@ -788,7 +788,7 @@ body.dark .chart-legend {
       <div class="chart-box"><canvas id="chartFabricante"></canvas></div>
       <div class="chart-box"><canvas id="chartRegiao"></canvas></div>
       <div class="chart-box"><canvas id="chartTipo"></canvas></div>
-      <div class="chart-box chart-large"><canvas id="chartUnidade"></canvas></div>
+      <div class="chart-box chart-large"><canvas id="chartUnidade" style="cursor: pointer;"></canvas></div>
     </div>
     <style>
   /* Estilo específico para a tabela de detalhamento */
@@ -1288,7 +1288,30 @@ body.dark .chart-legend {
     charts.push(doughnutChart('chartFabricante', group(d, 'FABRICANTE'), 'Distribuição por Fabricante'));
     charts.push(horizontalBar('chartRegiao', group(d, 'REGIAO'), 'Veículos por Região'));
     charts.push(horizontalBarRoxo('chartTipo', group(d, 'TIPO DE VEICULO'), 'Quantidade por Tipo'));
-    charts.push(barChartUnidadesHorizontal('chartUnidade', group(d, 'UNIDADE'), 'Top 15 Ativos por Unidade'));
+    const unidadeChartObj = barChartUnidadesHorizontal('chartUnidade', group(d, 'UNIDADE'), 'Top 15 Ativos por Unidade');
+    charts.push(unidadeChartObj);
+    
+    // Adicionar evento de clique ao gráfico de unidade
+    if (unidadeChartObj) {
+      const chartUnidadeCanvas = document.getElementById('chartUnidade');
+      chartUnidadeCanvas.addEventListener('click', function(event) {
+        const canvasPosition = Chart.helpers.getRelativePosition(event, unidadeChartObj);
+        const dataY = unidadeChartObj.scales.y.getValueForPixel(canvasPosition.y);
+        
+        // Verificar se clicou na área do gráfico
+        if (canvasPosition.y >= unidadeChartObj.chartArea.top && canvasPosition.y <= unidadeChartObj.chartArea.bottom) {
+          const barHeight = unidadeChartObj.chartArea.height / unidadeChartObj.data.labels.length;
+          const index = Math.floor((canvasPosition.y - unidadeChartObj.chartArea.top) / barHeight);
+          
+          if (index >= 0 && index < unidadeChartObj.data.labels.length) {
+            const unidadeName = unidadeChartObj.data.labels[index];
+            console.log('Clicou em unidade:', unidadeName);
+            mostrarPlacasPorUnidadeAtivos(unidadeName);
+          }
+        }
+      });
+    }
+    
     // Ajustar cores das legendas em dark mode
     adjustLegendColorsForDarkMode();
     
@@ -1748,6 +1771,155 @@ function doughnutChart(id, obj, label) {
         }
       }
     });
+  }
+  
+  // Função para mostrar placas/dispositivos de uma unidade selecionada
+  function mostrarPlacasPorUnidadeAtivos(unidade) {
+    const dispositivosDaUnidade = rawData.filter(v => v.UNIDADE === unidade);
+    
+    if (dispositivosDaUnidade.length === 0) {
+      alert(`Nenhum dispositivo encontrado para a unidade: ${unidade}`);
+      return;
+    }
+    
+    // Extrair dispositivos únicos e ordenar
+    const dispositivos = [...new Set(dispositivosDaUnidade.map(v => v.Dispositivo || 'N/A'))].sort();
+    
+    // Criar modal
+    const isDark = document.body.classList.contains('dark');
+    const modalHtml = `
+      <div class="placas-modal-overlay" onclick="this.remove()">
+        <div class="placas-modal" onclick="event.stopPropagation()">
+          <div class="placas-modal-header">
+            <h2>Dispositivos da Unidade: ${unidade}</h2>
+            <button class="placas-modal-close" onclick="this.closest('.placas-modal-overlay').remove()">✕</button>
+          </div>
+          <div class="placas-modal-content">
+            <div class="placas-grid">
+              ${dispositivos.map(disp => `<div class="placa-item">${disp}</div>`).join('')}
+            </div>
+            <p class="placas-count">Total: ${dispositivos.length} dispositivos</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Adicionar estilos CSS se não existirem
+    if (!document.getElementById('placas-modal-styles')) {
+      const styles = `
+        <style id="placas-modal-styles">
+          .placas-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+          }
+          
+          .placas-modal {
+            background: ${isDark ? '#2d3748' : '#ffffff'};
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+          }
+          
+          @keyframes slideIn {
+            from {
+              transform: translateY(-50px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+          
+          .placas-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid #3498DB;
+            background: ${isDark ? '#1a202c' : '#f8f9fa'};
+          }
+          
+          .placas-modal-header h2 {
+            color: ${isDark ? '#ffffff' : '#2c3e50'};
+            margin: 0;
+            font-size: 18px;
+          }
+          
+          .placas-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #e74c3c;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+          }
+          
+          .placas-modal-close:hover {
+            background: rgba(231, 76, 60, 0.1);
+          }
+          
+          .placas-modal-content {
+            padding: 20px;
+          }
+          
+          .placas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+          }
+          
+          .placa-item {
+            background: linear-gradient(135deg, #90EE90, #7BC97B);
+            color: #000;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: monospace;
+            box-shadow: 0 4px 8px rgba(144, 238, 144, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+          }
+          
+          .placa-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(144, 238, 144, 0.5);
+          }
+          
+          .placas-count {
+            text-align: center;
+            color: ${isDark ? '#cbd5e0' : '#7f8c8d'};
+            font-size: 14px;
+            margin: 0;
+          }
+        </style>
+      `;
+      document.head.insertAdjacentHTML('beforeend', styles);
+    }
+    
+    // Inserir modal no DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
   }
 
   // GRÁFICO 3: BARRAS VERTICAIS - Região (Cinza)
