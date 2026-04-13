@@ -1295,20 +1295,38 @@ body.dark .chart-legend {
     if (unidadeChartObj) {
       const chartUnidadeCanvas = document.getElementById('chartUnidade');
       chartUnidadeCanvas.addEventListener('click', function(event) {
-        const rect = chartUnidadeCanvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        
-        // Gráfico horizontal: dados estão no eixo Y
-        if (y >= unidadeChartObj.chartArea.top && y <= unidadeChartObj.chartArea.bottom) {
-          const barHeight = unidadeChartObj.chartArea.height / unidadeChartObj.data.labels.length;
-          const index = Math.floor((y - unidadeChartObj.chartArea.top) / barHeight);
+        try {
+          // Método simples: clicar em uma barra horizontal
+          // A posição Y do clique determina qual barra foi clicada
+          const rect = chartUnidadeCanvas.getBoundingClientRect();
+          const clickY = event.clientY - rect.top;
           
-          if (index >= 0 && index < unidadeChartObj.data.labels.length) {
+          // Converter de pixel de tela para pixel do canvas (mantém proporção)
+          const canvasHeight = chartUnidadeCanvas.height;
+          const offsetHeight = chartUnidadeCanvas.offsetHeight;
+          const canvasClickY = (clickY * canvasHeight) / offsetHeight;
+          
+          // Verificar se está na área do gráfico
+          if (canvasClickY >= unidadeChartObj.chartArea.top && canvasClickY <= unidadeChartObj.chartArea.bottom) {
+            // Calcular índice baseado na altura de cada barra
+            const chartAreaHeight = unidadeChartObj.chartArea.bottom - unidadeChartObj.chartArea.top;
+            const numBars = unidadeChartObj.data.labels.length;
+            const barHeight = chartAreaHeight / numBars;
+            
+            // Posição dentro da área do gráfico
+            const positionInChart = canvasClickY - unidadeChartObj.chartArea.top;
+            const index = Math.floor(positionInChart / barHeight);
+            
+            // Log para debug
             const unidadeName = unidadeChartObj.data.labels[index];
-            console.log('Clicou em unidade:', unidadeName);
-            mostrarPlacasPorUnidadeAtivos(unidadeName);
+            console.log('Dashboard Ativos - Clicou em:', unidadeName, '(índice:', index + ')');
+            
+            if (index >= 0 && index < numBars) {
+              mostrarPlacasPorUnidadeAtivos(unidadeName);
+            }
           }
+        } catch(e) {
+          console.error('Erro no clique:', e);
         }
       });
     }
