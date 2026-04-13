@@ -1558,7 +1558,7 @@ body.dark .sidebar-menu a.active {
                         </div>
                     </div>
                     <div class="chart-wrapper">
-                        <canvas id="unidadeChart"></canvas>
+                        <canvas id="unidadeChart" style="cursor: pointer;"></canvas>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -2103,6 +2103,28 @@ body.dark .sidebar-menu a.active {
                             ticks: { color: textColor },
                             grid: { color: gridColor }
                         }
+                    }
+                }
+            });
+            
+            // Adicionar evento de clique com detecção correta
+            const unidadeCanvasEl = document.getElementById('unidadeChart');
+            unidadeCanvasEl.addEventListener('click', function(event) {
+                const canvasPosition = Chart.helpers.getRelativePosition(event, unidadeChart);
+                const dataX = unidadeChart.scales.x.getValueForPixel(canvasPosition.x);
+                const dataY = unidadeChart.scales.y.getValueForPixel(canvasPosition.y);
+                
+                // Verificar se clicou na área do gráfico
+                if (canvasPosition.x >= 0 && canvasPosition.x <= unidadeChart.chartArea.width + unidadeChart.chartArea.left &&
+                    canvasPosition.y >= unidadeChart.chartArea.top && canvasPosition.y <= unidadeChart.chartArea.bottom) {
+                    
+                    const barWidth = unidadeChart.chartArea.width / unidadeChart.data.labels.length;
+                    const index = Math.floor((canvasPosition.x - unidadeChart.chartArea.left) / barWidth);
+                    
+                    if (index >= 0 && index < unidadeChart.data.labels.length) {
+                        const unidadeName = unidadeChart.data.labels[index];
+                        console.log('Clicou em:', unidadeName);
+                        mostrarPlacasPorUnidade(unidadeName);
                     }
                 }
             });
@@ -3104,6 +3126,159 @@ body.dark .sidebar-menu a.active {
             }
         }
         
+
+        function mostrarPlacasPorUnidade(unidade) {
+            // Filtrar veículos da unidade selecionada
+            const veiculosDaUnidade = fleetData.filter(v => {
+                const uni = v.unidade || 'Sem cadastro';
+                return uni === unidade;
+            });
+            
+            if (veiculosDaUnidade.length === 0) {
+                alert(`Nenhum veículo encontrado para a unidade: ${unidade}`);
+                return;
+            }
+            
+            // Extrair placas únicas e ordenar
+            const placas = [...new Set(veiculosDaUnidade.map(v => v.placa || 'N/A'))].sort();
+
+            
+            // Criar modal
+            const isDark = document.body.classList.contains('dark');
+            const modalHtml = `
+                <div class="placas-modal-overlay" onclick="this.remove()">
+                    <div class="placas-modal" onclick="event.stopPropagation()">
+                        <div class="placas-modal-header">
+                            <h2>Placas da Unidade: ${unidade}</h2>
+                            <button class="placas-modal-close" onclick="this.closest('.placas-modal-overlay').remove()">✕</button>
+                        </div>
+                        <div class="placas-modal-content">
+                            <div class="placas-grid">
+                                ${placas.map(placa => `<div class="placa-item">${placa}</div>`).join('')}
+                            </div>
+                            <p class="placas-count">Total: ${placas.length} veículos</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Adicionar estilos CSS se não existirem
+            if (!document.getElementById('placas-modal-styles')) {
+                const styles = `
+                    <style id="placas-modal-styles">
+                        .placas-modal-overlay {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: rgba(0, 0, 0, 0.5);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            z-index: 10000;
+                        }
+                        
+                        .placas-modal {
+                            background: ${isDark ? '#2d3748' : '#ffffff'};
+                            border-radius: 12px;
+                            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                            max-width: 800px;
+                            width: 90%;
+                            max-height: 80vh;
+                            overflow-y: auto;
+                            animation: slideIn 0.3s ease-out;
+                        }
+                        
+                        @keyframes slideIn {
+                            from {
+                                transform: translateY(-50px);
+                                opacity: 0;
+                            }
+                            to {
+                                transform: translateY(0);
+                                opacity: 1;
+                            }
+                        }
+                        
+                        .placas-modal-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 20px;
+                            border-bottom: 2px solid #3498DB;
+                            background: ${isDark ? '#1a202c' : '#f8f9fa'};
+                        }
+                        
+                        .placas-modal-header h2 {
+                            color: ${isDark ? '#ffffff' : '#2c3e50'};
+                            margin: 0;
+                            font-size: 18px;
+                        }
+                        
+                        .placas-modal-close {
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: #e74c3c;
+                            padding: 0;
+                            width: 30px;
+                            height: 30px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 4px;
+                            transition: background 0.2s;
+                        }
+                        
+                        .placas-modal-close:hover {
+                            background: rgba(231, 76, 60, 0.1);
+                        }
+                        
+                        .placas-modal-content {
+                            padding: 20px;
+                        }
+                        
+                        .placas-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                            gap: 12px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        .placa-item {
+                            background: linear-gradient(135deg, #3498DB, #2980B9);
+                            color: #ffffff;
+                            padding: 12px;
+                            border-radius: 8px;
+                            text-align: center;
+                            font-weight: bold;
+                            font-size: 14px;
+                            font-family: monospace;
+                            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+                            transition: transform 0.2s, box-shadow 0.2s;
+                        }
+                        
+                        .placa-item:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.5);
+                        }
+                        
+                        .placas-count {
+                            text-align: center;
+                            color: ${isDark ? '#cbd5e0' : '#7f8c8d'};
+                            font-size: 14px;
+                            margin: 0;
+                        }
+                    </style>
+                `;
+                document.head.insertAdjacentHTML('beforeend', styles);
+            }
+            
+            // Inserir modal no DOM
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
 
         function generateInsights() {
             const dataSource = filteredData && filteredData.length > 0 ? filteredData : fleetData;
