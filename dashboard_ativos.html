@@ -1473,8 +1473,8 @@ function doughnutChart(id, obj, label) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: { display: true, text: label, color: '#0033A0', font: { size: 14, weight: '600' } },
-          legend: { display: true, position: "top" },
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
           tooltip: {
             backgroundColor: 'rgba(0, 51, 160, 0.9)',
             titleColor: '#FFD700',
@@ -1511,7 +1511,7 @@ function doughnutChart(id, obj, label) {
               const maxValue = Math.max(...data);
               const currentValue = data[context.dataIndex];
               const percentage = (currentValue / maxValue) * 100;
-              return percentage > 15 ? '#000' : '#0033A0';
+              return percentage > 15 ? '#000' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
             },
             padding: 5
           }
@@ -1566,7 +1566,7 @@ function doughnutChart(id, obj, label) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: { display: true, text: label, color: '#0033A0', font: { size: 14, weight: '600' } },
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
           legend: { display: true, position: 'top', labels: { color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 12 } } },
           tooltip: {
             backgroundColor: 'rgba(0, 51, 160, 0.9)',
@@ -1656,8 +1656,8 @@ function doughnutChart(id, obj, label) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: { display: true, text: label, color: '#0033A0', font: { size: 14, weight: '600' } },
-          legend: { display: true, position: "top" },
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
           tooltip: {
             backgroundColor: 'rgba(0, 51, 160, 0.9)',
             titleColor: '#FFD700',
@@ -1694,7 +1694,7 @@ function doughnutChart(id, obj, label) {
               const maxValue = Math.max(...data);
               const currentValue = data[context.dataIndex];
               const percentage = (currentValue / maxValue) * 100;
-              return percentage > 15 ? '#fff' : '#0033A0';
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
             },
             padding: 5
           }
@@ -1751,8 +1751,8 @@ function doughnutChart(id, obj, label) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: { display: true, text: label, color: '#0033A0', font: { size: 14, weight: '600' } },
-          legend: { display: true, position: "top" },
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
           tooltip: {
             backgroundColor: 'rgba(0, 51, 160, 0.9)',
             titleColor: '#FFD700',
@@ -1789,7 +1789,7 @@ function doughnutChart(id, obj, label) {
               const maxValue = Math.max(...data);
               const currentValue = data[context.dataIndex];
               const percentage = (currentValue / maxValue) * 100;
-              return percentage > 15 ? '#fff' : '#0033A0';
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
             },
             padding: 5
           }
@@ -1811,7 +1811,13 @@ function doughnutChart(id, obj, label) {
   
   // Função para mostrar placas/dispositivos de uma unidade selecionada
   function mostrarPlacasPorUnidadeAtivos(unidade) {
-    const dispositivosDaUnidade = rawData.filter(v => v.UNIDADE === unidade);
+    // Filtrar registros: se for "Sem cadastro", buscar por UNIDADE vazia
+    let dispositivosDaUnidade;
+    if (unidade === 'Sem cadastro') {
+      dispositivosDaUnidade = rawData.filter(v => !v.UNIDADE || v.UNIDADE.trim() === '');
+    } else {
+      dispositivosDaUnidade = rawData.filter(v => v.UNIDADE === unidade);
+    }
     
     if (dispositivosDaUnidade.length === 0) {
       alert(`Nenhum dispositivo encontrado para a unidade: ${unidade}`);
@@ -1995,8 +2001,8 @@ function doughnutChart(id, obj, label) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: { display: true, text: label, color: '#0033A0', font: { size: 14, weight: '600' } },
-          legend: { display: true, position: "top" },
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
           tooltip: {
             backgroundColor: 'rgba(0, 51, 160, 0.9)',
             titleColor: '#FFD700',
@@ -2033,7 +2039,7 @@ function doughnutChart(id, obj, label) {
               const maxValue = Math.max(...data);
               const currentValue = data[context.dataIndex];
               const percentage = (currentValue / maxValue) * 100;
-              return percentage > 15 ? '#fff' : '#0033A0';
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
             },
             padding: 5
           }
@@ -2090,8 +2096,8 @@ function doughnutChart(id, obj, label) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          title: { display: true, text: label, color: '#0033A0', font: { size: 14, weight: '600' } },
-          legend: { display: true, position: "top" },
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
           tooltip: {
             backgroundColor: 'rgba(0, 51, 160, 0.9)',
             titleColor: '#FFD700',
@@ -2128,7 +2134,7 @@ function doughnutChart(id, obj, label) {
               const maxValue = Math.max(...data);
               const currentValue = data[context.dataIndex];
               const percentage = (currentValue / maxValue) * 100;
-              return percentage > 15 ? '#fff' : '#0033A0';
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
             },
             padding: 5
           }
