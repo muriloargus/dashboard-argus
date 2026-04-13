@@ -1295,13 +1295,14 @@ body.dark .chart-legend {
     if (unidadeChartObj) {
       const chartUnidadeCanvas = document.getElementById('chartUnidade');
       chartUnidadeCanvas.addEventListener('click', function(event) {
-        const canvasPosition = Chart.helpers.getRelativePosition(event, unidadeChartObj);
-        const dataY = unidadeChartObj.scales.y.getValueForPixel(canvasPosition.y);
+        const rect = chartUnidadeCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
         
-        // Verificar se clicou na área do gráfico
-        if (canvasPosition.y >= unidadeChartObj.chartArea.top && canvasPosition.y <= unidadeChartObj.chartArea.bottom) {
+        // Gráfico horizontal: dados estão no eixo Y
+        if (y >= unidadeChartObj.chartArea.top && y <= unidadeChartObj.chartArea.bottom) {
           const barHeight = unidadeChartObj.chartArea.height / unidadeChartObj.data.labels.length;
-          const index = Math.floor((canvasPosition.y - unidadeChartObj.chartArea.top) / barHeight);
+          const index = Math.floor((y - unidadeChartObj.chartArea.top) / barHeight);
           
           if (index >= 0 && index < unidadeChartObj.data.labels.length) {
             const unidadeName = unidadeChartObj.data.labels[index];
