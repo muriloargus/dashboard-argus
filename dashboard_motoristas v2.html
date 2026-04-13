@@ -1461,6 +1461,25 @@ body.dark .sidebar-menu a.active {
         carregarTransportadoras();
         atualizar();
         console.log('Dados padrão carregados (10 motoristas)');
+        
+        // Adicionar listener de clique NO GRÁFICO UMA ÚNICA VEZ (não repetir a cada atualização!)
+        if (!window.g3ClickListenerAdded) {
+          document.getElementById('g3').addEventListener('click', (event) => {
+            try {
+              if (!chart3) return;
+              const elements = chart3.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+              if (elements.length > 0) {
+                const index = elements[0].index;
+                const unidadeSelecionada = chart3.data.labels[index];
+                console.log('✓ Clicou em:', unidadeSelecionada, '(índice:', index, ')');
+                mostrarMotoristasUnidade(unidadeSelecionada);
+              }
+            } catch(e) {
+              console.error('Erro ao detectar clique:', e);
+            }
+          });
+          window.g3ClickListenerAdded = true;
+        }
       }
 
       // Extrair transportadora do grupo
@@ -1707,22 +1726,6 @@ body.dark .sidebar-menu a.active {
         const dataNfcTop = labelsTop.map(u => nfcPorU[u] || 0);
         if (chart3) chart3.destroy();
         chart3 = criarGraficoComDoisEixos('g3', labelsTop, dataTop, dataNfcTop);
-        
-        // Adicionar clique no gráfico para mostrar motoristas
-        document.getElementById('g3').addEventListener('click', (event) => {
-          try {
-            // Usar método nativo do Chart.js - muito mais confiável
-            const elements = chart3.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
-            if (elements.length > 0) {
-              const index = elements[0].index;
-              const unidadeSelecionada = chart3.data.labels[index]; // Pega label do gráfico já ordenado
-              console.log('✓ Clicou em:', unidadeSelecionada, '(índice:', index, ')');
-              mostrarMotoristasUnidade(unidadeSelecionada);
-            }
-          } catch(e) {
-            console.error('Erro ao detectar clique:', e);
-          }
-        });
       }
 
       function criarGraficoBarras(id, dados, titulo) {
