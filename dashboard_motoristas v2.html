@@ -1708,6 +1708,18 @@ body.dark .sidebar-menu a.active {
         const dataNfcTop = labelsTop.map(u => nfcPorU[u] || 0);
         if (chart3) chart3.destroy();
         chart3 = criarGraficoComDoisEixos('g3', labelsTop, dataTop, dataNfcTop);
+        
+        // Adicionar clique no gráfico para mostrar motoristas
+        document.getElementById('g3').addEventListener('click', (event) => {
+          const canvasPosition = Chart.helpers.getRelativePosition(event, chart3);
+          const dataX = chart3.scales.x.getValueForPixel(canvasPosition.x);
+          const datasetIndex = Math.round(dataX);
+          
+          if (datasetIndex >= 0 && datasetIndex < labelsTop.length) {
+            const unidadeSelecionada = labelsTop[datasetIndex];
+            mostrarMotoristasUnidade(unidadeSelecionada);
+          }
+        });
       }
 
       function criarGraficoBarras(id, dados, titulo) {
@@ -2120,6 +2132,181 @@ body.dark .sidebar-menu a.active {
             }
           }
         });
+      }
+
+      // Função para mostrar motoristas de uma unidade em modal
+      function mostrarMotoristasUnidade(unidade) {
+        const motoristasDaUnidade = data.filter(m => m.unidade === unidade);
+        
+        if (motoristasDaUnidade.length === 0) {
+          alert(`Nenhum motorista encontrado para a unidade: ${unidade}`);
+          return;
+        }
+        
+        // Ordenar por nome
+        motoristasDaUnidade.sort((a, b) => a.nome.localeCompare(b.nome));
+        
+        const isDark = document.body.classList.contains('dark');
+        const modalHtml = `
+          <div class="motoristas-modal-overlay" onclick="this.remove()">
+            <div class="motoristas-modal" onclick="event.stopPropagation()">
+              <div class="motoristas-modal-header">
+                <h2>Motoristas da Unidade: ${unidade}</h2>
+                <button class="motoristas-modal-close" onclick="this.closest('.motoristas-modal-overlay').remove()">✕</button>
+              </div>
+              <div class="motoristas-modal-content">
+                <div class="motoristas-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>NFC</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${motoristasDaUnidade.map(m => `
+                        <tr>
+                          <td>${m.nome}</td>
+                          <td><strong>${m.cpf}</strong></td>
+                          <td>${nfcOk(m.nfc) ? '<span class="ok">Válido</span>' : '<span class="no">Inválido</span>'}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+                <p class="motoristas-count">Total: ${motoristasDaUnidade.length} motoristas</p>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Adicionar estilos CSS se não existirem
+        if (!document.getElementById('motoristas-modal-styles')) {
+          const styles = `
+            <style id="motoristas-modal-styles">
+              .motoristas-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+              }
+              
+              .motoristas-modal {
+                background: ${isDark ? '#2d3748' : '#ffffff'};
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                max-width: 800px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                animation: slideIn 0.3s ease-out;
+              }
+              
+              @keyframes slideIn {
+                from {
+                  transform: translateY(-50px);
+                  opacity: 0;
+                }
+                to {
+                  transform: translateY(0);
+                  opacity: 1;
+                }
+              }
+              
+              .motoristas-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px;
+                border-bottom: 2px solid #3498DB;
+                background: ${isDark ? '#1a202c' : '#f8f9fa'};
+              }
+              
+              .motoristas-modal-header h2 {
+                color: ${isDark ? '#ffffff' : '#2c3e50'};
+                margin: 0;
+                font-size: 18px;
+              }
+              
+              .motoristas-modal-close {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #e74c3c;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                transition: background 0.2s;
+              }
+              
+              .motoristas-modal-close:hover {
+                background: rgba(231, 76, 60, 0.1);
+              }
+              
+              .motoristas-modal-content {
+                padding: 20px;
+              }
+              
+              .motoristas-table {
+                margin-bottom: 20px;
+                overflow-x: auto;
+              }
+              
+              .motoristas-table table {
+                width: 100%;
+                border-collapse: collapse;
+              }
+              
+              .motoristas-table th {
+                background: #63a3d8;
+                color: white;
+                padding: 12px;
+                text-align: left;
+                font-weight: 600;
+              }
+              
+              .motoristas-table td {
+                padding: 12px;
+                border-bottom: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb'};
+                color: ${isDark ? '#e0e0e0' : '#333'};
+              }
+              
+              .motoristas-table tr:hover {
+                background: ${isDark ? 'rgba(99, 163, 216, 0.1)' : '#f9fafb'};
+              }
+              
+              .motoristas-modal strong {
+                font-family: monospace;
+                font-weight: 700;
+                letter-spacing: 1px;
+              }
+              
+              .motoristas-count {
+                text-align: center;
+                color: ${isDark ? '#cbd5e0' : '#7f8c8d'};
+                font-size: 14px;
+                margin: 0;
+                font-weight: 600;
+              }
+            </style>
+          `;
+          document.head.insertAdjacentHTML('beforeend', styles);
+        }
+        
+        // Inserir modal no DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
       }
 
       function atualizarTabela(filtrados) {
