@@ -2110,16 +2110,16 @@ body.dark .sidebar-menu a.active {
             // Adicionar evento de clique com detecção correta
             const unidadeCanvasEl = document.getElementById('unidadeChart');
             unidadeCanvasEl.addEventListener('click', function(event) {
-                const canvasPosition = Chart.helpers.getRelativePosition(event, unidadeChart);
-                const dataX = unidadeChart.scales.x.getValueForPixel(canvasPosition.x);
-                const dataY = unidadeChart.scales.y.getValueForPixel(canvasPosition.y);
+                const rect = unidadeCanvasEl.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
                 
                 // Verificar se clicou na área do gráfico
-                if (canvasPosition.x >= 0 && canvasPosition.x <= unidadeChart.chartArea.width + unidadeChart.chartArea.left &&
-                    canvasPosition.y >= unidadeChart.chartArea.top && canvasPosition.y <= unidadeChart.chartArea.bottom) {
+                if (x >= unidadeChart.chartArea.left && x <= unidadeChart.chartArea.right &&
+                    y >= unidadeChart.chartArea.top && y <= unidadeChart.chartArea.bottom) {
                     
                     const barWidth = unidadeChart.chartArea.width / unidadeChart.data.labels.length;
-                    const index = Math.floor((canvasPosition.x - unidadeChart.chartArea.left) / barWidth);
+                    const index = Math.floor((x - unidadeChart.chartArea.left) / barWidth);
                     
                     if (index >= 0 && index < unidadeChart.data.labels.length) {
                         const unidadeName = unidadeChart.data.labels[index];
