@@ -1294,39 +1294,24 @@ body.dark .chart-legend {
     // Adicionar evento de clique ao gráfico de unidade
     if (unidadeChartObj) {
       const chartUnidadeCanvas = document.getElementById('chartUnidade');
-      
-      // Armazenar referência para uso no listener
-      chartUnidadeCanvas.chartInstance = unidadeChartObj;
-      
       chartUnidadeCanvas.addEventListener('click', function(event) {
-        try {
-          const chart = this.chartInstance;
-          if (!chart) return;
+        const rect = chartUnidadeCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        // Gráfico horizontal: verificar Y (altura das barras)
+        if (x >= unidadeChartObj.chartArea.left && x <= unidadeChartObj.chartArea.right &&
+            y >= unidadeChartObj.chartArea.top && y <= unidadeChartObj.chartArea.bottom) {
           
-          // Passar o evento nativo para o Chart.js
-          const points = chart.getElementsAtEventForMode(
-            event,
-            'nearest',
-            { intersect: true },
-            true
-          );
+          // Calcular índice baseado na altura (Y)
+          const barHeight = unidadeChartObj.chartArea.height / unidadeChartObj.data.labels.length;
+          const index = Math.floor((y - unidadeChartObj.chartArea.top) / barHeight);
           
-          console.log('Pontos detectados:', points.length);
-          
-          if (points.length > 0) {
-            // Obter o primeiro elemento clicado
-            const index = points[0].index;
-            const unidadeName = chart.data.labels[index];
-            
-            console.log('✓ Dashboard Ativos - Clicou em:', unidadeName, '| Índice:', index);
-            console.log('  Dados:', chart.data.labels.map((l, i) => i + ': ' + l));
-            
+          if (index >= 0 && index < unidadeChartObj.data.labels.length) {
+            const unidadeName = unidadeChartObj.data.labels[index];
+            console.log('Clicou em:', unidadeName, 'índice:', index);
             mostrarPlacasPorUnidadeAtivos(unidadeName);
-          } else {
-            console.log('Nenhum elemento detectado no ponto do clique');
           }
-        } catch(e) {
-          console.error('Erro no clique:', e.message);
         }
       });
     }
