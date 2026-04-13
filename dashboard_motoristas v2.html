@@ -1428,12 +1428,6 @@ body.dark .sidebar-menu a.active {
 
             carregarTransportadoras();
             atualizar();
-            // Salvar dados se localStorage disponível
-            try {
-              localStorage.setItem('motoristasData', JSON.stringify(data));
-            } catch(e) {
-              console.warn('Não foi possível salvar em localStorage:', e);
-            }
             alert(`✅ Arquivo carregado com sucesso!\n${data.length} motoristas encontrados.`);
           },
           error: err => {
@@ -1716,17 +1710,17 @@ body.dark .sidebar-menu a.active {
         
         // Adicionar clique no gráfico para mostrar motoristas
         document.getElementById('g3').addEventListener('click', (event) => {
-          const canvasPosition = Chart.helpers.getRelativePosition(event, chart3);
-          const meta = chart3.getDatasetMeta(0); // Primeira série (barras)
-          
-          // Iterar sobre as barras e checar qual foi clicada
-          for (let i = 0; i < meta.data.length; i++) {
-            const bar = meta.data[i];
-            if (canvasPosition.x >= bar.x - bar.width / 2 && canvasPosition.x <= bar.x + bar.width / 2) {
-              const unidadeSelecionada = labelsTop[i];
+          try {
+            // Usar método nativo do Chart.js - muito mais confiável
+            const elements = chart3.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const unidadeSelecionada = chart3.data.labels[index]; // Pega label do gráfico já ordenado
+              console.log('✓ Clicou em:', unidadeSelecionada, '(índice:', index, ')');
               mostrarMotoristasUnidade(unidadeSelecionada);
-              break;
             }
+          } catch(e) {
+            console.error('Erro ao detectar clique:', e);
           }
         });
       }
