@@ -1782,6 +1782,7 @@ body.dark .sidebar-menu a.active {
         const labels = Object.keys(dados);
         const values = Object.values(dados);
         const canvas = document.getElementById(id);
+        const maxValue = Math.max(...values);
         
         return new Chart(canvas, {
           type: 'bar',
@@ -1803,6 +1804,9 @@ body.dark .sidebar-menu a.active {
             layout: {
               padding: { left: 10, right: 10, top: 5, bottom: 5 }
             },
+            onHover: (event, activeElements) => {
+              canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+            },
             plugins: {
               legend: { display: false },
               tooltip: {
@@ -1815,32 +1819,20 @@ body.dark .sidebar-menu a.active {
               datalabels: {
                 display: true,
                 anchor: function(context) {
-                  const data = context.dataset.data;
-                  const maxValue = Math.max(...data);
-                  const currentValue = data[context.dataIndex];
-                  const percentage = (currentValue / maxValue) * 100;
+                  const percentage = (values[context.dataIndex] / maxValue) * 100;
                   return percentage > 15 ? 'center' : 'end';
                 },
                 align: function(context) {
-                  const data = context.dataset.data;
-                  const maxValue = Math.max(...data);
-                  const currentValue = data[context.dataIndex];
-                  const percentage = (currentValue / maxValue) * 100;
+                  const percentage = (values[context.dataIndex] / maxValue) * 100;
                   return percentage > 15 ? 'center' : 'end';
                 },
                 offset: function(context) {
-                  const data = context.dataset.data;
-                  const maxValue = Math.max(...data);
-                  const currentValue = data[context.dataIndex];
-                  const percentage = (currentValue / maxValue) * 100;
+                  const percentage = (values[context.dataIndex] / maxValue) * 100;
                   return percentage > 15 ? 0 : 8;
                 },
                 font: { size: 11, weight: 'bold' },
                 color: function(context) {
-                  const data = context.dataset.data;
-                  const maxValue = Math.max(...data);
-                  const currentValue = data[context.dataIndex];
-                  const percentage = (currentValue / maxValue) * 100;
+                  const percentage = (values[context.dataIndex] / maxValue) * 100;
                   return percentage > 15 ? '#fff' : '#0033A0';
                 },
                 padding: 5
@@ -1879,6 +1871,9 @@ body.dark .sidebar-menu a.active {
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            onHover: (event, activeElements) => {
+              canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+            },
             plugins: {
               legend: { display: false },
               tooltip: {
@@ -2041,6 +2036,9 @@ body.dark .sidebar-menu a.active {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
+            onHover: (event, activeElements) => {
+              canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+            },
             plugins: {
               legend: { 
                 display: true,
