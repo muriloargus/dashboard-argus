@@ -1666,6 +1666,36 @@ body.dark table th { background: var(--primary-dark); }
                 }
             }
             
+            // 🔧 PRÉ-PROCESSAR dados do localStorage para extrair campos faltantes
+            if (allFleetData.length > 0) {
+                allFleetData = allFleetData.map(row => {
+                    const grupoField = row.grupo || row.Grupo || '';
+                    
+                    // Extrair campos a partir do grupo se não existirem
+                    if (!row.fabricante && grupoField) {
+                        row.fabricante = extrairFabricante(grupoField);
+                    }
+                    if (!row.transportadora && grupoField) {
+                        row.transportadora = extrairTransportadora(grupoField);
+                    }
+                    if (!row.cambio && grupoField) {
+                        row.cambio = extrairCambio(grupoField);
+                    }
+                    if (!row.tipoVeiculo && grupoField) {
+                        row.tipoVeiculo = extrairTipoVeiculo(grupoField);
+                    }
+                    if (!row.regiao && grupoField) {
+                        row.regiao = extrairRegiao(grupoField);
+                    }
+                    
+                    return row;
+                });
+                console.log('✅ Dados pré-processados:', allFleetData.length, 'registros');
+                if (allFleetData.length > 0) {
+                    console.log('📋 Primeiro registro processado:', JSON.stringify(allFleetData[0], null, 2));
+                }
+            }
+            
             // 3️⃣ Se temps dados em localStorage, usar normalmente
             if (allFleetData.length > 0) {
                 fleetData = allFleetData;
