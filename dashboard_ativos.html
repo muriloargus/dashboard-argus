@@ -1295,23 +1295,45 @@ body.dark .chart-legend {
     if (unidadeChartObj) {
       const chartUnidadeCanvas = document.getElementById('chartUnidade');
       chartUnidadeCanvas.addEventListener('click', function(event) {
-        const rect = chartUnidadeCanvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        
-        // Gráfico horizontal: verificar Y (altura das barras)
-        if (x >= unidadeChartObj.chartArea.left && x <= unidadeChartObj.chartArea.right &&
-            y >= unidadeChartObj.chartArea.top && y <= unidadeChartObj.chartArea.bottom) {
+        try {
+          // Usar o método nativo do Chart.js - funciona para qualquer tipo de gráfico
+          const canvasRect = chartUnidadeCanvas.getBoundingClientRect();
+          const pixelX = event.clientX - canvasRect.left;
+          const pixelY = event.clientY - canvasRect.top;
           
-          // Calcular índice baseado na altura (Y)
-          const barHeight = unidadeChartObj.chartArea.height / unidadeChartObj.data.labels.length;
-          const index = Math.floor((y - unidadeChartObj.chartArea.top) / barHeight);
+          // Criar um click sintético no evento para o Chart.js processar
+          const clickEvent = new MouseEvent('click', {
+            clientX: canvasRect.left + pixelX,
+            clientY: canvasRect.top + pixelY
+          });
           
-          if (index >= 0 && index < unidadeChartObj.data.labels.length) {
-            const unidadeName = unidadeChartObj.data.labels[index];
-            console.log('Clicou em:', unidadeName, 'índice:', index);
-            mostrarPlacasPorUnidadeAtivos(unidadeName);
+          // Obter elementos no ponto clicado
+          const dataX = unidadeChartObj.scales.x.getValueForPixel(pixelX);
+          const dataY = unidadeChartObj.scales.y.getValueForPixel(pixelY);
+          
+          // Verificar qual barra foi clicada iterando pelo dataset
+          const meta = unidadeChartObj.getDatasetMeta(0);
+          let clickedIndex = -1;
+          
+          for (let i = 0; i < meta.data.length; i++) {
+            const bar = meta.data[i];
+            // Verificar se o clique está dentro da barra
+            if (pixelX >= bar.x - bar.width / 2 && pixelX <= bar.x + bar.width / 2 &&
+                pixelY >= bar.y - bar.height / 2 && pixelY <= bar.y + bar.height / 2) {
+              clickedIndex = i;
+              break;
+            }
           }
+          
+          if (clickedIndex >= 0 && clickedIndex < unidadeChartObj.data.labels.length) {
+            const unidadeName = unidadeChartObj.data.labels[clickedIndex];
+            console.log('✓ Clicou em:', unidadeName, 'índice:', clickedIndex);
+            mostrarPlacasPorUnidadeAtivos(unidadeName);
+          } else {
+            console.log('Clique fora das barras ou sem detecção');
+          }
+        } catch(e) {
+          console.error('Erro no clique:', e.message);
         }
       });
     }
