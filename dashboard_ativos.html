@@ -1,0 +1,2629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>TELEMETRIA CCO - ATIVOS CADASTRADOS</title>
+  <!-- LIBS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="persistence-manager.js"></script>
+    <script src="data-loader.js"></script>
+  <script src="dashboard-shared.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest"></script>
+  <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+ <style>
+    :root {
+      --primary-color: #63a3d8;
+      --primary-dark: #4a8fb8;
+      --secondary-color: #e60000;
+      --accent-color: #FFD700;
+      --success-color: #28a745;
+      --light-color: #f8fafc;
+      --dark-color: #1a1a1a;
+      --sidebar-width: 280px;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-700: #374151;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      height: 100%;
+    }
+    
+    body {
+      display: flex;
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: var(--light-color);
+      color: var(--dark-color);
+      transition: .25s;
+    }
+    
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px;
+      height: 100vh;
+      position: fixed;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+      border-right: 1px solid rgba(255, 215, 0, 0.1);
+    }
+
+    .sidebar-header {
+      padding: 20px 0;
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .sidebar-header i {
+      font-size: 1.8rem;
+      color: var(--accent-color);
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar-menu li {
+      margin-bottom: 5px;
+    }
+
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      gap: 12px;
+      position: relative;
+    }
+
+    .sidebar-menu a::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent-color);
+      border-radius: 0 3px 3px 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background: rgba(255, 215, 0, 0.15);
+      color: #FFF44F;
+      padding-left: 12px;
+    }
+
+    .sidebar-menu a.active::before {
+      opacity: 1;
+    }
+
+    .sidebar-menu a i {
+      width: 24px;
+      font-size: 1.1rem;
+    }
+
+    .sidebar-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      font-size: 0.85rem;
+      text-align: center;
+      position: absolute;
+      bottom: 20px;
+      width: calc(var(--sidebar-width) - 40px);
+    }
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        
+
+
+    .main-wrapper {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      overflow: auto;
+    }
+    
+    /* HEADER */
+    header {
+      background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(99, 163, 216, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logos {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .logo {
+      background: white;
+      padding: 8px 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .logos img {
+      height: 40px;
+      width: auto;
+      object-fit: contain;
+    }
+    
+    .logo.argus img {
+      height: 36px;
+    }
+    
+    .logo.ambev img {
+      height: 24px;
+    }
+
+    .btn-toggle {
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: rgba(255, 215, 0, 0.18);
+      border: 2px solid var(--accent-color);
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-toggle:hover { transform: scale(1.02); }
+    
+    header .titulo {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+    
+    header .titulo small {
+      display: block;
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.95;
+      margin-top: 4px;
+    }
+    
+    .toggle {
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: rgba(255, 215, 0, 0.3);
+      border: 2px solid var(--accent-color);
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .toggle:hover {
+      background: rgba(255, 215, 0, 0.5);
+      transform: scale(1.05);
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    
+    body.dark {
+      background: var(--dark-color);
+      color: var(--light-color);
+    }
+    h1 {
+      text-align: center;
+      margin: 22px 0 10px;
+      font-weight: 700;
+      color: var(--primary-color);
+      text-shadow: 2px 2px 4px rgba(0, 51, 160, 0.1);
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--accent-color);
+      font-size: 14px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .container {
+      padding: 24px;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: 2fr repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    select,
+    input[type="file"] {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 2px solid var(--primary-color);
+      font-size: 14px;
+      background: white;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+    select:focus,
+    input[type="file"]:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 6px 18px rgba(0, 51, 160, .15);
+      border: 2px solid var(--accent-color);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(0, 51, 160, .25);
+    }
+    body.dark .card {
+      background: var(--card-dark);
+      border-color: var(--accent-color);
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 28px;
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+    body.dark .card h2 {
+      color: var(--accent-color);
+    }
+    .card p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+    body.dark .card p {
+      color: var(--accent-color);
+    }
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+    .chart-box {
+      background: var(--white);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(0, 51, 160, .15);
+      border: 2px solid var(--primary-color);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chart-box canvas {
+      pointer-events: none;
+    }
+    .chart-box:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 24px rgba(0, 51, 160, .25);
+      border-color: var(--accent-color);
+    }
+    body.dark .chart-box {
+      background: var(--card-dark);
+      border-color: var(--accent-color);
+    }
+    /* Forçar legenda clara em dark mode - regras agressivas */
+    body.dark .chart-box .chartjs-legend {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+    body.dark .chart-box .chartjs-legend li {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+    body.dark .chart-box .chartjs-legend li span {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+    body.dark .chart-box .chartjs-legend-item {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+    body.dark .chart-box .chartjs-legend-item-text {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+    body.dark .chart-box .legend {
+      color: #fff !important;
+    }
+    body.dark .chart-box .legend li {
+      color: #fff !important;
+    }
+    /* Força BRANCO em qualquer legenda em dark mode */
+    body.dark .chart-box {
+      --chartjs-legend-color: #fff;
+    }
+    /* Sobrescrever estilo inline de legendas em dark mode */
+    body.dark .chart-box * {
+      --text-color-dark: #fff;
+    }
+    body.dark .chart-box [class*="legend"] {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+    body.dark .chart-box [class*="legend"] * {
+      color: #fff !important;
+      fill: #fff !important;
+    }
+    /* SVG text em legendas */
+    body.dark .chart-box tspan,
+    body.dark .chart-box text[class*="legend"] {
+      fill: #fff !important;
+    }
+    /* MÁXIMA AGRESSIVIDADE: SVG text em dark mode */
+    body.dark svg text {
+      fill: #fff !important;
+      color: #fff !important;
+      stroke: none !important;
+    }
+    body.dark svg tspan {
+      fill: #fff !important;
+      color: #fff !important;
+    }
+    body.dark .chart-box svg text {
+      fill: #fff !important;
+    }
+    body.dark canvas + * {
+      color: #fff !important;
+    }
+    /* Adicionar cor branca via CSS variable para fallback */
+    body.dark {
+      --text-color: #fff;
+      --svg-fill: #fff;
+    }
+    body.dark text, body.dark tspan {
+      fill: #fff !important;
+      color: #fff !important;
+    }
+    /* Remover override de cor escura de qualquer forma */
+    body.dark text[fill="rgb(0, 51, 160)"],
+    body.dark text[fill="#0033A0"],
+    body.dark text[fill="#333"],
+    body.dark text[fill="#000"],
+    body.dark text {
+      fill: #fff !important;
+    }
+    body.dark text[style*="fill"],
+    body.dark text[style*="color"] {
+      fill: #fff !important;
+      color: #fff !important;
+    }
+    /* Força legenda branca - elemento SVG específico */
+    body.dark .chartjs-legend ~ * text,
+    body.dark [role="legend"] text,
+    body.dark .legend text {
+      fill: #fff !important;
+    }
+    canvas {
+      height: 300px !important;
+    }
+    .chart-box.chart-large {
+      grid-column: span 2;
+    }
+    .chart-box.chart-large canvas {
+      height: 380px !important;
+    }
+    @media (max-width: 768px) {
+      .charts {
+        grid-template-columns: 1fr;
+      }
+      .chart-box.chart-large {
+        grid-column: span 1;
+      }
+    }
+    .dashboard-description {
+      color: #666;
+      font-size: 0.95rem;
+      margin: 8px 0 0 0;
+      line-height: 1.4;
+      max-width: 600px;
+    }
+    .dark .dashboard-description {
+      color: #aaa;
+    }
+    
+    /* INSIGHTS CONTAINER - PADRÃO */
+    .insights-container {
+        background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border-left: 5px solid var(--primary-color);
+        box-shadow: 0 2px 12px rgba(99, 163, 216, 0.15);
+    }
+
+    body.dark .insights-container {
+        background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+        box-shadow: 0 2px 12px rgba(99, 163, 216, 0.25);
+    }
+
+    .insights-card h2 {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+    }
+
+    body.dark .insights-card h2 {
+        color: #63a3d8;
+    }
+
+    .insight-section {
+        margin-bottom: 20px;
+    }
+
+    .insight-section h3 {
+        color: #333;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+        font-weight: 600;
+        display: flex;
+        gap: 8px;
+    }
+
+    body.dark .insight-section h3 {
+        color: rgba(255,255,255,0.9);
+    }
+
+    .insight-section p {
+        color: #555;
+        line-height: 1.6;
+        font-size: 14px;
+        padding: 10px;
+        background: white;
+        border-radius: 6px;
+        border-left: 3px solid var(--accent-color);
+    }
+
+    body.dark .insight-section p {
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.85);
+    }
+
+    .insight-section ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .insight-section li {
+        color: #555;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        background: white;
+        border-radius: 6px;
+        font-size: 14px;
+        border-left: 3px solid var(--primary-color);
+        line-height: 1.5;
+    }
+
+    body.dark .insight-section li {
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.85);
+    }
+    table {
+      width: 100%;
+    }
+  </style>
+  </style>
+</head>
+<style>
+/* Dark mode aprimorado (injetado automaticamente) */
+body.dark {
+  background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+  color: var(--light-color);
+}
+body.dark .sidebar {
+  background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+  box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+  border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .main-content { background: linear-gradient(135deg, #071124 0%, #0b1726 100%); }
+body.dark header {
+  background: linear-gradient(90deg, #0b2440 0%, #081830 100%);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+body.dark .topo {
+  background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+  color: #fff !important;
+}
+
+body.dark .card, body.dark .chart-card, body.dark .kpi-card { 
+  background: #081226; 
+  color: var(--light-color); 
+  border-color: rgba(255,255,255,0.03); 
+}
+body.dark .label, body.dark .kpi-title { color: rgba(255,255,255,0.8); }
+body.dark .value, body.dark .chart-title { color: var(--accent-color); }
+body.dark table th { background: var(--primary-dark); color: white; }
+body.dark table td { color: var(--light-color); border-color: rgba(255,255,255,0.06); }
+body.dark .sidebar-menu a:hover,
+body.dark .sidebar-menu a.active {
+  background: rgba(255, 215, 0, 0.15);
+  color: #FFF44F;
+}
+/* FORÇA BRANCO GLOBAL EM LEGENDAS CHART.JS EM DARK MODE */
+body.dark [class*="legend"] {
+  color: #fff !important;
+  fill: #fff !important;
+}
+body.dark [class*="legend"] * {
+  color: #fff !important;
+  fill: #fff !important;
+}
+/* Sobrescrever qualquer elemento com texto em chart em dark mode */
+body.dark .chart-box [role="legend"],
+body.dark .chart-box [role="legend"] * {
+  color: #fff !important;
+}
+body.dark .chartjs-render-monitor,
+body.dark canvas + div,
+body.dark .legend {
+  color: #fff !important;
+}
+body.dark .chartjs-legend,
+body.dark .chartjs-legend li,
+body.dark .chartjs-legend li span {
+  color: #fff !important;
+}
+/* Forçar cor clara para textos de legenda em dark mode */
+body.dark [data-testid="legend"],
+body.dark .legend-container,
+body.dark .chart-legend {
+  color: #fff !important;
+}
+</style>
+<body>
+  <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <p></p>
+            </div>
+        </nav>
+
+  <div class="main-wrapper" id="mainContent">
+  <header>
+    <div class="logos">
+      <div class="logo argus">
+        <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" />
+      </div>
+      <div class="logo ambev">
+        <img src="ambev-logo.png" alt="Ambev" onerror="this.style.display='none'" />
+      </div>
+    </div>
+    <div class="titulo">
+      Telemetria CCO
+      <small>Ativos Cadastrados</small>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+      <button class="btn-toggle" onclick="clearCache()" title="Limpar dados em cache do localStorage">🗑️ Limpar Cache</button>
+    </div>
+  </header>
+  <div class="container">
+    <div class="filters">
+      <input type="file" id="csvFile" accept=".csv" />
+      <select id="fTransportadora"></select>
+      <select id="fUnidade"></select>
+      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; color: var(--primary-color); padding: 8px 12px; background: rgba(99, 163, 216, 0.08); border-radius: 6px; border: 2px solid var(--accent-color); margin-left: auto;">
+        <input type="checkbox" id="filtrarSemCadastroAtivos" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color);">
+        <span>🗑️ Remover "Sem cadastro"</span>
+      </label>
+    </div>
+    <div class="cards">
+      <div class="card"><h2 id="kpiVeiculos">0</h2><p>Total de Veículos</p></div>
+      <div class="card"><h2 id="kpiTransportadoras">0</h2><p>Transportadoras</p></div>
+      <div class="card"><h2 id="kpiRegioes">0</h2><p>Regiões</p></div>
+    </div>
+    
+    <!-- Storytelling de Dados -->
+    <div id="insightsContainer" class="insights-container" style="display: none;">
+        <div class="insights-card">
+            <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+            
+            <div class="insight-section">
+                <h3>🎯 Situação Principal</h3>
+                <p id="insightPrincipal">Carregando análise...</p>
+            </div>
+
+            <div class="insight-section">
+                <h3>📈 Padrões Detectados</h3>
+                <ul id="insightPadroes">
+                    <li>Carregando padrões...</li>
+                </ul>
+            </div>
+
+            <div class="insight-section">
+                <h3>💡 Recomendações</h3>
+                <ul id="insightRecomendacoes">
+                    <li>Carregando recomendações...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="charts">
+      <div class="chart-box" onclick="handleChartClick('transportadora')"><canvas id="chartTransportadora"></canvas></div>
+      <div class="chart-box" onclick="handleChartClick('fabricante')"><canvas id="chartFabricante"></canvas></div>
+      <div class="chart-box" onclick="handleChartClick('regiao')"><canvas id="chartRegiao"></canvas></div>
+      <div class="chart-box" onclick="handleChartClick('tipo')"><canvas id="chartTipo"></canvas></div>
+      <div class="chart-box chart-large" onclick="handleChartClick('unidade')"><canvas id="chartUnidade" style="cursor: pointer;"></canvas></div>
+    </div>
+    <style>
+  /* Estilo específico para a tabela de detalhamento */
+  #dataTableWrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background: var(--white);
+    margin-top: 12px;
+  }
+  body.dark #dataTableWrapper {
+    background: var(--card-dark);
+  }
+
+  .dataTables-container {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  #dataTable {
+    width: 100%;
+    min-width: 800px; /* evita colapso em telas pequenas */
+    font-size: 12px;
+    border-collapse: collapse;
+  }
+
+  #dataTable thead th {
+    position: sticky;
+    top: 0;
+    background: var(--light-color);
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--dark-color);
+    border-bottom: 2px solid #e2e8f0;
+  }
+  body.dark #dataTable thead th {
+    background: var(--dark-color);
+    color: var(--light-color);
+    border-bottom: 2px solid #334155;
+  }
+
+  #dataTable tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+  body.dark #dataTable tbody td {
+    border-bottom: 1px solid #334155;
+  }
+
+  /* Controle de paginação e busca */
+  .dataTable-top,
+  .dataTable-bottom {
+    padding: 12px 16px;
+    background: var(--white);
+    font-size: 13px;
+  }
+  body.dark .dataTable-top,
+  body.dark .dataTable-bottom {
+    background: var(--card-dark);
+  }
+
+  .dataTable-input,
+  .dataTable-selector {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+</style>
+
+<h3>📋 Detalhamento de Ativos</h3>
+<div id="dataTableWrapper">
+  <div class="dataTables-container">
+    <table id="dataTable"></table>
+  </div>
+</div>
+  </div>
+
+  <script>
+  // Registrar o plugin ChartDataLabels globalmente
+  Chart.register(ChartDataLabels);
+  
+  let rawData = [], charts = [];
+  let chartListeners = {
+    transportadora: null,
+    fabricante: null,
+    regiao: null,
+    tipo: null,
+    unidade: null
+  };
+  // Variáveis GLOBAIS para os gráficos (necessário para que os listeners funcionem)
+  let transportadoraChart, fabricanteChart, regiaoChart, tipoChart, unidadeChartObj;
+  let csvFile;
+  let fTransportadora, fUnidade, kpiVeiculos, kpiTransportadoras, kpiRegioes;
+
+  function toggleDark() {
+    const isDark = document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+    console.log('Dark mode:', isDark);
+    
+    // Atualizar gráficos quando dark mode é toggled
+    setTimeout(function() {
+      if (window.graficoAtivos) try { window.graficoAtivos.update(); } catch(e) { console.log('Erro ao atualizar gráfico'); }
+      adjustLegendColorsForDarkMode();
+      initLegendObserver(); // Reiniciar observer quando dark mode é toggled
+      debugLegendState();
+    }, 50);
+  }
+  
+  function clearCache() {
+    try {
+      localStorage.removeItem('ativosData');
+      localStorage.removeItem('ativosFiltroSemCadastro');
+      alert('✅ Cache limpo com sucesso!\n\nRecarregue a página e carregue o CSV novamente.');
+      console.log('✅ Dados de cache removidos');
+    } catch(e) {
+      alert('❌ Erro ao limpar cache: ' + e.message);
+    }
+  }
+  
+  // Carregar preferência dark mode ao iniciar
+  document.addEventListener('DOMContentLoaded', function() {
+            activateCurrentLink();
+    const darkMode = localStorage.getItem('darkMode');
+    console.log('Carregando dark mode:', darkMode);
+    if (darkMode === 'true') {
+      document.body.classList.add('dark');
+    }
+
+    // Inicializar referências dos elementos DOM
+    fTransportadora = document.getElementById('fTransportadora');
+    fUnidade = document.getElementById('fUnidade');
+    kpiVeiculos = document.getElementById('kpiVeiculos');
+    kpiTransportadoras = document.getElementById('kpiTransportadoras');
+    kpiRegioes = document.getElementById('kpiRegioes');
+
+    // ===== FUNÇÃO DE DIAGNÓSTICO GLOBAL =====
+    window.diagnosticoGraficos = function() {
+      const diag = {
+        'transportadoraChart existe?': !!transportadoraChart,
+        'fabricanteChart existe?': !!fabricanteChart,
+        'regiaoChart existe?': !!regiaoChart,
+        'tipoChart existe?': !!tipoChart,
+        'unidadeChartObj existe?': !!unidadeChartObj,
+        'rawData.length': rawData.length,
+        'charts.length': charts.length,
+        'chartListeners.transportadora é função?': typeof chartListeners.transportadora === 'function'
+      };
+      
+      console.table(diag);
+      alert('DIAGNÓSTICO:\n' + Object.entries(diag).map(([k,v]) => `${k}: ${v}`).join('\n') + '\n\nAbra Console (F12) para ver mais detalhes');
+      return diag;
+    };
+    
+    // Mostrar alerta após 2 segundos se houver dados
+    setTimeout(() => {
+      if (rawData && rawData.length > 0) {
+        console.log('🔍 DIAGNÓSTICO AUTOMÁTICO:', window.diagnosticoGraficos());
+      }
+    }, 2000);
+
+    // Registrar eventos dos filtros
+    fTransportadora.addEventListener('change', () => {
+      const d = filterByTransportadora();
+      fillSelect('fUnidade', d, 'UNIDADE');
+      fUnidade.value = '';
+      applyFilters();
+    });
+
+    fUnidade.addEventListener('change', applyFilters);
+
+    // Restaurar estado do checkbox de filtro "Sem cadastro"
+    const checkboxFiltro = document.getElementById('filtrarSemCadastroAtivos');
+    const savedFiltroState = localStorage.getItem('ativosFiltroSemCadastro');
+    if (savedFiltroState === 'true') {
+      checkboxFiltro.checked = true;
+    }
+    
+    // Listener para o checkbox
+    checkboxFiltro.addEventListener('change', function() {
+      try {
+        localStorage.setItem('ativosFiltroSemCadastro', this.checked ? 'true' : 'false');
+      } catch(e) {}
+      applyFilters();
+    });
+    
+    // Carregar dados persistidos (com tratamento ITP)
+    let savedData = null;
+    try {
+      savedData = localStorage.getItem('ativosData');
+    } catch(e) {
+      console.warn('Storage access denied');
+    }
+    
+    if (savedData) {
+      const rawData_loaded = safeParseJSON(savedData);
+      if (rawData_loaded && Array.isArray(rawData_loaded)) {
+        rawData = rawData_loaded;
+        buildTransportadora();
+        applyFilters();
+        console.log('✅ Dados carregados do localStorage');
+      } else {
+        console.warn('⚠️ Dados persistidos inválidos');
+        loadDefaultAtivos();
+      }
+    } else {
+      loadDefaultAtivos();
+    }
+
+    // Garantir que o input exista antes de registrar o listener
+    csvFile = document.getElementById('csvFile');
+    if (csvFile) {
+      csvFile.addEventListener('change', e => {
+        if (!e.target.files[0]) {
+          console.log('Nenhum arquivo selecionado');
+          return;
+        }
+        Papa.parse(e.target.files[0], {
+          header: true,
+          skipEmptyLines: true,
+          delimiter: ';',
+          dynamicTyping: false,
+          complete: r => {
+            console.log('CSV Carregado:', r.data.length, 'registros');
+            console.log('Primeira linha:', r.data[0]);
+            
+            rawData = r.data
+              .filter(n => n && Object.values(n).some(v => v && String(v).trim()))
+              .map((n, idx) => {
+                const normalized = normalize(n);
+                if (idx === 0) {
+                  console.log('Primeira linha normalizada:', normalized);
+                }
+                return normalized;
+              });
+            
+            console.log('Dados normalizados:', rawData.length, 'registros válidos');
+            if (rawData.length > 0) {
+              console.log('Primeiro registro normalizado:', rawData[0]);
+              console.log('Transportadoras únicas:', [...new Set(rawData.map(x => x.TRANSPORTADORA).filter(x => x))]);
+              console.log('Unidades únicas:', [...new Set(rawData.map(x => x.UNIDADE).filter(x => x))]);
+            }
+            
+            if (rawData.length < 500) {
+              try {
+                localStorage.setItem('ativosData', JSON.stringify(rawData));
+              } catch (e) {
+                console.warn('Falha ao salvar em localStorage (quota):', e);
+              }
+            } else {
+              console.log(`Arquivo muito grande (${rawData.length} registros) — não será salvo em localStorage.`);
+            }
+            
+            buildTransportadora();
+            applyFilters();
+            alert(`✅ Arquivo carregado! ${rawData.length} registros processados`);
+          },
+          error: (err) => {
+            console.error('Erro ao carregar CSV:', err);
+            alert('❌ Erro ao carregar CSV: ' + err.message);
+          }
+        });
+      });
+    } else {
+      console.warn('Elemento #csvFile não encontrado no DOM ao carregar.');
+    }
+    
+    // Ajustar cores das legendas em dark mode após inicialização
+    setTimeout(function() {
+      adjustLegendColorsForDarkMode();
+      initLegendObserver(); // Iniciar observador para ajustes em tempo real
+    }, 100);
+  });
+
+  function loadDefaultAtivos() {
+    rawData = [
+      { Dispositivo: 'MG-1547', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_GOIANIA', REGIAO: 'MG', FABRICANTE: 'VOLVO', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'SP-2891', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_OSASCO', REGIAO: 'SP', FABRICANTE: 'MERCEDES BENZ', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'GO-3456', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_GOIANIA', REGIAO: 'GO', FABRICANTE: 'SCANIA', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'SP-4821', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_SAO PAULO', REGIAO: 'SP', FABRICANTE: 'VOLVO', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'MG-5678', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_GOIANIA', REGIAO: 'MG', FABRICANTE: 'IVECO', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'PR-2105', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_OSASCO', REGIAO: 'PR', FABRICANTE: 'MERCEDES BENZ', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'SP-9334', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_SAO PAULO', REGIAO: 'SP', FABRICANTE: 'VOLVO', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'MG-7890', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_GOIANIA', REGIAO: 'MG', FABRICANTE: 'SCANIA', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'GO-1111', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_GOIANIA', REGIAO: 'GO', FABRICANTE: 'MERCEDES BENZ', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'SP-2222', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_SAO PAULO', REGIAO: 'SP', FABRICANTE: 'VOLVO', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'RJ-3333', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_RIO JANEIRO', REGIAO: 'RJ', FABRICANTE: 'FOTON', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'MG-4444', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_BELO HORIZONTE', REGIAO: 'MG', FABRICANTE: 'RENAULT', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'SP-5555', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_SAO PAULO', REGIAO: 'SP', FABRICANTE: 'FIAT', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'BA-6666', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_SALVADOR', REGIAO: 'BA', FABRICANTE: 'HYUNDAI', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'RS-7777', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_PORTO ALEGRE', REGIAO: 'RS', FABRICANTE: 'MITSUBISHI', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'PE-8888', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_RECIFE', REGIAO: 'PE', FABRICANTE: 'HINO', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'MG-9999', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_GOIANIA', REGIAO: 'MG', FABRICANTE: 'ISUZU', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'GO-1010', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_GOIANIA', REGIAO: 'GO', FABRICANTE: 'AGRALE', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'SP-1111', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_CAMPINAS', REGIAO: 'SP', FABRICANTE: 'LIBRA', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'RJ-1212', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_RIO JANEIRO', REGIAO: 'RJ', FABRICANTE: 'DAF', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'MG-1313', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_BELO HORIZONTE', REGIAO: 'MG', FABRICANTE: 'MAN', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'BA-1414', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_SALVADOR', REGIAO: 'BA', FABRICANTE: 'FORD', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'RS-1515', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_PORTO ALEGRE', REGIAO: 'RS', FABRICANTE: 'VOLKSWAGEN', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'PE-1616', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_RECIFE', REGIAO: 'PE', FABRICANTE: 'FOTON', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'GO-1717', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_GOIANIA', REGIAO: 'GO', FABRICANTE: 'RENAULT', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'SP-1818', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_SOROCABA', REGIAO: 'SP', FABRICANTE: 'FIAT', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'MG-1919', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_GOIANIA', REGIAO: 'MG', FABRICANTE: 'HYUNDAI', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'RJ-2020', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_DUQUE DE CAXIAS', REGIAO: 'RJ', FABRICANTE: 'MITSUBISHI', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'BA-2121', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_SALVADOR', REGIAO: 'BA', FABRICANTE: 'HINO', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'RS-2222', TRANSPORTADORA: 'TRS_LOG20', UNIDADE: 'UNI_GUAIBA', REGIAO: 'RS', FABRICANTE: 'ISUZU', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'PE-2323', TRANSPORTADORA: 'TRS_TRANSLOG', UNIDADE: 'UNI_RECIFE', REGIAO: 'PE', FABRICANTE: 'AGRALE', 'TIPO DE VEICULO': 'CAMINHÃO TOCO', COMBUSTIVEL: 'DIESEL' },
+      { Dispositivo: 'GO-2424', TRANSPORTADORA: 'TRS_TRANPLA', UNIDADE: 'UNI_APARECIDA', REGIAO: 'GO', FABRICANTE: 'LIBRA', 'TIPO DE VEICULO': 'CAVALO MECÂNICO', COMBUSTIVEL: 'DIESEL' }
+    ];
+    buildTransportadora();
+    applyFilters();
+    console.log('Dados padrão carregados (32 ativos com múltiplos fabricantes)');
+  }
+
+  function normalize(o) {
+    const normalized = {};
+    
+    // Copiar e limpar todos os campos
+    Object.keys(o).forEach(k => {
+      normalized[k] = typeof o[k] === 'string' ? o[k].trim() : o[k];
+    });
+    
+    // Debug: mostrar chaves do objeto
+    if (Object.keys(o).length > 0 && !window.colunasLogadas) {
+      console.log('Colunas encontradas:', Object.keys(o));
+      window.colunasLogadas = true;
+    }
+    
+    // Extrair dados do campo "Grupo de dispositivo" (padrão Geotab)
+    // Busca robusta - testa várias variações
+    let grupoKey = null;
+    let grupoValue = null;
+    
+    for (let k of Object.keys(o)) {
+      const keyLower = k.toLowerCase().trim();
+      if (keyLower.includes('grupo') && keyLower.includes('dispositivo')) {
+        grupoKey = k;
+        grupoValue = o[k];
+        break;
+      }
+    }
+    
+    console.log('grupoKey encontrada:', grupoKey);
+    console.log('grupoValue:', grupoValue?.substring(0, 100));
+    
+    if (grupoKey && grupoValue) {
+      const g = grupoValue;
+      
+      // Extrair transportadora (TRS_...)
+      const trsMatch = g.match(/TRS_([^,;]+)/);
+      if (trsMatch) {
+        let transp = 'TRS_' + trsMatch[1].trim().toUpperCase();
+        // Normalizar variações de LOG 20
+        transp = transp.replace(/LOG\s+20/i, 'LOG20').replace(/LOG20\s+/i, 'LOG20');
+        normalized.TRANSPORTADORA = transp;
+      }
+      
+      // Extrair unidade (UNI_...)
+      const uniMatch = g.match(/UNI_([^,;]+)/);
+      if (uniMatch) {
+        normalized.UNIDADE = 'UNI_' + uniMatch[1].trim().toUpperCase();
+      }
+      
+      // Extrair região (REG_...)
+      const regMatch = g.match(/REG_([^,;]+)/);
+      if (regMatch) {
+        normalized.REGIAO = regMatch[1].trim().toUpperCase();
+      }
+      
+      // Extrair fabricante (MERCEDES BENZ, VOLVO, SCANIA, etc.) - Ordenado por comprimento para evitar false matches
+      // MAN deve estar separado de MANUAL, JAC separado de JACAREI/JAGUARI, logo usamos word boundaries
+      const fabMatch = g.match(/(MERCEDES BENZ|FREIGHTLINER|PETERBILT|VOLKSWAGEN|HYUNDAI|MITSUBISHI|NAVISTAR|RENAULT|AGRALE|SCANIA|VOLVO|CUMMINS|FOTON|HINO|ISUZU|LIBRA|FIAT|FORD|IVECO|TRACAO|TRACTION|MACK|DAF|MAM|(?<![A-Z])JAC(?![A-Z])|(?<![A-Z])MAN(?![A-Z]))/i);
+      if (fabMatch) {
+        normalized.FABRICANTE = fabMatch[0].trim().toUpperCase();
+      } else {
+        normalized.FABRICANTE = '';
+      }
+      
+      // Extrair tipo de veículo
+      const veiculoMatch = g.match(/(CAMINHÃO TOCO|CAVALO MECÂNICO|TRUCK|CAVALO|VEICULO|CARRO)/i);
+      if (veiculoMatch) {
+        normalized['TIPO DE VEICULO'] = veiculoMatch[0].trim().toUpperCase();
+      } else {
+        normalized['TIPO DE VEICULO'] = '';
+      }
+      
+      // Extrair tipo de combustível (Diesel, COMBUSTÃO, Gasolina, etc.)
+      const combustMatch = g.match(/(?:Diesel|COMBUSTÃO|Gasolina|GNV|Etanol|Híbrido)/i);
+      if (combustMatch) {
+        let comb = combustMatch[0].trim().toUpperCase();
+        // Normalizar Diesel e COMBUSTÃO como a mesma coisa
+        if (comb === 'DIESEL' || comb === 'COMBUSTÃO') {
+          comb = 'DIESEL';
+        }
+        normalized['COMBUSTIVEL'] = comb;
+      }
+    }
+    
+    // Se não encontrou os dados no Grupo, deixar vazio (não preencher com "Sem cadastro")
+    if (!normalized.TRANSPORTADORA) {
+      normalized.TRANSPORTADORA = '';
+    }
+    if (!normalized.UNIDADE) {
+      normalized.UNIDADE = '';
+    }
+    if (!normalized.REGIAO) {
+      normalized.REGIAO = (normalized['REGIÃO'] || normalized['REGIAO'] || normalized['Regiao'] || '').trim().toUpperCase();
+    }
+    if (!normalized.FABRICANTE) {
+      normalized.FABRICANTE = (normalized['FABRICANTE'] || normalized['Fabricante'] || '').trim().toUpperCase();
+    }
+    if (!normalized['TIPO DE VEICULO']) {
+      normalized['TIPO DE VEICULO'] = (normalized['TIPO DE VEICULO'] || normalized['Tipo de veículo'] || 'Sem cadastro').trim().toUpperCase();
+    }
+    
+    // Garantir Dispositivo
+    if (!normalized.Dispositivo) {
+      normalized.Dispositivo = Object.keys(o)[0]; // Primeira coluna como fallback
+    }
+    
+    // Normalizar status do Geotab
+    if (normalized.Status) {
+      if (normalized.Status === 'OK') {
+        normalized.Status = 'Online';
+      } else if (normalized.Status === 'OK (Parado)') {
+        normalized.Status = 'Parado';
+      } else if (normalized.Status && normalized.Status.includes('Off-line')) {
+        normalized.Status = 'Offline';
+      }
+    }
+    
+    return normalized;
+  }
+
+  /* ===== FILTROS ENCADEADOS (SEM REGIÃO) ===== */
+  function buildTransportadora() {
+    fillSelect('fTransportadora', rawData, 'TRANSPORTADORA');
+  }
+
+  function filterByTransportadora() {
+    return rawData.filter(r => {
+      if (!fTransportadora.value) return true; // Mostrar tudo
+      if (fTransportadora.value === 'SEM_CADASTRO') {
+        return !r.TRANSPORTADORA || r.TRANSPORTADORA.trim() === '';
+      }
+      return r.TRANSPORTADORA === fTransportadora.value;
+    });
+  }
+
+  function fillSelect(id, data, col) {
+    const s = document.getElementById(id);
+    s.innerHTML = '<option value="">' +
+      (id === 'fTransportadora' ? 'Todas Transportadoras' : 'Todas Unidades') +
+      '</option>';
+    
+    // Coletar valores únicos
+    const valoresFiltrados = [...new Set(data.map(r => r[col]).filter(Boolean))].sort();
+    valoresFiltrados.forEach(v =>
+      s.innerHTML += `<option>${v}</option>`
+    );
+    
+    // Adicionar "Sem cadastro" se houver registros com campo vazio
+    const temVazios = data.some(r => !r[col] || r[col].trim() === '');
+    if (temVazios) {
+      s.innerHTML += '<option value="SEM_CADASTRO">Sem cadastro</option>';
+    }
+  }
+
+  function applyFilters() {
+    const d = rawData.filter(r => {
+      // Filtro Transportadora
+      let matchTransp = true;
+      if (fTransportadora.value) {
+        if (fTransportadora.value === 'SEM_CADASTRO') {
+          matchTransp = !r.TRANSPORTADORA || r.TRANSPORTADORA.trim() === '';
+        } else {
+          matchTransp = r.TRANSPORTADORA === fTransportadora.value;
+        }
+      }
+      
+      // Filtro Unidade
+      let matchUnid = true;
+      if (fUnidade.value) {
+        if (fUnidade.value === 'SEM_CADASTRO') {
+          matchUnid = !r.UNIDADE || r.UNIDADE.trim() === '';
+        } else {
+          matchUnid = r.UNIDADE === fUnidade.value;
+        }
+      }
+      
+      // Filtro "Remover Sem Cadastro" - Remove apenas registros com AMBOS transportadora E unidade inválidos
+      let matchSemCadastro = true;
+      if (document.getElementById('filtrarSemCadastroAtivos')?.checked) {
+        const transInvalida = !r.TRANSPORTADORA || r.TRANSPORTADORA.trim() === '' || r.TRANSPORTADORA === 'Sem cadastro';
+        const unidadeInvalida = !r.UNIDADE || r.UNIDADE.trim() === '' || r.UNIDADE === 'Sem cadastro';
+        const ambosSemCadastro = transInvalida && unidadeInvalida;
+        matchSemCadastro = !ambosSemCadastro;
+      }
+      
+      return matchTransp && matchUnid && matchSemCadastro;
+    });
+    updateKPIs(d);
+    updateCharts(d);
+    updateTable(d);
+    generateInsights(d);
+    document.getElementById('insightsContainer').style.display = d.length > 0 ? 'block' : 'none';
+  }
+
+  /* ===== KPIs (SEM CONFORMIDADE) ===== */
+  function updateKPIs(d) {
+    console.log('updateKPIs chamada com', d.length, 'registros');
+    if (d.length > 0) {
+      console.log('Primeiro registro:', d[0]);
+      console.log('Transportadoras:', [...new Set(d.map(x => x.TRANSPORTADORA))]);
+      console.log('Regiões:', [...new Set(d.map(x => x.REGIAO))]);
+    }
+    
+    kpiVeiculos.innerText = d.length;
+    kpiTransportadoras.innerText = new Set(d.map(x => x.TRANSPORTADORA)).size;
+    kpiRegioes.innerText = new Set(d.map(x => x.REGIAO)).size;
+    // REMOVIDA A LINHA DO kpiConformidade
+  }
+
+  /* ===== GRÁFICOS (AGORA COM FABRICANTE) ===== */
+  function updateCharts(d) {
+    console.log('📊 updateCharts chamado com', d.length, 'registros');
+    
+    // Destruir gráficos antigos com proteção
+    charts.forEach(c => {
+      try {
+        if (c && typeof c.destroy === 'function') {
+          c.destroy();
+        }
+      } catch(e) {
+        console.warn('⚠️ Erro ao destruir gráfico:', e.message);
+      }
+    });
+    charts = [];
+    
+    console.log('🔧 Criando gráfico 1: Transportadora...');
+    transportadoraChart = barChartWithLabels('chartTransportadora', group(d, 'TRANSPORTADORA'), 'Ativos por Transportadora');
+    console.log('✅ transportadoraChart =', transportadoraChart ? 'OK (Chart object)' : 'NULL!');
+    charts.push(transportadoraChart);
+    
+    console.log('🔧 Criando gráfico 2: Fabricante...');
+    fabricanteChart = doughnutChart('chartFabricante', group(d, 'FABRICANTE'), 'Distribuição por Fabricante');
+    console.log('✅ fabricanteChart =', fabricanteChart ? 'OK (Chart object)' : 'NULL!');
+    charts.push(fabricanteChart);
+    
+    console.log('🔧 Criando gráfico 3: Região...');
+    regiaoChart = horizontalBar('chartRegiao', group(d, 'REGIAO'), 'Veículos por Região');
+    console.log('✅ regiaoChart =', regiaoChart ? 'OK (Chart object)' : 'NULL!');
+    charts.push(regiaoChart);
+    
+    console.log('🔧 Criando gráfico 4: Tipo...');
+    tipoChart = horizontalBarRoxo('chartTipo', group(d, 'TIPO DE VEICULO'), 'Quantidade por Tipo');
+    console.log('✅ tipoChart =', tipoChart ? 'OK (Chart object)' : 'NULL!');
+    charts.push(tipoChart);
+    
+    console.log('🔧 Criando gráfico 5: Unidade...');
+    unidadeChartObj = barChartUnidadesHorizontal('chartUnidade', group(d, 'UNIDADE'), 'Top 15 Ativos por Unidade');
+    console.log('✅ unidadeChartObj =', unidadeChartObj ? 'OK (Chart object)' : 'NULL!');
+    charts.push(unidadeChartObj);
+    
+    console.log('✓ 5 gráficos criados e armazenados');
+    console.log('Debug gráficos APÓS criação:', { 
+      transportadoraChart: !!transportadoraChart,
+      fabricanteChart: !!fabricanteChart,
+      regiaoChart: !!regiaoChart,
+      tipoChart: !!tipoChart,
+      unidadeChartObj: !!unidadeChartObj
+    });
+    
+    // ===== LISTENERS DE CLIQUE PARA TODOS OS GRÁFICOS =====
+    // Remover listeners antigos
+    ['chartTransportadora', 'chartFabricante', 'chartRegiao', 'chartTipo', 'chartUnidade'].forEach((id, idx) => {
+      const keys = ['transportadora', 'fabricante', 'regiao', 'tipo', 'unidade'];
+      const canvas = document.getElementById(id);
+      if (canvas && chartListeners[keys[idx]]) {
+        canvas.removeEventListener('click', chartListeners[keys[idx]]);
+      }
+    });
+    
+    // Listeners: Transportadora
+    chartListeners.transportadora = function(event) {
+      console.log('🎯 EVENTO CAPTURADO em Transportadora!', event.type);
+      console.log('rawData existe?', !!rawData, 'Tamanho:', rawData ? rawData.length : 0);
+      
+      if (!transportadoraChart) {
+        console.error('❌ transportadoraChart NÃO EXISTE!');
+        return;
+      }
+      
+      try {
+        const elements = transportadoraChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+        console.log('✓ getElementsAtEventForMode retornou:', elements.length);
+        
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const transportadora = transportadoraChart.data.labels[index];
+          console.log('✓ Clicou em Transportadora:', transportadora);
+          console.log('Chamando mostrarPlacasPorTransportadora...');
+          mostrarPlacasPorTransportadora(transportadora);
+          console.log('✓ mostrarPlacasPorTransportadora executado');
+        } else {
+          console.warn('⚠️ Nenhum elemento encontrado no gráfico');
+        }
+      } catch(e) {
+        console.error('❌ ERRO COMPLETO:', e);
+        throw e; // Relança para ver no console
+      }
+    };
+    document.getElementById('chartTransportadora').addEventListener('click', chartListeners.transportadora, false);
+    console.log('✅ Listener Transportadora adicionado');
+    
+    // Listeners: Fabricante
+    chartListeners.fabricante = function(event) {
+      console.log('� EVENTO CAPTURADO em Fabricante!', event.type);
+      console.log('fabricanteChart existe?', !!fabricanteChart);
+      
+      if (!fabricanteChart) {
+        console.error('❌ fabricanteChart NÃO EXISTE!');
+        return;
+      }
+      
+      try {
+        const elements = fabricanteChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+        console.log('✓ getElementsAtEventForMode retornou:', elements.length);
+        
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const fabricante = fabricanteChart.data.labels[index];
+          console.log('✓ Clicou em Fabricante:', fabricante);
+          console.log('Chamando mostrarPlacasPorFabricante...');
+          mostrarPlacasPorFabricante(fabricante);
+        } else {
+          console.warn('⚠️ Nenhum elemento encontrado no gráfico');
+        }
+      } catch(e) {
+        console.error('❌ ERRO COMPLETO:', e);
+        throw e;
+      }
+    };
+    document.getElementById('chartFabricante').addEventListener('click', chartListeners.fabricante, false);
+    console.log('✅ Listener Fabricante adicionado');
+    
+    // Listeners: Região
+    chartListeners.regiao = function(event) {
+      console.log('🎯 EVENTO CAPTURADO em Região!', event.type);
+      console.log('regiaoChart existe?', !!regiaoChart);
+      
+      if (!regiaoChart) {
+        console.error('❌ regiaoChart NÃO EXISTE!');
+        return;
+      }
+      
+      try {
+        const elements = regiaoChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+        console.log('✓ getElementsAtEventForMode retornou:', elements.length);
+        
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const regiao = regiaoChart.data.labels[index];
+          console.log('✓ Clicou em Região:', regiao);
+          console.log('Chamando mostrarPlacasPorRegiao...');
+          mostrarPlacasPorRegiao(regiao);
+        } else {
+          console.warn('⚠️ Nenhum elemento encontrado no gráfico');
+        }
+      } catch(e) {
+        console.error('❌ ERRO COMPLETO:', e);
+        throw e;
+      }
+    };
+    document.getElementById('chartRegiao').addEventListener('click', chartListeners.regiao, false);
+    console.log('✅ Listener Região adicionado');
+    
+    // Listeners: Tipo de Veículo
+    chartListeners.tipo = function(event) {
+      console.log('🎯 EVENTO CAPTURADO em Tipo!', event.type);
+      console.log('tipoChart existe?', !!tipoChart);
+      
+      if (!tipoChart) {
+        console.error('❌ tipoChart NÃO EXISTE!');
+        return;
+      }
+      
+      try {
+        const elements = tipoChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+        console.log('✓ getElementsAtEventForMode retornou:', elements.length);
+        
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const tipo = tipoChart.data.labels[index];
+          console.log('✓ Clicou em Tipo:', tipo);
+          console.log('Chamando mostrarPlacasPorTipo...');
+          mostrarPlacasPorTipo(tipo);
+        } else {
+          console.warn('⚠️ Nenhum elemento encontrado no gráfico');
+        }
+      } catch(e) {
+        console.error('❌ ERRO COMPLETO:', e);
+        throw e;
+      }
+    };
+    document.getElementById('chartTipo').addEventListener('click', chartListeners.tipo, false);
+    console.log('✅ Listener Tipo adicionado');
+    
+    // Listeners: Unidade
+    chartListeners.unidade = function(event) {
+      console.log('� EVENTO CAPTURADO em Unidade!', event.type);
+      console.log('unidadeChartObj existe?', !!unidadeChartObj);
+      
+      if (!unidadeChartObj) {
+        console.error('❌ unidadeChartObj NÃO EXISTE!');
+        return;
+      }
+      
+      try {
+        const elements = unidadeChartObj.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+        console.log('✓ getElementsAtEventForMode retornou:', elements.length);
+        
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const unidadeName = unidadeChartObj.data.labels[index];
+          console.log('✓ Clicou em Unidade:', unidadeName);
+          console.log('Chamando mostrarPlacasPorUnidadeAtivos...');
+          mostrarPlacasPorUnidadeAtivos(unidadeName);
+        } else {
+          console.warn('⚠️ Nenhum elemento encontrado no gráfico');
+        }
+      } catch(e) {
+        console.error('❌ ERRO COMPLETO:', e);
+        throw e;
+      }
+    };
+    document.getElementById('chartUnidade').addEventListener('click', chartListeners.unidade, false);
+    console.log('✅ Listener Unidade adicionado');
+    console.log('✓ updateCharts COMPLETO - todos os 5 gráficos e listeners prontos');
+    
+    // Ajustar cores das legendas em dark mode
+    adjustLegendColorsForDarkMode();
+    
+    // Se dark mode ativo, fazer segunda varredura após Charts renderizar completamente
+    if (document.body.classList.contains('dark')) {
+      setTimeout(() => { adjustLegendColorsForDarkMode(); debugLegendState(); }, 100);
+      setTimeout(() => { adjustLegendColorsForDarkMode(); }, 200);
+      setTimeout(() => { adjustLegendColorsForDarkMode(); }, 350);
+      setTimeout(() => { adjustLegendColorsForDarkMode(); }, 500);
+    }
+  }
+
+  // Função para ajustar cores das legendas em dark mode - SIMPLIFICADA
+  function adjustLegendColorsForDarkMode() {
+    if (!document.body.classList.contains('dark')) return;
+    
+    // ESTRATÉGIA 1: Legendas HTML (mais comuns em Chart.js 4.4.1)
+    const htmlLegends = document.querySelectorAll('.chart-box .chartjs-legend-item, .chart-box [class*="legend"] li, .chart-box .legend-item');
+    
+    htmlLegends.forEach(el => {
+      el.style.color = '#fff !important';
+      el.style.fill = '#fff !important';
+      
+      // Também aplicar em children
+      el.querySelectorAll('*').forEach(child => {
+        child.style.color = '#fff !important';
+        child.style.fill = '#fff !important';
+      });
+    });
+    
+    // ESTRATÉGIA 2: SVG texts (se existirem)
+    const svgTexts = document.querySelectorAll('.chart-box svg text, .chart-box svg tspan');
+    svgTexts.forEach(el => {
+      el.removeAttribute('fill');
+      el.setAttribute('fill', '#fff');
+      let existingStyle = el.getAttribute('style') || '';
+      if (!existingStyle.includes('fill:')) {
+        existingStyle += '; fill: #fff !important;';
+      } else {
+        existingStyle = existingStyle.replace(/fill:\s*[^;]+;?/g, 'fill: #fff !important;');
+      }
+      el.setAttribute('style', existingStyle.trim());
+    });
+    
+    // ESTRATÉGIA 3: Qualquer elemento com texto em legendas
+    const chartBoxes = document.querySelectorAll('.chart-box');
+    chartBoxes.forEach(box => {
+      const legendContainer = box.querySelector('[class*="legend"]');
+      if (legendContainer) {
+        legendContainer.style.color = '#fff !important';
+        legendContainer.style.fill = '#fff !important';
+      }
+    });
+  }
+
+  // Criar MutationObserver para ajustar legendas em tempo real
+  function initLegendObserver() {
+    const observer = new MutationObserver(function(mutations) {
+      if (document.body.classList.contains('dark')) {
+        // Executar ajuste a cada mudança no DOM
+        adjustLegendColorsForDarkMode();
+      }
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'fill', 'color']
+    });
+  }
+
+  // Função para debugar o estado das legendas
+  function debugLegendState() {
+    const isDark = document.body.classList.contains('dark');
+    if (isDark) {
+      const chartBoxes = document.querySelectorAll('.chart-box');
+      const svgTexts = document.querySelectorAll('.chart-box svg text');
+      console.log(`%c✨ DARK MODE DEBUG`, 'color: #fff; background: #000; padding: 5px 10px; border-radius: 3px;');
+      console.log(`📊 Gráficos: ${chartBoxes.length} | 📝 SVG texts: ${svgTexts.length}`);
+      svgTexts.forEach((el, i) => {
+        const fill = el.getAttribute('fill');
+        const style = el.getAttribute('style');
+        if (i < 3) console.log(`  Text ${i}: fill="${fill}" | style="${style?.substring(0, 50)}..."`);
+      });
+    }
+  }
+
+ // GRÁFICO 2: BARRAS HORIZONTAL - Distribuição por Fabricante (Amarelo)
+function doughnutChart(id, obj, label) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+    
+    const cleanObj = {};
+    for (const key in obj) {
+      if (key && obj[key] > 0) cleanObj[key] = obj[key];
+    }
+    
+    const sortedEntries = Object.entries(cleanObj).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(e => e[0]);
+    const values = sortedEntries.map(e => e[1]);
+    
+    // Cor única - Amarelo
+    const backgroundColor = '#FFD700';
+
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: backgroundColor,
+          borderColor: '#FFD700',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBorderWidth: 3,
+          hoverBorderColor: '#FFD700'
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        onHover: (event, activeElements) => {
+          canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+        },
+        plugins: {
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
+          tooltip: {
+            backgroundColor: 'rgba(0, 51, 160, 0.9)',
+            titleColor: '#FFD700',
+            bodyColor: '#fff',
+            borderColor: '#FFD700',
+            borderWidth: 1
+          },
+          datalabels: {
+            display: true,
+            anchor: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'end';
+            },
+            align: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'right';
+            },
+            offset: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 0 : 8;
+            },
+            font: { size: 11, weight: 'bold' },
+            color: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? '#000' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
+            },
+            padding: 5
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { size: 10 }, precision: 0 },
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 51, 160, 0.1)' }
+          },
+          y: {
+            ticks: { font: { size: 9 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // GRÁFICO 2: BARRAS VERTICAIS - Para comparação clara por Região
+  function barChart(id, obj, label) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+
+    const cleanObj = {};
+    for (const key in obj) {
+      if (key && obj[key] > 0) cleanObj[key] = obj[key];
+    }
+
+    const sortedEntries = Object.entries(cleanObj).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(e => e[0]);
+    const values = sortedEntries.map(e => e[1]);
+    
+    // Paleta de cores diversificada
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#A8E6CF'];
+
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+          borderColor: '#FFD700',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBackgroundColor: '#1E90FF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onHover: (event, activeElements) => {
+          canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+        },
+        plugins: {
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: 'top', labels: { color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 12 } } },
+          tooltip: {
+            backgroundColor: 'rgba(0, 51, 160, 0.9)',
+            titleColor: '#FFD700',
+            bodyColor: '#fff',
+            borderColor: '#FFD700',
+            borderWidth: 1
+          },
+          datalabels: {
+            display: true,
+            anchor: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const current = data[context.dataIndex];
+              return (current / maxValue) * 100 > 15 ? 'center' : 'end';
+            },
+            align: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const current = data[context.dataIndex];
+              return (current / maxValue) * 100 > 15 ? 'center' : 'top';
+            },
+            offset: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const current = data[context.dataIndex];
+              return (current / maxValue) * 100 > 15 ? 0 : 8;
+            },
+            font: { size: 11, weight: 'bold' },
+            color: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const current = data[context.dataIndex];
+              return (current / maxValue) * 100 > 15 ? '#fff' : '#0033A0';
+            },
+            padding: 5
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { size: 10 } },
+            grid: { display: false }
+          },
+          y: {
+            ticks: { font: { size: 10 }, precision: 0 },
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 51, 160, 0.1)' }
+          }
+        }
+      }
+    });
+  }
+
+  // GRÁFICO COM LABELS AUTOMÁTICOS: BARRAS VERTICAIS - Ativos por Transportadora
+  function barChartWithLabels(id, obj, label) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+    
+    const cleanObj = {};
+    for (const key in obj) {
+      if (key && obj[key] > 0) cleanObj[key] = obj[key];
+    }
+    
+    const sortedEntries = Object.entries(cleanObj).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(e => e[0]);
+    const values = sortedEntries.map(e => e[1]);
+    
+    // Cor única - Azul Claro
+    const backgroundColor = '#ADD8E6';
+    
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: backgroundColor,
+          borderColor: '#FFD700',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBorderWidth: 3,
+          hoverBorderColor: '#FFD700'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onHover: (event, activeElements) => {
+          canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+        },
+        plugins: {
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
+          tooltip: {
+            backgroundColor: 'rgba(0, 51, 160, 0.9)',
+            titleColor: '#FFD700',
+            bodyColor: '#fff',
+            borderColor: '#FFD700',
+            borderWidth: 1
+          },
+          datalabels: {
+            display: true,
+            anchor: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'end';
+            },
+            align: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'top';
+            },
+            offset: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 0 : 8;
+            },
+            font: { size: 11, weight: 'bold' },
+            color: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
+            },
+            padding: 5
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { size: 10 } },
+            grid: { display: false }
+          },
+          y: {
+            ticks: { font: { size: 10 }, precision: 0 },
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 51, 160, 0.1)' }
+          }
+        }
+      }
+    });
+  }
+
+  // GRÁFICO HORIZONTAL: UNIDADES (parecido com dashboard_motoristas) - TOP 15
+  function barChartUnidadesHorizontal(id, obj, label) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+    
+    const cleanObj = {};
+    for (const key in obj) {
+      if (key && obj[key] > 0) cleanObj[key] = obj[key];
+    }
+    
+    // Ordena do maior para o menor e pega TOP 15
+    const sortedEntries = Object.entries(cleanObj).sort((a, b) => b[1] - a[1]).slice(0, 15);
+    const labels = sortedEntries.map(e => e[0]);
+    const values = sortedEntries.map(e => e[1]);
+    
+    // Cor única - Verde
+    const backgroundColor = '#90EE90';
+    
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: backgroundColor,
+          borderColor: '#FFD700',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBorderWidth: 3,
+          hoverBorderColor: '#FFD700'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onHover: (event, activeElements) => {
+          canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+        },
+        plugins: {
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
+          tooltip: {
+            backgroundColor: 'rgba(0, 51, 160, 0.9)',
+            titleColor: '#FFD700',
+            bodyColor: '#fff',
+            borderColor: '#FFD700',
+            borderWidth: 1
+          },
+          datalabels: {
+            display: true,
+            anchor: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'end';
+            },
+            align: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'right';
+            },
+            offset: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 0 : 8;
+            },
+            font: { size: 11, weight: 'bold' },
+            color: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
+            },
+            padding: 5
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { size: 10 }, precision: 0 },
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 51, 160, 0.1)' }
+          },
+          y: {
+            ticks: { font: { size: 9 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+  
+  // Função para mostrar placas/dispositivos de uma unidade selecionada
+  function mostrarPlacasPorUnidadeAtivos(unidade) {
+    // Filtrar registros: se for "Sem cadastro", buscar por UNIDADE vazia
+    let dispositivosDaUnidade;
+    if (unidade === 'Sem cadastro') {
+      dispositivosDaUnidade = rawData.filter(v => !v.UNIDADE || v.UNIDADE.trim() === '');
+    } else {
+      dispositivosDaUnidade = rawData.filter(v => v.UNIDADE === unidade);
+    }
+    
+    if (dispositivosDaUnidade.length === 0) {
+      alert(`Nenhum dispositivo encontrado para a unidade: ${unidade}`);
+      return;
+    }
+    
+    // Extrair dispositivos únicos e ordenar
+    const dispositivos = [...new Set(dispositivosDaUnidade.map(v => v.Dispositivo || 'N/A'))].sort();
+    
+    // Criar modal
+    const isDark = document.body.classList.contains('dark');
+    const modalHtml = `
+      <div class="placas-modal-overlay" onclick="this.remove()">
+        <div class="placas-modal" onclick="event.stopPropagation()">
+          <div class="placas-modal-header">
+            <h2>Dispositivos da Unidade: ${unidade}</h2>
+            <button class="placas-modal-close" onclick="this.closest('.placas-modal-overlay').remove()">✕</button>
+          </div>
+          <div class="placas-modal-content">
+            <div class="placas-grid">
+              ${dispositivos.map(disp => `<div class="placa-item">${disp}</div>`).join('')}
+            </div>
+            <p class="placas-count">Total: ${dispositivos.length} dispositivos</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Adicionar estilos CSS se não existirem
+    if (!document.getElementById('placas-modal-styles')) {
+      const styles = `
+        <style id="placas-modal-styles">
+          .placas-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+          }
+          
+          .placas-modal {
+            background: ${isDark ? '#2d3748' : '#ffffff'};
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+          }
+          
+          @keyframes slideIn {
+            from {
+              transform: translateY(-50px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+          
+          .placas-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid #3498DB;
+            background: ${isDark ? '#1a202c' : '#f8f9fa'};
+          }
+          
+          .placas-modal-header h2 {
+            color: ${isDark ? '#ffffff' : '#2c3e50'};
+            margin: 0;
+            font-size: 18px;
+          }
+          
+          .placas-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #e74c3c;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+          }
+          
+          .placas-modal-close:hover {
+            background: rgba(231, 76, 60, 0.1);
+          }
+          
+          .placas-modal-content {
+            padding: 20px;
+          }
+          
+          .placas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+          }
+          
+          .placa-item {
+            background: linear-gradient(135deg, #90EE90, #7BC97B);
+            color: #000;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: monospace;
+            box-shadow: 0 4px 8px rgba(144, 238, 144, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+          }
+          
+          .placa-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(144, 238, 144, 0.5);
+          }
+          
+          .placas-count {
+            text-align: center;
+            color: ${isDark ? '#cbd5e0' : '#7f8c8d'};
+            font-size: 14px;
+            margin: 0;
+          }
+        </style>
+      `;
+      document.head.insertAdjacentHTML('beforeend', styles);
+    }
+    
+    // Inserir modal no DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+
+  // ===== NOVAS FUNÇÕES DE FILTRO POR CATEGORIA =====
+  
+  function mostrarPlacasPorTransportadora(transportadora) {
+    const dispositivosDaTransp = rawData.filter(v => v.TRANSPORTADORA === transportadora);
+    if (dispositivosDaTransp.length === 0) {
+      alert(`Nenhum dispositivo encontrado para: ${transportadora}`);
+      return;
+    }
+    const dispositivos = [...new Set(dispositivosDaTransp.map(v => v.Dispositivo || 'N/A'))].sort();
+    criarModalPlacas(`Dispositivos da Transportadora: ${transportadora}`, dispositivos);
+  }
+  
+  function mostrarPlacasPorFabricante(fabricante) {
+    const dispositivosFab = rawData.filter(v => v.FABRICANTE === fabricante);
+    if (dispositivosFab.length === 0) {
+      alert(`Nenhum dispositivo encontrado para: ${fabricante}`);
+      return;
+    }
+    const dispositivos = [...new Set(dispositivosFab.map(v => v.Dispositivo || 'N/A'))].sort();
+    criarModalPlacas(`Dispositivos do Fabricante: ${fabricante}`, dispositivos);
+  }
+  
+  function mostrarPlacasPorRegiao(regiao) {
+    const dispositivosReg = rawData.filter(v => v.REGIAO === regiao);
+    if (dispositivosReg.length === 0) {
+      alert(`Nenhum dispositivo encontrado para: ${regiao}`);
+      return;
+    }
+    const dispositivos = [...new Set(dispositivosReg.map(v => v.Dispositivo || 'N/A'))].sort();
+    criarModalPlacas(`Dispositivos da Região: ${regiao}`, dispositivos);
+  }
+  
+  function mostrarPlacasPorTipo(tipo) {
+    const dispositivosTipo = rawData.filter(v => v['TIPO DE VEICULO'] === tipo);
+    if (dispositivosTipo.length === 0) {
+      alert(`Nenhum dispositivo encontrado para: ${tipo}`);
+      return;
+    }
+    const dispositivos = [...new Set(dispositivosTipo.map(v => v.Dispositivo || 'N/A'))].sort();
+    criarModalPlacas(`Dispositivos do Tipo: ${tipo}`, dispositivos);
+  }
+  
+  // ===== FUNÇÃO AUXILIAR PARA CRIAR MODAL =====
+  function criarModalPlacas(titulo, dispositivos) {
+    const isDark = document.body.classList.contains('dark');
+    const modalHtml = `
+      <div class="placas-modal-overlay" onclick="this.remove()">
+        <div class="placas-modal" onclick="event.stopPropagation()">
+          <div class="placas-modal-header">
+            <h2>${titulo}</h2>
+            <button class="placas-modal-close" onclick="this.closest('.placas-modal-overlay').remove()">✕</button>
+          </div>
+          <div class="placas-modal-content">
+            <div class="placas-grid">
+              ${dispositivos.map(disp => `<div class="placa-item">${disp}</div>`).join('')}
+            </div>
+            <p class="placas-count">Total: ${dispositivos.length} dispositivos</p>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+
+  // GRÁFICO 3: BARRAS VERTICAIS - Região (Cinza)
+  function horizontalBar(id, obj, label) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+    
+    const cleanObj = {};
+    for (const key in obj) {
+      if (key && obj[key] > 0) cleanObj[key] = obj[key];
+    }
+    
+    // Ordena do maior para o menor
+    const sortedEntries = Object.entries(cleanObj).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(e => e[0]);
+    const values = sortedEntries.map(e => e[1]);
+    
+    // Cor única - Cinza
+    const backgroundColor = '#CCCCCC';
+
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: backgroundColor,
+          borderColor: '#FFD700',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBorderWidth: 3,
+          hoverBorderColor: '#FFD700'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onHover: (event, activeElements) => {
+          canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+        },
+        plugins: {
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
+          tooltip: {
+            backgroundColor: 'rgba(0, 51, 160, 0.9)',
+            titleColor: '#FFD700',
+            bodyColor: '#fff',
+            borderColor: '#FFD700',
+            borderWidth: 1
+          },
+          datalabels: {
+            display: true,
+            anchor: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'end';
+            },
+            align: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'right';
+            },
+            offset: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 0 : 8;
+            },
+            font: { size: 11, weight: 'bold' },
+            color: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
+            },
+            padding: 5
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { size: 10 }, precision: 0 },
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 51, 160, 0.1)' }
+          },
+          y: {
+            ticks: { font: { size: 9 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // GRÁFICO 4: BARRAS VERTICAIS - Tipo (Roxo)
+  function horizontalBarRoxo(id, obj, label) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+    
+    const cleanObj = {};
+    for (const key in obj) {
+      if (key && obj[key] > 0) cleanObj[key] = obj[key];
+    }
+    
+    // Ordena do maior para o menor
+    const sortedEntries = Object.entries(cleanObj).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(e => e[0]);
+    const values = sortedEntries.map(e => e[1]);
+    
+    // Cor única - Roxo
+    const backgroundColor = '#9370DB';
+
+    return new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: backgroundColor,
+          borderColor: '#FFD700',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBorderWidth: 3,
+          hoverBorderColor: '#FFD700'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onHover: (event, activeElements) => {
+          canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+        },
+        plugins: {
+          title: { display: true, text: label, color: document.body.classList.contains('dark') ? '#fff' : '#0033A0', font: { size: 14, weight: '600' } },
+          legend: { display: true, position: "top", labels: { color: document.body.classList.contains('dark') ? '#fff' : '#000' } },
+          tooltip: {
+            backgroundColor: 'rgba(0, 51, 160, 0.9)',
+            titleColor: '#FFD700',
+            bodyColor: '#fff',
+            borderColor: '#FFD700',
+            borderWidth: 1
+          },
+          datalabels: {
+            display: true,
+            anchor: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'end';
+            },
+            align: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 'center' : 'top';
+            },
+            offset: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? 0 : 8;
+            },
+            font: { size: 11, weight: 'bold' },
+            color: function(context) {
+              const data = context.dataset.data;
+              const maxValue = Math.max(...data);
+              const currentValue = data[context.dataIndex];
+              const percentage = (currentValue / maxValue) * 100;
+              return percentage > 15 ? '#fff' : document.body.classList.contains('dark') ? '#fff' : '#0033A0';
+            },
+            padding: 5
+          }
+        },
+        scales: {
+          y: {
+            ticks: { font: { size: 10 }, precision: 0 },
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 51, 160, 0.1)' }
+          },
+          x: {
+            ticks: { font: { size: 9 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  function group(d, c) {
+    return d.reduce((a, r) => {
+      const valor = r[c] && r[c].trim() !== '' ? r[c] : 'Sem cadastro';
+      a[valor] = (a[valor] || 0) + 1;
+      return a;
+    }, {});
+  }
+
+  /* ===== INSIGHTS (STORYTELLING) ===== */
+  function generateInsights(d) {
+    if (d.length === 0) return;
+    
+    const total = d.length;
+    const porFab = group(d, 'FABRICANTE');
+    const fabLider = Object.entries(porFab).sort((a, b) => b[1] - a[1])[0];
+    const fabPct = fabLider ? Math.round((fabLider[1] / total) * 100) : 0;
+    const porReg = group(d, 'REGIAO');
+    const regLider = Object.entries(porReg).sort((a, b) => b[1] - a[1])[0];
+    const regPct = regLider ? Math.round((regLider[1] / total) * 100) : 0;
+    const porTipo = group(d, 'TIPO DE VEICULO');
+    const tipoLider = Object.entries(porTipo).sort((a, b) => b[1] - a[1])[0];
+    const tipoPct = tipoLider ? Math.round((tipoLider[1] / total) * 100) : 0;
+    const transportadoras = new Set(d.map(x => x.TRANSPORTADORA).filter(x => x && x.trim() !== '')).size;
+    const regioes = new Set(d.map(x => x.REGIAO).filter(x => x && x.trim() !== '')).size;
+    
+    // Contar ativos COM transportadora E unidade preenchidas corretamente
+    const comTranspUnidade = d.filter(x => 
+      x.TRANSPORTADORA && x.TRANSPORTADORA.trim() !== '' && 
+      x.UNIDADE && x.UNIDADE.trim() !== ''
+    ).length;
+    const semTranspUnidade = total - comTranspUnidade;
+    const pctComTransp = Math.round((comTranspUnidade / total) * 100);
+    const pctSemTransp = Math.round((semTranspUnidade / total) * 100);
+    
+    console.log('Debug contagem:', { total, comTranspUnidade, semTranspUnidade, pctComTransp, pctSemTransp });
+    
+    const insightPrincipal = `O sistema registra <strong>${total} ativos cadastrados</strong> na operação, distribuídos em <strong>${regioes} regiões</strong> e operados por <strong>${transportadoras}</strong> transportadora(s). A frota está concentrada em <strong>${fabLider ? fabLider[0] : 'diversas marcas'}</strong> (${fabPct}%), com predominância de <strong>${tipoLider ? tipoLider[0] : 'diversidade'}</strong>. Destaque: <strong>${comTranspUnidade} ativos (${pctComTransp}%)</strong> estão devidamente vinculados a transportadora e unidade, enquanto <strong>${semTranspUnidade} (${pctSemTransp}%)</strong> carecem dessa informação crítica.`;
+    
+    const padroes = [
+      `🚛 <strong>${total} ativos</strong> no total`,
+      `🏭 Concentração: <strong>${fabLider ? fabLider[0] : '-'}</strong> com ${fabPct}%`,
+      `📍 Região líder: <strong>${regLider ? regLider[0] : 'N/A'}</strong> (${regPct}%)`,
+      `🚚 Tipo predominante: <strong>${tipoLider ? tipoLider[0] : 'variado'}</strong>`,
+      `🌐 Presença em <strong>${regioes}</strong> regiões com <strong>${transportadoras}</strong> transportadora(s)`,
+      `✅ <strong>${comTranspUnidade} ativos</strong> com transportadora/unidade vinculadas (${pctComTransp}%)`,
+      `⚠️ <strong>${semTranspUnidade} ativos</strong> sem info de transportadora/unidade (${pctSemTransp}%)`
+    ];
+    
+    const recomendacoes = [
+      `${total >= 100 ? '✅ Frota robusta' : total >= 50 ? '⚠️ Cobertura média' : '🔔 Operação limitada'} - audiência atual`,
+      `📊 Revisar diversificação de marcas vis-à-vis ${fabLider ? fabLider[0] : 'líder'}`,
+      `🎯 Otimizar concentração em ${regLider ? regLider[0] : 'regiões'}`,
+      `🔧 Harmonizar tipos de veículos para adequação operacional`,
+      `📈 Implementar KPIs por transportadora para benchmarking`,
+      `🚨 CRÍTICO: Vincular os ${semTranspUnidade} ativos faltantes a transportadora e unidade para rastreabilidade completa`
+    ];
+    
+    document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+    document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+    document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+  }
+
+  /* ===== TABELA ===== */
+  function updateTable(d) {
+    if (window.tableInstance) {
+      try {
+        window.tableInstance.destroy();
+      } catch (e) {
+        console.warn('Erro ao destruir datatable:', e);
+      }
+      window.tableInstance = null;
+    }
+    
+    const tableElement = document.getElementById('dataTable');
+    
+    if (d.length === 0) {
+      tableElement.innerHTML = '<thead><tr><th colspan="100">Nenhum dado encontrado</th></tr></thead>';
+      return;
+    }
+
+    // Preencher HTML da tabela
+    const headers = Object.keys(d[0]);
+    let html = '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+    html += d.map(row => '<tr>' + headers.map(h => {
+      const val = row[h];
+      const colunasComSemCadastro = ['TRANSPORTADORA', 'UNIDADE', 'FABRICANTE', 'TIPO DE VEICULO'];
+      const display = (val && val.trim() !== '') ? val : (colunasComSemCadastro.includes(h) ? 'Sem cadastro' : '-');
+      return `<td>${display}</td>`;
+    }).join('') + '</tr>').join('');
+    html += '</tbody>';
+    tableElement.innerHTML = html;
+
+    // Inicializar datatable com delay
+    setTimeout(() => {
+      try {
+        if (typeof simpleDatatables !== 'undefined') {
+          window.tableInstance = new simpleDatatables.DataTable('#dataTable', {
+            perPage: 10,
+            searchable: true,
+            sortable: true
+          });
+        }
+      } catch (e) {
+        console.warn('Simple-Datatables error:', e);
+      }
+    }, 100);
+  }
+
+
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
+        }
+
+        // ===== HANDLER DE CLIQUES NOS GRÁFICOS - FUNCIONA NO GITHUB PAGES =====
+        window.handleChartClick = function(chartType) {
+            console.log('🎯 Clicou em gráfico:', chartType);
+            
+            const chartMap = {
+                'transportadora': { chart: transportadoraChart, key: 'TRANSPORTADORA', fn: mostrarPlacasPorTransportadora },
+                'fabricante': { chart: fabricanteChart, key: 'FABRICANTE', fn: mostrarPlacasPorFabricante },
+                'regiao': { chart: regiaoChart, key: 'REGIAO', fn: mostrarPlacasPorRegiao },
+                'tipo': { chart: tipoChart, key: 'TIPO DE VEICULO', fn: mostrarPlacasPorTipo },
+                'unidade': { chart: unidadeChartObj, key: 'UNIDADE', fn: mostrarPlacasPorUnidadeAtivos }
+            };
+            
+            const config = chartMap[chartType];
+            if (!config || !config.chart) {
+                console.error('❌ Gráfico não encontrado:', chartType);
+                return;
+            }
+            
+            // Se tem rótulos, mostrar seletor
+            if (config.chart && config.chart.data && config.chart.data.labels) {
+                const labels = config.chart.data.labels;
+                const selected = prompt(`Escolha uma opção:\n\n${labels.map((l, i) => `${i + 1}. ${l}`).join('\n')}\n\nDigite o número:`, '1');
+                
+                if (selected) {
+                    const index = parseInt(selected) - 1;
+                    if (index >= 0 && index < labels.length) {
+                        const value = labels[index];
+                        console.log('✓ Selecionou:', value);
+                        config.fn(value);
+                    } else {
+                        alert('❌ Opção inválida');
+                    }
+                }
+            }
+        };
+
+        // ===== HANDLER DE CLIQUES NOS GRÁFICOS - FUNCIONA NO GITHUB PAGES =====
+        window.handleChartClick = function(chartType) {
+            console.log('🎯 Clicou em gráfico:', chartType);
+            
+            const chartMap = {
+                'transportadora': { chart: transportadoraChart, key: 'TRANSPORTADORA', fn: mostrarPlacasPorTransportadora },
+                'fabricante': { chart: fabricanteChart, key: 'FABRICANTE', fn: mostrarPlacasPorFabricante },
+                'regiao': { chart: regiaoChart, key: 'REGIAO', fn: mostrarPlacasPorRegiao },
+                'tipo': { chart: tipoChart, key: 'TIPO DE VEICULO', fn: mostrarPlacasPorTipo },
+                'unidade': { chart: unidadeChartObj, key: 'UNIDADE', fn: mostrarPlacasPorUnidadeAtivos }
+            };
+            
+            const config = chartMap[chartType];
+            if (!config || !config.chart) {
+                console.error('❌ Gráfico não encontrado:', chartType);
+                return;
+            }
+            
+            // Se tem rótulos, mostrar seletor
+            if (config.chart && config.chart.data && config.chart.data.labels) {
+                const labels = config.chart.data.labels;
+                const selected = prompt(`Escolha uma opção:\n\n${labels.map((l, i) => `${i + 1}. ${l}`).join('\n')}\n\nDigite o número:`, '1');
+                
+                if (selected) {
+                    const index = parseInt(selected) - 1;
+                    if (index >= 0 && index < labels.length) {
+                        const value = labels[index];
+                        console.log('✓ Selecionou:', value);
+                        config.fn(value);
+                    } else {
+                        alert('❌ Opção inválida');
+                    }
+                }
+            }
+        };
+    </script>
+  </div>
+</body>
+</html>

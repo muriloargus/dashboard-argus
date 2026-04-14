@@ -1,0 +1,3879 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status da Frota - Sistema Argus Ambev</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <script src="persistence-manager.js"></script>
+    <script src="data-loader.js"></script>
+    <script src="dashboard-shared.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #63a3d8;
+            --primary-dark: #4a8fb8;
+            --secondary-color: #e60000;
+            --accent-color: #FFD700;
+            --accent-light: #FFF44F;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --light-color: #f8fafc;
+            --dark-color: #1a1a1a;
+            --sidebar-width: 280px;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 50%, #f3f4f6 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            scroll-behavior: smooth;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        body.dark {
+            background: var(--dark-color);
+            color: var(--light-color);
+        }
+        
+        body.dark .main-content {
+            background: var(--dark-color);
+        }
+        
+        body.dark .container {
+            background: var(--dark-color);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(99, 163, 216, 0.05);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 163, 216, 0.3);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 163, 216, 0.5);
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 8px 0 20px rgba(99, 163, 216, 0.15);
+            border-right: 1px solid rgba(255, 215, 0, 0.1);
+        }
+        
+        .sidebar-header {
+            padding: 20px 0;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header i {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            gap: 12px;
+            position: relative;
+        }
+        
+        .sidebar-menu a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-color);
+            border-radius: 0 3px 3px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--accent-light);
+            padding-left: 12px;
+        }
+        
+        .sidebar-menu a.active::before {
+            opacity: 1;
+        }
+        
+        .sidebar-menu a i {
+            width: 24px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            font-size: 0.85rem;
+            text-align: center;
+            position: absolute;
+            bottom: 20px;
+            width: calc(var(--sidebar-width) - 40px);
+        }
+        
+        /* ===== SIDEBAR COLLAPSED ===== */
+        .sidebar.collapsed {
+            width: 70px;
+            padding: 20px 10px;
+        }
+        
+        .sidebar.collapsed .sidebar-header h1 {
+            font-size: 0;
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar.collapsed .sidebar-header img {
+            margin-bottom: 0;
+            height: 40px;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a {
+            padding: 12px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a i {
+            width: auto;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar.collapsed .sidebar-footer {
+            display: none;
+        }
+        
+        /* ===== MAIN CONTENT WITH COLLAPSED SIDEBAR ===== */
+        .main-content.collapsed {
+            margin-left: 70px;
+            padding: 0 30px 30px 30px;
+        }
+        
+        /* ===== TOOLTIP PARA SIDEBAR COLAPSADO ===== */
+        .sidebar.collapsed .sidebar-menu a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1002;
+        }
+        
+        .sidebar.collapsed .sidebar-menu a:hover::after {
+            opacity: 1;
+            left: 55px;
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            transition: all 0.3s ease;
+            padding: 0 30px 30px 30px;
+        }
+        
+        /* HEADER */
+        .header {
+            background: linear-gradient(90deg, var(--primary-color), #7bb5e0);
+            color: white;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(99, 163, 216, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-branding {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo.argus {
+            height: 48px;
+        }
+        
+        .logo.ambev {
+            height: 36px;
+        }
+        
+        .header .titulo {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            flex: 1;
+        }
+        
+        .header .titulo small {
+            display: block;
+            font-size: 13px;
+            font-weight: 400;
+            opacity: 0.95;
+            margin-top: 4px;
+        }
+        
+        .btn-toggle {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 215, 0, 0.3);
+            border: 2px solid var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-toggle:hover {
+            background: rgba(255, 215, 0, 0.5);
+            transform: scale(1.05);
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-right: 20px;
+            border-right: 2px solid var(--gray-200);
+        }
+        
+        .logo-container img {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .header h2 {
+            color: var(--primary-color);
+            font-weight: 800;
+            font-size: 1.7rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        
+        .header .date-info {
+            background: linear-gradient(135deg, rgba(99, 163, 216, 0.1), rgba(255, 215, 0, 0.1));
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            color: var(--primary-color);
+            border: 1px solid rgba(99, 163, 216, 0.2);
+            white-space: nowrap;
+        }
+        
+        .upload-section {
+            background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+            border-radius: 12px;
+            padding: 20px 15px;
+            box-shadow: 0 2px 10px rgba(99, 163, 216, 0.08);
+            margin-bottom: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px dashed rgba(99, 163, 216, 0.2);
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .upload-section.visible {
+            display: block;
+        }
+
+        .container {
+            background: transparent;
+            border-radius: 4px;
+            padding: 8px 4px;
+            box-shadow: none;
+            margin-bottom: 8px;
+            text-align: center;
+            transition: all 0.2s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container.visible {
+            display: none;
+        }
+        
+        /* dark mode container override - must be specific */
+        body.dark .container {
+            background: var(--dark-color) !important;
+            color: var(--light-color) !important;
+            border-color: rgba(255,255,255,0.1) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+        
+        body.dark .container h3 {
+            color: #FFD700 !important;
+        }
+        
+        body.dark .container p {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+        
+        .upload-section:hover {
+            box-shadow: none;
+        }
+        
+        .upload-icon {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 6px;
+        }
+        
+        .upload-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: none;
+        }
+        
+        .upload-section p {
+            color: #888;
+            margin-bottom: 6px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 0.75rem;
+        }
+        
+        .btn-upload {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(99, 163, 216, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-upload:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 2px 6px rgba(99, 163, 216, 0.15);
+        }
+        
+        .file-input-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            margin-top: 15px;
+        }
+        
+        .file-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .summary-cards.visible {
+            display: grid;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(99, 163, 216, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(99, 163, 216, 0.08);
+        }
+
+        .card.selected {
+            background: linear-gradient(135deg, #63a3d8 0%, #4a8fb8 100%);
+            color: white;
+            box-shadow: 0 12px 40px rgba(99, 163, 216, 0.3);
+            transform: translateY(-6px);
+            border: 1px solid rgba(99, 163, 216, 0.3);
+        }
+
+        .card.selected .card-value {
+            color: white;
+        }
+
+        .card.selected .card-title {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .card.selected .card-icon {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, 0.2);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+        
+        .card.online::before { background: linear-gradient(90deg, #28a745, #20c997); }
+        .card.parado::before { background: linear-gradient(90deg, var(--warning-color), #ff9800); }
+        .card.offline::before { background: linear-gradient(90deg, var(--danger-color), #f57c00); }
+        
+        .card-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background: rgba(99, 163, 216, 0.08);
+            border-radius: 10px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .card.online .card-icon { color: var(--success-color); background: rgba(40, 167, 69, 0.12); }
+        .card.parado .card-icon { color: var(--warning-color); background: rgba(255, 193, 7, 0.12); }
+        .card.offline .card-icon { color: var(--danger-color); background: rgba(220, 53, 69, 0.12); }
+        
+        .card-title {
+            font-size: 0.75rem;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .card-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+            display: none;
+        }
+        
+        .charts-section.visible {
+            display: grid;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .insights-section {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(99, 163, 216, 0.12);
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary-color);
+            display: none;
+        }
+        
+        .insights-section.visible {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        body.dark .insights-section {
+            background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+            border-left-color: #63a3d8;
+            box-shadow: 0 4px 20px rgba(99, 163, 216, 0.2);
+        }
+        
+        .insights-section h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+        
+        body.dark .insights-section h2 {
+            color: #63a3d8;
+        }
+        
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .insight-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        body.dark .insight-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-left-color: #63a3d8;
+        }
+        
+        .insight-card h3 {
+            color: var(--primary-color);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        body.dark .insight-card h3 {
+            color: #FFD700;
+        }
+        
+        .insight-card p {
+            color: #333;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        body.dark .insight-card p {
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .insight-card .value {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.3rem;
+        }
+        
+        body.dark .insight-card .value {
+            color: #FFD700;
+        }
+
+        /* === INSIGHTS PADRONIZADOS === */
+        .insights-container {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .insights-container.visible {
+            display: block;
+        }
+
+        .insights-container .insights-card {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(99, 163, 216, 0.12);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        body.dark .insights-container .insights-card {
+            background: linear-gradient(135deg, #0d1b2a 0%, #081226 100%);
+            box-shadow: 0 4px 20px rgba(99, 163, 216, 0.2);
+        }
+
+        .insights-container .insights-card h2 {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        body.dark .insights-container .insights-card h2 {
+            color: #63a3d8;
+        }
+
+        .insight-section {
+            margin-bottom: 20px;
+        }
+
+        .insight-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .insight-section h3 {
+            color: var(--primary-color);
+            font-size: 1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.dark .insight-section h3 {
+            color: #FFD700;
+        }
+
+        .insight-section p,
+        .insight-section li {
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        body.dark .insight-section p,
+        body.dark .insight-section li {
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .insight-section ul {
+            margin-left: 20px;
+            margin-bottom: 0;
+        }
+
+        .insight-section li {
+            margin-bottom: 8px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 6px 18px rgba(0, 51, 160, .15);
+            border: 2px solid var(--primary-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .chart-wrapper canvas {
+            pointer-events: none;
+        }
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(0, 51, 160, .25);
+            border-color: var(--accent-color);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .chart-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 380px;
+        }
+        
+        #map {
+            height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        
+        .map-section {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .map-section .chart-header {
+            margin-bottom: 12px;
+        }
+        
+        body.dark #map {
+            filter: invert(0.93) hue-rotate(200deg);
+        }
+        
+        .table-section {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            display: none;
+        }
+        
+        .table-section.visible {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead th {
+            background: linear-gradient(180deg, var(--primary-color) 0%, #4a8fb8 100%);
+            color: white;
+            font-weight: 600;
+            padding: 10px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+            font-size: 0.85rem;
+        }
+        
+        tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 0.85rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        
+        .pagination button, .pagination span {
+            padding: 6px 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination button.active, .pagination .page-info {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            cursor: default;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        tbody tr:hover {
+            background-color: #f5f7ff;
+            box-shadow: 0 2px 8px rgba(99, 163, 216, 0.05);
+        }
+        
+        .filters-section {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            background: white;
+            color: var(--dark-color);
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 163, 216, 0.1);
+        }
+        
+        .filter-group input::placeholder {
+            color: #999;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .filter-buttons button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-buttons button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .filter-buttons button.reset {
+            background: #f0f0f0;
+            color: #666;
+            border-color: #ddd;
+        }
+        
+        .filter-buttons button.reset:hover {
+            background: #e0e0e0;
+        }
+        
+        /* Dark Mode para Filter Buttons */
+        body.dark .filter-buttons button {
+            background: #081226;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #FFD700;
+        }
+
+        body.dark .filter-buttons button:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        body.dark .filter-buttons button.reset {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        body.dark .filter-buttons button.reset:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.3px;
+        }
+        
+        .status-online {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: var(--success-color);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .status-online::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success-color);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        
+        .status-parado {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #856404;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        .status-offline {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(99, 163, 216, 0.2);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 15px 25px;
+            min-width: 300px;
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, white 0%, var(--gray-50) 100%);
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 12px;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.05);
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9rem;
+            border: 1px solid rgba(99, 163, 216, 0.05);
+        }
+        
+        .footer p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        
+        .footer p strong {
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 250px;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .dashboard-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+        .dark .dashboard-description {
+            color: #aaa;
+        }
+    </style>
+    <script>
+        // Aplicar dark mode ANTES do DOM carregar para evitar flash de light mode
+        (function() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'true') {
+                document.documentElement.classList.add('dark-preload');
+            }
+        })();
+    </script>
+</head>
+<style>
+    /* Preload dark mode para evitar flash */
+    html.dark-preload {
+        filter: none;
+    }
+    
+    html.dark-preload body {
+        background: linear-gradient(135deg, #071124 0%, #0b1726 100%) !important;
+        color: #e0e0e0 !important;
+    }
+/* Dark mode aprimorado (injetado automaticamente) */
+body.dark {
+    background: linear-gradient(135deg, #071124 0%, #0b1726 100%);
+    color: var(--light-color);
+}
+body.dark .sidebar {
+    background: linear-gradient(180deg, #0b2440 0%, #071830 100%);
+    box-shadow: 8px 0 20px rgba(0,0,0,0.6);
+    border-right-color: rgba(255,215,0,0.06);
+}
+body.dark .main-content { background: linear-gradient(135deg, #071124 0%, #0b1726 100%); }
+body.dark .header {
+    background: linear-gradient(90deg, #0b2440 0%, #081830 100%);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* Dark Mode para Gráficos e Tabelas */
+body.dark .chart-container {
+    background: #0d1b2a;
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 6px 18px rgba(0, 51, 160, .15);
+}
+
+body.dark .chart-container:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 51, 160, .25);
+    border-color: var(--accent-color);
+}
+
+body.dark .chart-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark .table-section {
+    background: #0d1b2a;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+body.dark .table-section .table-title {
+    color: #FFD700;
+}
+
+body.dark table {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark thead th {
+    background: linear-gradient(180deg, var(--primary-color) 0%, #4a8fb8 100%) !important;
+    color: white;
+    border-bottom-color: rgba(255, 215, 0, 0.3);
+}
+
+body.dark tbody td {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark tbody tr:hover {
+    background-color: rgba(99, 163, 216, 0.15);
+    box-shadow: 0 2px 8px rgba(99, 163, 216, 0.15);
+}
+
+body.dark .filters-section {
+    background: #0d1b2a;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+body.dark .filter-group label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+body.dark .filter-group input,
+body.dark .filter-group select {
+    background: #081226;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark .filter-group input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+body.dark .filter-group input:focus,
+body.dark .filter-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 163, 216, 0.2);
+}
+
+body.dark .pagination button,
+body.dark .pagination span {
+    background: #081226;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.dark .pagination button:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+body.dark .pagination button.active,
+body.dark .pagination .page-info {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+body.dark .container {
+    background: #081226 !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark .container h3 {
+    color: #FFD700 !important;
+}
+
+body.dark .container p {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+body.dark .container small {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body.dark .topo {
+    background: linear-gradient(90deg, #0b2440 0%, #081830 100%) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+    color: #fff !important;
+}
+
+body.dark .card, body.dark .chart-card, body.dark .kpi-card { 
+    background: #081226; 
+    color: var(--light-color); 
+    border-color: rgba(255,255,255,0.03); 
+}
+body.dark .label, body.dark .kpi-title { color: rgba(255,255,255,0.8); }
+body.dark .value, body.dark .chart-title { color: var(--accent-color); }
+body.dark table th { background: var(--primary-dark); color: white; }
+body.dark table td { color: var(--light-color); border-color: rgba(255,255,255,0.06); }
+body.dark .sidebar-menu a:hover,
+body.dark .sidebar-menu a.active {
+    background: rgba(255, 215, 0, 0.15);
+    color: #FFF44F;
+}
+</style>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="argus-logo.png" alt="Argus" onerror="this.style.display='none'" style="height: 45px; width: auto; object-fit: contain; margin-bottom: 8px; filter: brightness(0) invert(1);">
+                <h1><i class="bi bi-speedometer2"></i> Telemetria CCO</h1>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html" data-tooltip="Home"><i class="bi bi-house"></i> <span>Home</span></a></li>
+                <li><a href="status_frota.html" data-tooltip="Status Frota"><i class="bi bi-speedometer2"></i> <span>Status Frota</span></a></li>
+                <li><a href="dashboard_motoristas%20v2.html" data-tooltip="Motoristas"><i class="bi bi-people"></i> <span>Motoristas</span></a></li>
+                <li><a href="dashboard_ativos.html" data-tooltip="Ativos"><i class="bi bi-truck"></i> <span>Ativos</span></a></li>
+                <li><a href="dashboard_usuarios.html" data-tooltip="Usuários"><i class="bi bi-person-check"></i> <span>Usuários</span></a></li>
+                <li><a href="dashboard_comparativo.html" data-tooltip="Comparativo"><i class="bi bi-bar-chart"></i> <span>Comparativo</span></a></li>
+                <li><a href="dashboard_desempenho_analista.html" data-tooltip="Desempenho"><i class="bi bi-person-badge"></i> <span>Desempenho - Analista</span></a></li>
+                <li><a href="dashboard_excecoes.html" data-tooltip="Exceções"><i class="bi bi-exclamation-triangle"></i> <span>Exceções</span></a></li>
+                <li><a href="dashboard_falhas.html" data-tooltip="Falhas"><i class="bi bi-bug"></i> <span>Falhas</span></a></li>
+                <li><a href="dashboard_timeline.html" data-tooltip="Motorista Não ID"><i class="bi bi-calendar-event"></i> <span>Motorista Não Identificado</span></a></li>
+                <li><a href="dashboard_risco_colisao.html" data-tooltip="Risco Colisão"><i class="bi bi-shield-exclamation"></i> <span>Risco de Colisão</span></a></li>
+                <li><a href="dashboard_dispositivos.html" data-tooltip="Dispositivos"><i class="bi bi-inbox"></i> <span>Disp. Sem Vínculo</span></a></li>
+                <li><a href="dashboard_temporal_mapas.html" data-tooltip="Temporal"><i class="bi bi-calendar-range"></i> <span>Temporal & Mapas</span></a></li>
+                <li><a href="tv_dashboard.html" data-tooltip="TV Dashboard"><i class="bi bi-television"></i> <span>🎬 Dashboard TV</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <p></p>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <header class="header">
+                <div class="header-branding">
+                    <img src="argus-logo.png" class="logo argus" alt="Argus" onerror="this.style.display='none'">
+                    <img src="ambev-logo.png" class="logo ambev" alt="Ambev" onerror="this.style.display='none'">
+                </div>
+                <div class="titulo">
+                    Telemetria CCO
+                    <small>Status da Frota</small>
+                </div>
+                <button class="btn-toggle" onclick="clearCache()" title="Limpar cache de dados da frota">🗑️ Limpar Cache</button>
+                <button class="btn-toggle" onclick="toggleDark()">🌙 Dark / ☀️ Light</button>
+            </header>
+            
+
+            <div class="container">
+                <button class="btn-upload" id="uploadBtn">
+                    <i class="bi bi-cloud-upload"></i> Carregar CSV
+                </button>
+                <div class="file-input-container">
+                    <input type="file" id="csvFileInput" class="file-input" accept=".csv">
+                </div>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <div class="loading-text">Processando dados da frota...</div>
+                <p class="mt-2">Aguarde enquanto organizamos as informações para análise</p>
+            </div>
+            
+            <!-- Summary Cards -->
+            <section class="summary-cards" id="summaryCards">
+                <div class="card online" id="cardOnline" onclick="filterByStatus('Online')" style="cursor: pointer;">
+                    <div class="card-icon"><i class="bi bi-check-circle"></i></div>
+                    <div class="card-title">Veículos Online</div>
+                    <div class="card-value" id="onlineCount">0</div>
+                </div>
+                <div class="card parado" id="cardNaoAtivo" onclick="filterByStatus('Não Ativo')" style="cursor: pointer;">
+                    <div class="card-icon"><i class="bi bi-exclamation-circle"></i></div>
+                    <div class="card-title">Veículos Não Ativo</div>
+                    <div class="card-value" id="paradoCount">0</div>
+                </div>
+                <div class="card offline" id="cardOffline" onclick="filterByStatus('Offline')" style="cursor: pointer;">
+                    <div class="card-icon"><i class="bi bi-x-circle"></i></div>
+                    <div class="card-title">Veículos Offline</div>
+                    <div class="card-value" id="offlineCount">0</div>
+                </div>
+            </section>
+            
+            <!-- Insights Section -->
+            <!-- Insights Estratégicos Padronizados -->
+            <div id="insightsContainer" class="insights-container">
+                <div class="insights-card">
+                    <h2><i class="bi bi-lightbulb"></i> 📊 Insights Estratégicos</h2>
+                    
+                    <div class="insight-section">
+                        <h3>🎯 Situação Principal</h3>
+                        <p id="insightPrincipal">Carregando análise...</p>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>📈 Padrões Detectados</h3>
+                        <ul id="insightPadroes">
+                            <li>Carregando padrões...</li>
+                        </ul>
+                    </div>
+
+                    <div class="insight-section">
+                        <h3>💡 Recomendações</h3>
+                        <ul id="insightRecomendacoes">
+                            <li>Carregando recomendações...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters Section - Acima dos gráficos -->
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label for="searchPlaca">Pesquisar Placa</label>
+                    <input 
+                        type="text" 
+                        id="searchPlaca" 
+                        placeholder="Ex: ABC-1234"
+                        oninput="applyFilters()"
+                    >
+                </div>
+                <div class="filter-group">
+                    <label for="filterTransportadora">Transportadora</label>
+                    <select id="filterTransportadora" onchange="applyFilters()">
+                        <option value="">Todas as Transportadoras</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterUnidade">Unidade</label>
+                    <select id="filterUnidade" onchange="applyFilters()">
+                        <option value="">Todas as Unidades</option>
+                    </select>
+                </div>
+                <div class="filter-group filter-buttons">
+                    <button onclick="applyFilters()"><i class="bi bi-funnel"></i> Filtrar</button>
+                    <button class="reset" onclick="resetFilters()"><i class="bi bi-arrow-clockwise"></i> Limpar</button>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; color: var(--primary-color); padding: 10px 14px; background: rgba(99, 163, 216, 0.08); border-radius: 6px; border: 2px solid var(--accent-color); margin-left: auto;">
+                        <input type="checkbox" id="filtrarSemCadastroFrota" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color);">
+                        <span>🗑️ Remover "Sem cadastro"</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Charts Section -->
+            <section class="charts-section" id="chartsSection">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-pie-chart"></i> Status da Frota
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" onclick="handleChartClick('status')">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-bar-chart"></i> Distribuição por Região
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="regionChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" onclick="handleChartClick('fabricante')">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-building"></i> Por Fabricante
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="fabricanteChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container" onclick="handleChartClick('cambio')">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-gear"></i> Por Câmbio
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="cambioChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" onclick="handleChartClick('tipoVeiculo')">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-truck"></i> Por Tipo de Veículo
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="tipoVeiculoChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" onclick="handleChartClick('transportadora')">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-diagram-3"></i> Por Transportadora
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="transportadoraChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" onclick="handleChartClick('unidade')">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-building"></i> Por Unidade
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="unidadeChart" style="cursor: pointer;"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" onclick="handleChartClick('statusRegiao')">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-diagram-3"></i> Status por Região (Top 5)
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="statusRegiaoChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container map-section">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="bi bi-geo-alt"></i> Mapa de Endereços
+                        </div>
+                    </div>
+                    <div id="map"></div>
+                </div>
+            </section>
+            
+            <!-- Table Section -->
+            <section class="table-section" id="tableSection">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="bi bi-list-ul"></i> Tabela de Veículos
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table id="fleetTable">
+                        <thead>
+                            <tr>
+                                <th>Placa</th>
+                                <th>Série G9</th>
+                                <th>Status</th>
+                                <th>Última Comunicação</th>
+                                <th>Endereço</th>
+                                <th>Grupo</th>
+                                <th>Combustível</th>
+                                <th>Câmbio</th>
+                                <th>Fabricante</th>
+                                <th>Motorização</th>
+                                <th>Região</th>
+                                <th>Transportadora</th>
+                                <th>Unidade</th>
+                                <th>Tipo Veículo</th>
+                                <th>Velocidade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </section>
+            
+            <!-- Footer -->
+            <footer class="footer">
+                <p>Dashboard Status da Frota • Dados atualizados em tempo real • Versão 1.0</p>
+                <p>Sistema de Telemetria CCO Ambev - Argus</p>
+            </footer>
+        </main>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toastNotification">
+        <div style="font-size: 1.8rem; color: #28a745;"><i class="bi bi-check-circle"></i></div>
+        <div>
+            <h4 style="font-weight: 600; margin: 0; color: var(--dark-color);">Sucesso!</h4>
+            <p style="color: #666; font-size: 0.95rem; margin: 0;">Arquivo CSV carregado com sucesso.</p>
+        </div>
+    </div>
+    
+    <script>
+        let fleetData = [];
+        let filteredData = [];
+        let selectedStatusFilter = null;
+        let statusChart, regionChart, fabricanteChart, cambioChart, tipoVeiculoChart, transportadoraChart, unidadeChart, statusRegiaoChart;
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        
+        // references to DOM elements (assigned on DOMContentLoaded)
+        let csvFileInput, uploadBtn, loadingIndicator, summaryCards, chartsSection, tableSection, tableBody, toastNotification;
+        let searchPlaca, filterTransportadora, filterUnidade, filtrarSemCadastroFrota;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // IMPORTANTE: Inicializar dark mode sync GLOBAL (com ITP fallback)
+            initDarkModeSync();
+            
+            // Ati// Ativar link correto no menu
+            activateCurrentLink();
+            
+            // IMPORTANTE: Remover classe 'dark' se localStorage for false
+            try {
+                if (localStorage.getItem('darkMode') === 'false') {
+                    document.body.classList.remove('dark');
+                }
+            } catch(e) {
+                console.warn('Storage access denied');
+            }
+            
+            // grab elements after the DOM is ready
+            csvFileInput = document.getElementById('csvFileInput');
+            uploadBtn = document.getElementById('uploadBtn');
+            loadingIndicator = document.getElementById('loadingIndicator');
+            summaryCards = document.getElementById('summaryCards');
+            chartsSection = document.getElementById('chartsSection');
+            tableSection = document.getElementById('tableSection');
+            tableBody = document.getElementById('tableBody');
+            toastNotification = document.getElementById('toastNotification');
+            
+            searchPlaca = document.getElementById('searchPlaca');
+            filterTransportadora = document.getElementById('filterTransportadora');
+            filterUnidade = document.getElementById('filterUnidade');
+            filtrarSemCadastroFrota = document.getElementById('filtrarSemCadastroFrota');
+            
+            // Restaurar estado do checkbox de filtro "Sem cadastro"
+            let savedFiltroState = null;
+            try {
+                savedFiltroState = localStorage.getItem('frotaFiltroSemCadastro');
+            } catch(e) {}
+            
+            if (savedFiltroState === 'true' && filtrarSemCadastroFrota) {
+                filtrarSemCadastroFrota.checked = true;
+            }
+            
+            // Listener para o checkbox
+            if (filtrarSemCadastroFrota) {
+                filtrarSemCadastroFrota.addEventListener('change', function() {
+                    try {
+                        localStorage.setItem('frotaFiltroSemCadastro', this.checked ? 'true' : 'false');
+                    } catch(e) {}
+                    applyFilters();
+                });
+            }
+
+            // Registrar plugin de datalabels
+            if (window.Chart && window.ChartDataLabels) {
+                try { Chart.register(ChartDataLabels); } catch(e) { console.warn('ChartDataLabels:', e); }
+            }
+            
+            // Inicializar gráficos ANTES de carregar dados
+            initCharts();
+            
+            // Carregar dados persistidos (com tratamento ITP)
+            let savedData = null;
+            try {
+                savedData = localStorage.getItem('statusFrotaData');
+            } catch(e) {
+                console.warn('Storage access denied, usando dados padrão');
+            }
+            
+            if (savedData) {
+                try {
+                    const fleetData_loaded = JSON.parse(savedData);
+                    if (fleetData_loaded && Array.isArray(fleetData_loaded)) {
+                        fleetData = fleetData_loaded;
+                        updateDashboard();
+                        console.log('✅ Dados carregados do localStorage');
+                    } else {
+                        console.warn('⚠️ Dados persistidos inválidos');
+                    }
+                } catch(parseErr) {
+                    console.warn('⚠️ Erro ao fazer parse dos dados salvos:', parseErr);
+                }
+            }
+
+            if (uploadBtn && csvFileInput) {
+                uploadBtn.addEventListener('click', () => csvFileInput.click());
+                csvFileInput.addEventListener('change', handleFileSelect);
+            } else {
+                console.error('uploadBtn ou csvFileInput não encontrados');
+            }
+            
+            loadStoredData();
+            if (fleetData.length === 0) {
+                createSampleFleetData();
+            }
+        });
+        
+        function shouldLabelBeInside(value, maxValue) {
+            // Se o valor for maior que 35% do máximo, coloca label dentro
+            return value > maxValue * 0.35;
+        }
+        
+        function initCharts() {
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? '#e0e0e0' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tooltipBg = isDarkMode ? 'rgba(13, 27, 42, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+            
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Online', 'Não Ativo', 'Offline'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                        borderColor: isDarkMode ? '#0d1b2a' : '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        document.getElementById('statusChart').style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: textColor, padding: 15 }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    }
+                }
+            });
+            
+            const regionCtx = document.getElementById('regionChart').getContext('2d');
+            regionChart = new Chart(regionCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Veículos',
+                        data: [],
+                        backgroundColor: '#63a3d8',
+                        borderColor: '#4a8fb8',
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        regionCtx.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+            
+            const fabricanteCtx = document.getElementById('fabricanteChart').getContext('2d');
+            fabricanteChart = new Chart(fabricanteCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: [],
+                        backgroundColor: '#28a745',
+                        borderColor: '#20c997',
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        fabricanteCtx.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: { 
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+            
+
+            const cambioCtx = document.getElementById('cambioChart').getContext('2d');
+            cambioChart = new Chart(cambioCtx, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'],
+                        borderColor: isDarkMode ? '#0d1b2a' : '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        cambioCtx.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: textColor, padding: 15 }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    }
+                }
+            });
+            
+            const tipoVeiculoCtx = document.getElementById('tipoVeiculoChart').getContext('2d');
+            tipoVeiculoChart = new Chart(tipoVeiculoCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Veículos',
+                        data: [],
+                        backgroundColor: '#9B59B6',
+                        borderColor: '#8E44AD',
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        tipoVeiculoCtx.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: { 
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+            
+            const transportadoraCtx = document.getElementById('transportadoraChart').getContext('2d');
+            transportadoraChart = new Chart(transportadoraCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#96CEB4', '#FFEAA7', '#DFE6E9'],
+                        borderColor: isDarkMode ? '#0d1b2a' : '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        transportadoraCtx.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: textColor, padding: 15 }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    }
+                }
+            });
+            
+            const unidadeCtx = document.getElementById('unidadeChart').getContext('2d');
+            unidadeChart = new Chart(unidadeCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Veículos',
+                        data: [],
+                        backgroundColor: '#3498DB',
+                        borderColor: '#2980B9',
+                        borderWidth: 1,
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        unidadeCtx.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: { 
+                        legend: { display: true, position: 'top', labels: { color: textColor } },
+                        datalabels: {
+                            anchor: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'end';
+                            },
+                            align: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                return shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue) ? 'center' : 'top';
+                            },
+                            font: { size: 10, weight: 'bold' },
+                            color: function(context) {
+                                const maxValue = Math.max(...context.dataset.data);
+                                if (shouldLabelBeInside(context.dataset.data[context.dataIndex], maxValue)) {
+                                    return '#ffffff';
+                                }
+                                return textColor;
+                            }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+            
+            // Listener para unidade - usa nova abordagem Chart.js
+            const canvas = document.getElementById('unidadeChart');
+            if (window.friotaListeners && window.friotaListeners.unidade) {
+              canvas.removeEventListener('click', window.friotaListeners.unidade);
+            }
+            if (!window.friotaListeners) window.friotaListeners = {};
+            
+            window.friotaListeners.unidade = function(event) {
+              console.log('🎯 EVENTO CAPTURADO em Unidade!', event.type);
+              if (!unidadeChart) {
+                console.error('❌ unidadeChart NÃO EXISTE!');
+                return;
+              }
+              try {
+                const elements = unidadeChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                console.log('✓ getElementsAtEventForMode retornou:', elements.length);
+                if (elements.length > 0) {
+                  const index = elements[0].index;
+                  if (index < unidadeChart.data.labels.length) {
+                    const unidadeName = unidadeChart.data.labels[index];
+                    console.log('✓ Clicou em:', unidadeName);
+                    mostrarPlacasPorUnidade(unidadeName);
+                  }
+                } else {
+                  console.warn('⚠️ Nenhum elemento encontrado');
+                }
+              } catch(e) {
+                console.error('❌ ERRO COMPLETO:', e);
+                throw e;
+              }
+            };
+            document.getElementById('unidadeChart').addEventListener('click', window.friotaListeners.unidade, false);
+            console.log('✅ Listener Unidade adicionado');
+            
+            const statusRegiaoCtx = document.getElementById('statusRegiaoChart').getContext('2d');
+            statusRegiaoChart = new Chart(statusRegiaoCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Online',
+                            data: [],
+                            backgroundColor: '#28a745',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Não Ativo',
+                            data: [],
+                            backgroundColor: '#ffc107',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Offline',
+                            data: [],
+                            backgroundColor: '#dc3545',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onHover: (event, activeElements) => {
+                        statusRegiaoCtx.canvas.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: textColor, padding: 15 }
+                        },
+                        tooltip: { backgroundColor: tooltipBg }
+                    },
+                    scales: {
+                        x: { 
+                            stacked: true, 
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: { 
+                            stacked: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+            
+            // ========== LISTENERS PARA INTERATIVIDADE ==========
+            // Usar flags para evitar listeners duplicados
+            
+            // 1. Status Chart (Doughnut)
+            if (!window.statusChartClickAdded) {
+                document.getElementById('statusChart').addEventListener('click', function(event) {
+                    const canvasPosition = Chart.helpers.getRelativePosition(event, statusChart);
+                    const elements = statusChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const statuses = ['Online', 'Não Ativo', 'Offline'];
+                        mostrarPlacasPorStatus(statuses[index]);
+                    }
+                });
+                window.statusChartClickAdded = true;
+            }
+            
+            // 2. Region Chart (Bar)
+            if (!window.regionChartClickAdded) {
+                document.getElementById('regionChart').addEventListener('click', function(event) {
+                    const elements = regionChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        if (index < regionChart.data.labels.length) {
+                            mostrarPlacasPorRegiao(regionChart.data.labels[index]);
+                        }
+                    }
+                });
+                window.regionChartClickAdded = true;
+            }
+            
+            // 3. Fabricante Chart (Bar)
+            if (!window.fabricanteChartClickAdded) {
+                document.getElementById('fabricanteChart').addEventListener('click', function(event) {
+                    const elements = fabricanteChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        if (index < fabricanteChart.data.labels.length) {
+                            mostrarPlacasPorFabricante(fabricanteChart.data.labels[index]);
+                        }
+                    }
+                });
+                window.fabricanteChartClickAdded = true;
+            }
+            
+            // 4. Cambio Chart (Bar)
+            if (!window.cambioChartClickAdded) {
+                document.getElementById('cambioChart').addEventListener('click', function(event) {
+                    const elements = cambioChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        if (index < cambioChart.data.labels.length) {
+                            mostrarPlacasPorCambio(cambioChart.data.labels[index]);
+                        }
+                    }
+                });
+                window.cambioChartClickAdded = true;
+            }
+            
+            // 5. Tipo Veículo Chart (Bar)
+            if (!window.tipoVeiculoChartClickAdded) {
+                document.getElementById('tipoVeiculoChart').addEventListener('click', function(event) {
+                    const elements = tipoVeiculoChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        if (index < tipoVeiculoChart.data.labels.length) {
+                            mostrarPlacasPorTipo(tipoVeiculoChart.data.labels[index]);
+                        }
+                    }
+                });
+                window.tipoVeiculoChartClickAdded = true;
+            }
+            
+            // 6. Transportadora Chart (Bar)
+            if (!window.transportadoraChartClickAdded) {
+                document.getElementById('transportadoraChart').addEventListener('click', function(event) {
+                    const elements = transportadoraChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        if (index < transportadoraChart.data.labels.length) {
+                            mostrarPlacasPorTransportadora(transportadoraChart.data.labels[index]);
+                        }
+                    }
+                });
+                window.transportadoraChartClickAdded = true;
+            }
+            
+            // 7. Unidade Chart (Bar) - já tem listener abaixo
+            // 8. Status por Região Chart (Stacked Bar)
+            if (!window.statusRegiaoChartClickAdded) {
+                document.getElementById('statusRegiaoChart').addEventListener('click', function(event) {
+                    const elements = statusRegiaoChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+                    if (elements.length > 0) {
+                        const datasetIndex = elements[0].datasetIndex;
+                        const index = elements[0].index;
+                        const regiao = statusRegiaoChart.data.labels[index];
+                        const statuses = ['Online', 'Não Ativo', 'Offline'];
+                        mostrarPlacasPorRegiaoStatus(regiao, statuses[datasetIndex]);
+                    }
+                });
+                window.statusRegiaoChartClickAdded = true;
+            }
+        }
+        
+        function createSampleFleetData() {
+            fleetData = [
+                { placa: 'ABC-1234', status: 'Online', regiao: 'SP', transportadora: 'Translog', fabricante: 'Volvo', tipo: 'Truck', ultima: '28/01/2026' },
+                { placa: 'DEF-5678', status: 'Parado', regiao: 'MG', transportadora: 'JadLog', fabricante: 'Mercedes', tipo: 'Truck', ultima: '28/01/2026' },
+                { placa: 'GHI-9012', status: 'Offline', regiao: 'RJ', transportadora: 'Translog', fabricante: 'Scania', tipo: 'Truck', ultima: '20/01/2026' },
+                { placa: 'JKL-3456', status: 'Online', regiao: 'SP', transportadora: 'JadLog', fabricante: 'Volvo', tipo: 'Van', ultima: '28/01/2026' },
+                { placa: 'MNO-7890', status: 'Online', regiao: 'BA', transportadora: 'Protege', fabricante: 'Mercedes', tipo: 'Truck', ultima: '28/01/2026' }
+            ];
+            updateDashboard();
+        }
+        
+        function loadStoredData() {
+            try {
+                const stored = localStorage.getItem('fleetData');
+                if (stored) {
+                    try {
+                        fleetData = JSON.parse(stored);
+                        if (fleetData && fleetData.length > 0) {
+                            updateDashboard();
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao carregar dados:', e);
+                    }
+                }
+            } catch(e) {
+                console.warn('⚠️ localStorage bloqueado (ITP/Tracking Prevention):', e.message);
+            }
+        }
+        
+        function handleFileSelect(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) {
+                console.warn('Nenhum arquivo selecionado');
+                return;
+            }
+            
+            console.log('📁 Arquivo selecionado:', file.name, file.size, 'bytes');
+            
+            if (file.size > 50 * 1024 * 1024) {
+                alert('Arquivo muito grande. Máximo 50MB.');
+                return;
+            }
+            
+            const uploadContainer = document.querySelector('.container');
+            if (uploadContainer) uploadContainer.classList.add('visible');
+            if (loadingIndicator) loadingIndicator.classList.add('visible');
+            
+            const timeout = setTimeout(() => {
+                if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                if (uploadContainer) uploadContainer.classList.remove('visible');
+                console.error('⏱️ Timeout ao processar arquivo');
+                alert('Timeout ao processar arquivo. Tente com um arquivo menor.');
+            }, 30000);
+            
+            // Detectar delimitador automaticamente
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const firstLine = e.target.result.split('\n')[0];
+                let delimiter = ';';
+                
+                if (firstLine.includes(',') && !firstLine.includes(';')) {
+                    delimiter = ',';
+                } else if (firstLine.includes('\t')) {
+                    delimiter = '\t';
+                }
+                
+                console.log('🔍 Delimitador detectado:', JSON.stringify(delimiter), 'Primeira linha:', firstLine.substring(0, 100));
+                
+                Papa.parse(file, {
+                    header: true,
+                    delimiter: delimiter,
+                    skipEmptyLines: true,
+                    dynamicTyping: false,
+                    worker: true,
+                    complete: function(results) {
+                        clearTimeout(timeout);
+                        console.log('✅ Papa.parse concluído. Erros:', results.errors?.length ? results.errors : 'nenhum');
+                        if (results.data && results.data.length > 0) {
+                            console.log('📊 Papa.parse success. Registros encontrados:', results.data.length);
+                            console.log('📋 Colunas detectadas:', Object.keys(results.data[0]));
+                        // Detecta qual coluna contém a placa
+                        const firstRow = results.data[0];
+                        const placaKey = Object.keys(firstRow).find(key => 
+                            key.toLowerCase() === 'veículo' || 
+                            key.toLowerCase() === 'veiculo' ||
+                            key.toLowerCase().includes('placa') || 
+                            key.toLowerCase().includes('plate') ||
+                            key === 'Veículo' ||
+                            key === 'Veiculo' ||
+                            key === 'PLACA' ||
+                            key === 'Placa'
+                        );
+                        
+                        console.log('🔑 Coluna de placa detectada:', placaKey, '| Colunas disponíveis:', Object.keys(firstRow));
+                        
+                        if (placaKey) {
+                            console.log('✔️ Coluna de placa encontrada:', placaKey);
+                            fleetData = results.data
+                                .filter(row => row[placaKey] && row[placaKey].trim() !== '')
+                                .map(row => normalizeGeotabData(row, placaKey));
+                        } else {
+                            console.warn('⚠️ Coluna de placa não encontrada, tentando com a primeira linha');
+                            fleetData = results.data
+                                .filter(row => Object.values(row).some(v => v && v.toString().trim() !== ''))
+                                .map(row => normalizeGeotabData(row));
+                        }
+                        
+                        console.log('✅ Registros carregados:', fleetData.length);
+                        if (fleetData.length === 0) {
+                            console.error('❌ Nenhum registro foi processado');
+                            alert('Aviso: Nenhum dado válido foi encontrado no arquivo. Verifique o formato.');
+                        }
+                        
+                        // Salvar no localStorage apenas se não for muito grande
+                        if (fleetData.length < 500) {
+                            try {
+                                localStorage.setItem('statusFrotaData', JSON.stringify(fleetData));
+                                console.log('💾 Dados salvos no localStorage');
+                            } catch(e) {
+                                console.warn('⚠️ Não foi possível salvar no localStorage:', e.message);
+                            }
+                        } else {
+                            console.warn('⚠️ Arquivo muito grande para localStorage, dados não foram persistidos');
+                        }
+                        
+                        if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                        console.log('📈 Atualizando dashboard com', fleetData.length, 'veículos');
+                        updateDashboard();
+                        showToast();
+                        // permitir novo envio: restaurar container e resetar input
+                        const uploadContainer = document.querySelector('.container');
+                        if (uploadContainer) uploadContainer.classList.remove('visible');
+                        // resetar file input para permitir re-envio
+                        if (csvFileInput) {
+                            csvFileInput.value = '';
+                            csvFileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    } else {
+                        if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                        const uploadContainer = document.querySelector('.container');
+                        if (uploadContainer) uploadContainer.classList.remove('visible');
+                        console.error('❌ Nenhum dado encontrado no arquivo');
+                        alert('Nenhum dado encontrado no arquivo. Verifique o formato CSV.');
+                    }
+                },
+                error: function(error) {
+                    clearTimeout(timeout);
+                    console.error('Papa.parse error:', error);
+                    if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                    const uploadContainer = document.querySelector('.container');
+                    if (uploadContainer) uploadContainer.classList.remove('visible');
+                    alert('Erro ao processar CSV: ' + error.message);
+                }
+                });
+            };
+            reader.onerror = function() {
+                clearTimeout(timeout);
+                console.error('❌ Erro ao ler arquivo');
+                if (loadingIndicator) loadingIndicator.classList.remove('visible');
+                const uploadContainer = document.querySelector('.container');
+                if (uploadContainer) uploadContainer.classList.remove('visible');
+                alert('Erro ao ler o arquivo. Verifique se o arquivo é válido.');
+            };
+            reader.readAsText(file);
+        }
+        
+        function normalizeGeotabData(row, placaKey) {
+            // Mapear os nomes de colunas do Geotab para valores padrão
+            const normalized = {};
+            
+            // Copiar todas as colunas como lowercase
+            Object.keys(row).forEach(key => {
+                normalized[key.toLowerCase()] = row[key];
+            });
+            
+            // Mapear nome da placa com suporte para "Ativo"
+            if (placaKey) {
+                normalized.placa = row[placaKey];
+            } else {
+                // Fallback: procurar automaticamente
+                const placaKeyFallback = Object.keys(row).find(key => 
+                    key.toLowerCase() === 'veículo' || 
+                    key.toLowerCase() === 'veiculo' ||
+                    key.toLowerCase().includes('placa') || 
+                    key.toLowerCase().includes('plate')
+                );
+                if (placaKeyFallback) {
+                    normalized.placa = row[placaKeyFallback];
+                }
+            }
+            
+            // ============ EXTRAIR TRANSPORTADORA E UNIDADE DO CAMPO "GRUPO" ============
+            const grupoKey = Object.keys(row).find(key => 
+                key.toLowerCase().includes('grupo') || key === 'Grupo'
+            );
+            
+            if (grupoKey) {
+                const grupoValue = row[grupoKey];
+                if (grupoValue) {
+                    // Padrão: "ROTA SP_CDD SAO JOSE CAMPOS, Vehicle, Diesel, CAMBIO MANUAL, MERCEDES BENZ, COMBUSTÃO, REG_MACRO REGIÃO SP, CAMINHÃO TOCO / TRUCK, TRS_FADEL, UNI_CDD SÃO JOSÉ DOS CAMPOS, 80 km/h"
+                    
+                    // Extrair transportadora (TRS_XXX)
+                    const trsMatch = grupoValue.match(/TRS_([^,]+)/);
+                    if (trsMatch) {
+                        let transp = 'TRS_' + trsMatch[1].trim();
+                        // Normalizar variações de LOG 20
+                        transp = transp.replace(/LOG\s+20/i, 'LOG20').replace(/LOG20\s+/i, 'LOG20');
+                        normalized.transportadora = transp;
+                    }
+                    
+                    // Extrair unidade (UNI_XXX)
+                    const uniMatch = grupoValue.match(/UNI_([^,]+)/);
+                    if (uniMatch) {
+                        normalized.unidade = 'UNI_' + uniMatch[1].trim();
+                    }
+                    
+                    // Extrair região (REG_XXX) - mantém formato original
+                    const regMatch = grupoValue.match(/REG_([^,]+)/);
+                    if (regMatch) {
+                        const regValue = regMatch[1].trim();
+                        normalized.regiao = regValue; // Mantém formato original (ex: MACRO REGIÃO SP)
+                        normalized.regiao_sigla = regValue.match(/SP|MG|RJ|BA|PR|SC|RS|PE|DF|ES|GO|MT|MS|AM|PA|AP|AC|RO|RR|TO|PI|MA|CE|RN|PB|AL|SE/)?.[0] || 'N/A';
+                    }
+                    
+                    // Extrair tipo de veículo (CAMINHÃO, CAVALO MECÂNICO, etc.)
+                    const veiculoMatch = grupoValue.match(/(CAMINHÃO|CAVALO MECÂNICO|VAN|UTILITÁRIO|PICKUP)[^,]*/i);
+                    if (veiculoMatch) {
+                        normalized['tipo de veículo'] = veiculoMatch[0].trim();
+                    }
+                    
+                    // Extrair combustível (Diesel, Gasolina, etc.)
+                    let combMatch = grupoValue.match(/(Diesel|Gasolina|Etanol|COMBUSTÃO|Elétrico|Híbrido)/i);
+                    if (combMatch) {
+                        let comb = combMatch[0].trim().toLowerCase();
+                        // Normalizar variações
+                        if (comb.includes('diesel')) comb = 'Diesel';
+                        else if (comb.includes('gasolina')) comb = 'Gasolina';
+                        else if (comb.includes('etanol')) comb = 'Etanol';
+                        else if (comb.includes('combustão')) comb = 'Combustão';
+                        else if (comb.includes('elétrico')) comb = 'Elétrico';
+                        else if (comb.includes('híbrido')) comb = 'Híbrido';
+                        normalized['tipo de combustível'] = comb;
+                    }
+                    
+                    // Extrair câmbio
+                    const cambioMatch = grupoValue.match(/(CAMBIO MANUAL|CAMBIO AUTOMATICO|CAMBIO AUTOMATICO OU SEMI AUTOMATICO)/i);
+                    if (cambioMatch) {
+                        normalized['tipo de cambio'] = cambioMatch[0].trim();
+                    }
+                    
+                    // Extrair fabricante (MERCEDES BENZ, VOLVO, SCANIA, etc.) - Ordenado por comprimento para evitar false matches
+                    // MAN e JAC devem estar protegidos por word boundaries para não capturar MANUAL, JACAREI, JAGUARI, etc.
+                    let fabMatch = grupoValue.match(/(MERCEDES BENZ|FREIGHTLINER|PETERBILT|VOLKSWAGEN|HYUNDAI|MITSUBISHI|NAVISTAR|RENAULT|AGRALE|SCANIA|VOLVO|CUMMINS|FOTON|HINO|ISUZU|LIBRA|FIAT|FORD|IVECO|TRACAO|TRACTION|MACK|VW|DAF|MAM|(?<![A-Z])JAC(?![A-Z])|(?<![A-Z])MAN(?![A-Z]))/i);
+                    if (fabMatch) {
+                        let fab = fabMatch[0].trim().toUpperCase();
+                        // Normalizar variações de Volkswagen
+                        if (fab.includes('VOLKSWAGEN') || fab === 'VW') fab = 'Volkswagen';
+                        else if (fab.includes('MERCEDES')) fab = 'Mercedes Benz';
+                        else if (fab.includes('FREIGHTLINER')) fab = 'Freightliner';
+                        else if (fab.includes('PETERBILT')) fab = 'Peterbilt';
+                        else if (fab.includes('VOLVO')) fab = 'Volvo';
+                        else if (fab.includes('SCANIA')) fab = 'Scania';
+                        else if (fab.includes('IVECO')) fab = 'Iveco';
+                        else if (fab.includes('FORD')) fab = 'Ford';
+                        else if (fab.includes('RENAULT')) fab = 'Renault';
+                        else if (fab.includes('FOTON')) fab = 'Foton';
+                        else if (fab.includes('HINO')) fab = 'Hino';
+                        else if (fab.includes('ISUZU')) fab = 'Isuzu';
+                        else if (fab.includes('LIBRA')) fab = 'Libra';
+                        else if (fab.includes('FIAT')) fab = 'Fiat';
+                        else if (fab.includes('AGRALE')) fab = 'Agrale';
+                        else if (fab.includes('HYUNDAI')) fab = 'Hyundai';
+                        else if (fab.includes('MITSUBISHI')) fab = 'Mitsubishi';
+                        else if (fab.includes('NAVISTAR')) fab = 'Navistar';
+                        else if (fab.includes('CUMMINS')) fab = 'Cummins';
+                        else if (fab.includes('MACK')) fab = 'Mack';
+                        else if (fab.includes('JAC')) fab = 'JAC';
+                        else if (fab.includes('MAM')) fab = 'MAM';
+                        else if (fab.includes('DAF')) fab = 'DAF';
+                        normalized.fabricante = fab;
+                    }
+                }
+            }
+            
+            // Mapear valores de status do Geotab
+            const statusKey = Object.keys(row).find(key => 
+                key.toLowerCase().includes('status') && !key.toLowerCase().includes('adicional')
+            );
+            
+            if (statusKey && row[statusKey]) {
+                const statusValue = row[statusKey].trim();
+                
+                // PRIORIDADE 1: Tratar "Offline" primeiro (com ou sem hífen)
+                if (statusValue.includes('Off-line') || statusValue.toLowerCase().includes('offline')) {
+                    normalized.status = 'Offline';
+                }
+                // PRIORIDADE 2: Tratar "Não Ativo" ou "Untracked Asset"
+                else if (statusValue.toLowerCase().includes('não ativo') || 
+                    statusValue.toLowerCase().includes('inativo') ||
+                    statusValue.toLowerCase().includes('untracked')) {
+                    normalized.status = 'Não Ativo';
+                } 
+                // PRIORIDADE 3: Tratar "OK" e "OK (Parado)" como Online
+                else if (statusValue.includes('OK') || statusValue.toUpperCase() === 'OK') {
+                    normalized.status = 'Online';
+                }
+            }
+            
+            // Mapear última comunicação
+            const ultimaKey = Object.keys(row).find(key => 
+                key.toLowerCase().includes('última data') || 
+                key.toLowerCase().includes('data de comunicação')
+            );
+            if (ultimaKey) {
+                normalized.ultima = row[ultimaKey];
+            }
+            
+            // Mapear série/número
+            const serieKey = Object.keys(row).find(key => 
+                key.toLowerCase().includes('série') || 
+                key.toLowerCase().includes('numero de serie')
+            );
+            if (serieKey) {
+                normalized.serie = row[serieKey];
+            }
+            
+            // Mapear último endereço - buscar coluna com nome similar
+            let enderecoMapeado = false;
+            
+            // Primeiro tentar palavras-chave específicas
+            const enderecoKey = Object.keys(row).find(key => {
+                const keyLower = key.toLowerCase();
+                return keyLower.includes('último endereço') || 
+                       keyLower.includes('ultimo endereco') ||
+                       keyLower.includes('last address') ||
+                       keyLower.includes('endereço conhecido') ||
+                       keyLower.includes('endereco conhecido');
+            });
+            
+            if (enderecoKey) {
+                normalized.endereco = row[enderecoKey];
+                enderecoMapeado = true;
+            }
+            
+            // Fallback: procurar qualquer coluna com "endereço" ou "endereco"
+            if (!enderecoMapeado) {
+                const enderecoKeyFallback = Object.keys(row).find(key => {
+                    const keyLower = key.toLowerCase();
+                    return keyLower.includes('endereço') || 
+                           keyLower.includes('endereco') ||
+                           keyLower.includes('localizacao') ||
+                           keyLower.includes('localização') ||
+                           keyLower.includes('location') ||
+                           keyLower.includes('address');
+                });
+                
+                if (enderecoKeyFallback) {
+                    normalized.endereco = row[enderecoKeyFallback];
+                    enderecoMapeado = true;
+                }
+            }
+            
+            // Último fallback: procurar coluna M (índice 12)
+            if (!enderecoMapeado) {
+                const columnNames = Object.keys(row);
+                if (columnNames.length >= 13) {
+                    const columnM = columnNames[12];
+                    if (row[columnM] && row[columnM].trim() !== '') {
+                        normalized.endereco = row[columnM];
+                    }
+                }
+            }
+            
+            // Mapear status do dispositivo
+            const statusDispositivoKey = Object.keys(row).find(key => 
+                key.toLowerCase().includes('status do dispositivo')
+            );
+            if (statusDispositivoKey) {
+                normalized['status do dispositivo'] = row[statusDispositivoKey];
+            }
+            
+            return normalized;
+        }
+        
+        function updateDashboard() {
+            const online = fleetData.filter(v => v.status === 'Online').length;
+            const parado = fleetData.filter(v => v.status === 'Não Ativo' || v.status === 'Parado').length;
+            const offline = fleetData.filter(v => v.status === 'Offline').length;
+            
+            document.getElementById('onlineCount').textContent = online;
+            document.getElementById('paradoCount').textContent = parado;
+            document.getElementById('offlineCount').textContent = offline;
+            
+            statusChart.data.datasets[0].data = [online, parado, offline];
+            statusChart.update();
+            
+            // Gráfico de Regiões
+            const regions = {};
+            fleetData.forEach(v => {
+                const region = v.regiao || 'Sem cadastro';
+                regions[region] = (regions[region] || 0) + 1;
+            });
+            
+            const sortedRegions = Object.entries(regions).sort((a, b) => b[1] - a[1]);
+            regionChart.data.labels = sortedRegions.map(r => r[0]);
+            regionChart.data.datasets[0].data = sortedRegions.map(r => r[1]);
+            regionChart.update();
+            
+            // Gráfico de Fabricante
+            const fabricantes = {};
+            fleetData.forEach(v => {
+                const fab = v.fabricante || 'Sem cadastro';
+                fabricantes[fab] = (fabricantes[fab] || 0) + 1;
+            });
+            
+            const sortedFabricantes = Object.entries(fabricantes).sort((a, b) => b[1] - a[1]);
+            fabricanteChart.data.labels = sortedFabricantes.map(f => f[0]);
+            fabricanteChart.data.datasets[0].data = sortedFabricantes.map(f => f[1]);
+            fabricanteChart.update();
+            
+
+            
+            // Gráfico de Câmbio
+            const cambios = {};
+            fleetData.forEach(v => {
+                const cambio = v['tipo de cambio'] || v.cambio || 'Sem cadastro';
+                cambios[cambio] = (cambios[cambio] || 0) + 1;
+            });
+            
+            const sortedCambios = Object.entries(cambios).sort((a, b) => b[1] - a[1]);
+            cambioChart.data.labels = sortedCambios.map(c => c[0]);
+            cambioChart.data.datasets[0].data = sortedCambios.map(c => c[1]);
+            cambioChart.update();
+            
+            // Gráfico de Tipo de Veículo
+            const tiposVeiculo = {};
+            fleetData.forEach(v => {
+                const tipo = v['tipo de veículo'] || v['tipo de veiculo'] || 'Sem cadastro';
+                tiposVeiculo[tipo] = (tiposVeiculo[tipo] || 0) + 1;
+            });
+            
+            const sortedTipos = Object.entries(tiposVeiculo).sort((a, b) => b[1] - a[1]);
+            tipoVeiculoChart.data.labels = sortedTipos.map(t => t[0]);
+            tipoVeiculoChart.data.datasets[0].data = sortedTipos.map(t => t[1]);
+            tipoVeiculoChart.update();
+            
+            // Gráfico de Transportadora
+            const transportadoras = {};
+            fleetData.forEach(v => {
+                const trans = v.transportadora || 'Sem cadastro';
+                transportadoras[trans] = (transportadoras[trans] || 0) + 1;
+            });
+            
+            const sortedTransportadoras = Object.entries(transportadoras).sort((a, b) => b[1] - a[1]);
+            transportadoraChart.data.labels = sortedTransportadoras.map(t => t[0]);
+            transportadoraChart.data.datasets[0].data = sortedTransportadoras.map(t => t[1]);
+            transportadoraChart.update();
+            
+            // Gráfico de Unidade (Top 10)
+            const unidades = {};
+            fleetData.forEach(v => {
+                const uni = v.unidade || 'Sem cadastro';
+                unidades[uni] = (unidades[uni] || 0) + 1;
+            });
+            
+            const sortedUnidades = Object.entries(unidades).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            unidadeChart.data.labels = sortedUnidades.map(u => u[0]);
+            unidadeChart.data.datasets[0].data = sortedUnidades.map(u => u[1]);
+            unidadeChart.update();
+            
+            // Gráfico de Status por Região (Top 5)
+            const statusPorRegiao = {};
+            fleetData.forEach(v => {
+                const regiao = v.regiao || 'Sem cadastro';
+                if (!statusPorRegiao[regiao]) {
+                    statusPorRegiao[regiao] = { Online: 0, 'Não Ativo': 0, Offline: 0 };
+                }
+                statusPorRegiao[regiao][v.status || 'Offline']++;
+            });
+            
+            // Top 5 regiões por total de veículos
+            const top5Regioes = Object.entries(statusPorRegiao)
+                .map(([regiao, statuses]) => ({
+                    regiao,
+                    total: Object.values(statuses).reduce((a, b) => a + b, 0),
+                    ...statuses
+                }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+            
+            statusRegiaoChart.data.labels = top5Regioes.map(r => r.regiao);
+            statusRegiaoChart.data.datasets[0].data = top5Regioes.map(r => r.Online);
+            statusRegiaoChart.data.datasets[1].data = top5Regioes.map(r => r['Não Ativo']);
+            statusRegiaoChart.data.datasets[2].data = top5Regioes.map(r => r.Offline);
+            statusRegiaoChart.update();
+            
+            // Renderizar tabela com paginação
+            filteredData = [...fleetData];
+            populateFilterSelects();
+            renderTable();
+            
+            // Gerar Insights
+            generateInsights();
+            
+            // Mostrar seções (com verificação de null)
+            if (summaryCards) summaryCards.classList.add('visible');
+            if (chartsSection) chartsSection.classList.add('visible');
+            if (tableSection) tableSection.classList.add('visible');
+            const insightsSection = document.getElementById('insightsSection');
+            if (insightsSection) insightsSection.classList.add('visible');
+            
+            // Plotar mapa com endereços
+            setTimeout(() => { plotarNoMapa().catch(console.error); }, 100);
+        }
+        
+        function populateFilterSelects() {
+            // Preencher opções de Transportadora - incluir "Sem cadastro" se houver valores vazios
+            let transportadoras = [...new Set(fleetData.map(v => v.transportadora).filter(Boolean))].sort();
+            const temSemCadastroTransportadora = fleetData.some(v => !v.transportadora || v.transportadora.trim() === '');
+            if (temSemCadastroTransportadora) {
+                transportadoras.unshift('Sem cadastro');
+            }
+            
+            filterTransportadora.innerHTML = '<option value="">Todas as Transportadoras</option>';
+            transportadoras.forEach(t => {
+                const option = document.createElement('option');
+                option.value = t;
+                option.textContent = t;
+                filterTransportadora.appendChild(option);
+            });
+            
+            // Preencher opções de Unidade (inicial - todas)
+            updateUnidadeOptions();
+            
+            // Adicionar listener para atualizar unidades quando transportadora mudar
+            filterTransportadora.addEventListener('change', updateUnidadeOptions);
+        }
+        
+        function updateUnidadeOptions() {
+            const transportadoraSelecionada = filterTransportadora.value;
+            
+            // Filtrar unidades conforme transportadora selecionada
+            let unidades;
+            if (transportadoraSelecionada) {
+                // Se "Sem cadastro" é selecionado, mostrar unidades sem cadastro também
+                if (transportadoraSelecionada === 'Sem cadastro') {
+                    unidades = [...new Set(
+                        fleetData
+                            .filter(v => !v.transportadora || v.transportadora.trim() === '')
+                            .map(v => v.unidade)
+                    )].filter(u => !u || u.trim() === '').sort();
+                    // Se houver unidades com cadastro mesmo com transportadora vazia, incluir "Sem cadastro"
+                    if (fleetData.some(v => (!v.transportadora || v.transportadora.trim() === '') && (!v.unidade || v.unidade.trim() === ''))) {
+                        if (!unidades.includes('Sem cadastro')) {
+                            unidades.unshift('Sem cadastro');
+                        }
+                    }
+                } else {
+                    unidades = [...new Set(
+                        fleetData
+                            .filter(v => v.transportadora === transportadoraSelecionada)
+                            .map(v => v.unidade)
+                            .filter(Boolean)
+                    )].sort();
+                }
+            } else {
+                unidades = [...new Set(fleetData.map(v => v.unidade).filter(Boolean))].sort();
+                const temSemCadastroUnidade = fleetData.some(v => !v.unidade || v.unidade.trim() === '');
+                if (temSemCadastroUnidade) {
+                    unidades.unshift('Sem cadastro');
+                }
+            }
+            
+            filterUnidade.innerHTML = '<option value="">Todas as Unidades</option>';
+            unidades.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u || 'Sem cadastro';
+                option.textContent = u || 'Sem cadastro';
+                filterUnidade.appendChild(option);
+            });
+        }
+        
+        function applyFilters() {
+            currentPage = 1;
+            const placaBusca = (searchPlaca.value || '').toUpperCase().trim();
+            const transportadoraSelecionada = filterTransportadora.value;
+            const unidadeSelecionada = filterUnidade.value;
+            const filtrarSemCadastro = filtrarSemCadastroFrota?.checked || false;
+            
+            filteredData = fleetData.filter(v => {
+                const placaMatch = !placaBusca || (v.placa || '').toUpperCase().includes(placaBusca);
+                
+                // Melhorado: suportar "Sem cadastro" como filtro
+                let transportadoraMatch = true;
+                if (transportadoraSelecionada) {
+                    if (transportadoraSelecionada === 'Sem cadastro') {
+                        transportadoraMatch = !v.transportadora || v.transportadora.trim() === '';
+                    } else {
+                        transportadoraMatch = v.transportadora === transportadoraSelecionada;
+                    }
+                }
+                
+                let unidadeMatch = true;
+                if (unidadeSelecionada) {
+                    if (unidadeSelecionada === 'Sem cadastro') {
+                        unidadeMatch = !v.unidade || v.unidade.trim() === '';
+                    } else {
+                        unidadeMatch = v.unidade === unidadeSelecionada;
+                    }
+                }
+                
+                const statusMatch = !selectedStatusFilter || v.status === selectedStatusFilter;
+                
+                // Filtro "Remover Sem cadastro" - Remove apenas registros com AMBOS transportadora E unidade inválidos
+                let semCadastroMatch = true;
+                if (filtrarSemCadastro) {
+                    const transInvalida = !v.transportadora || v.transportadora.trim() === '' || v.transportadora === 'Sem cadastro';
+                    const unidadeInvalida = !v.unidade || v.unidade.trim() === '' || v.unidade === 'Sem cadastro';
+                    const ambosSemCadastro = transInvalida && unidadeInvalida;
+                    semCadastroMatch = !ambosSemCadastro;
+                }
+                
+                return placaMatch && transportadoraMatch && unidadeMatch && statusMatch && semCadastroMatch;
+            });
+            
+            // Atualizar gráficos com dados filtrados
+            updateChartsWithFilteredData();
+            
+            // Renderizar tabela com dados filtrados
+            renderTable();
+        }
+        
+        function filterByStatus(status) {
+            // Togglizar filter: se já estiver selecionado, deselecionar; caso contrário, selecionar
+            if (selectedStatusFilter === status) {
+                selectedStatusFilter = null;
+            } else {
+                selectedStatusFilter = status;
+            }
+            
+            // Atualizar visuais dos cards
+            document.getElementById('cardOnline').classList.toggle('selected', selectedStatusFilter === 'Online');
+            document.getElementById('cardNaoAtivo').classList.toggle('selected', selectedStatusFilter === 'Não Ativo');
+            document.getElementById('cardOffline').classList.toggle('selected', selectedStatusFilter === 'Offline');
+            
+            // Aplicar filtros
+            applyFilters();
+        }
+        
+        function resetFilters() {
+            searchPlaca.value = '';
+            filterTransportadora.value = '';
+            filterUnidade.value = '';
+            filtrarSemCadastroFrota.checked = false;
+            selectedStatusFilter = null;
+            currentPage = 1;
+            filteredData = [...fleetData];
+            
+            // Remover seleção visual dos cards
+            document.getElementById('cardOnline').classList.remove('selected');
+            document.getElementById('cardNaoAtivo').classList.remove('selected');
+            document.getElementById('cardOffline').classList.remove('selected');
+            
+            // Resetar localStorage
+            try {
+                localStorage.setItem('frotaFiltroSemCadastro', 'false');
+            } catch(e) {
+                console.warn('⚠️ localStorage bloqueado:', e.message);
+            }
+            
+            // Voltar aos gráficos originais
+            updateChartsWithFilteredData();
+            
+            // Renderizar tabela sem filtros
+            renderTable();
+        }
+        
+        function updateChartsWithFilteredData() {
+            const dataSource = filteredData && filteredData.length > 0 ? filteredData : fleetData;
+            
+            // Atualizar cards de resumo
+            const online = dataSource.filter(v => v.status === 'Online').length;
+            const parado = dataSource.filter(v => v.status === 'Não Ativo' || v.status === 'Parado').length;
+            const offline = dataSource.filter(v => v.status === 'Offline').length;
+            
+            document.getElementById('onlineCount').textContent = online;
+            document.getElementById('paradoCount').textContent = parado;
+            document.getElementById('offlineCount').textContent = offline;
+            
+            // Atualizar gráfico de Status
+            statusChart.data.datasets[0].data = [online, parado, offline];
+            statusChart.update();
+            
+            // Atualizar gráfico de Regiões
+            const regions = {};
+            dataSource.forEach(v => {
+                const region = v.regiao || 'Sem cadastro';
+                regions[region] = (regions[region] || 0) + 1;
+            });
+            
+            const sortedRegions = Object.entries(regions).sort((a, b) => b[1] - a[1]);
+            regionChart.data.labels = sortedRegions.map(r => r[0]);
+            regionChart.data.datasets[0].data = sortedRegions.map(r => r[1]);
+            regionChart.update();
+            
+            // Atualizar gráfico de Fabricante
+            const fabricantes = {};
+            dataSource.forEach(v => {
+                const fab = v.fabricante || 'Sem cadastro';
+                fabricantes[fab] = (fabricantes[fab] || 0) + 1;
+            });
+            
+            const sortedFabricantes = Object.entries(fabricantes).sort((a, b) => b[1] - a[1]);
+            fabricanteChart.data.labels = sortedFabricantes.map(f => f[0]);
+            fabricanteChart.data.datasets[0].data = sortedFabricantes.map(f => f[1]);
+            fabricanteChart.update();
+            
+
+            
+            // Atualizar gráfico de Câmbio
+            const cambios = {};
+            dataSource.forEach(v => {
+                const cambio = v['tipo de cambio'] || v.cambio || 'Sem cadastro';
+                cambios[cambio] = (cambios[cambio] || 0) + 1;
+            });
+            
+            const sortedCambios = Object.entries(cambios).sort((a, b) => b[1] - a[1]);
+            cambioChart.data.labels = sortedCambios.map(c => c[0]);
+            cambioChart.data.datasets[0].data = sortedCambios.map(c => c[1]);
+            cambioChart.update();
+            
+            // Atualizar gráfico de Tipo de Veículo
+            const tiposVeiculo = {};
+            dataSource.forEach(v => {
+                const tipo = v['tipo de veículo'] || v['tipo de veiculo'] || 'Sem cadastro';
+                tiposVeiculo[tipo] = (tiposVeiculo[tipo] || 0) + 1;
+            });
+            
+            const sortedTipos = Object.entries(tiposVeiculo).sort((a, b) => b[1] - a[1]);
+            tipoVeiculoChart.data.labels = sortedTipos.map(t => t[0]);
+            tipoVeiculoChart.data.datasets[0].data = sortedTipos.map(t => t[1]);
+            tipoVeiculoChart.update();
+            
+            // Atualizar gráfico de Transportadora
+            const transportadoras = {};
+            dataSource.forEach(v => {
+                const trans = v.transportadora || 'Sem cadastro';
+                transportadoras[trans] = (transportadoras[trans] || 0) + 1;
+            });
+            
+            const sortedTransportadoras = Object.entries(transportadoras).sort((a, b) => b[1] - a[1]);
+            transportadoraChart.data.labels = sortedTransportadoras.map(t => t[0]);
+            transportadoraChart.data.datasets[0].data = sortedTransportadoras.map(t => t[1]);
+            transportadoraChart.update();
+            
+            // Atualizar gráfico de Unidade (Top 10)
+            const unidades = {};
+            dataSource.forEach(v => {
+                const uni = v.unidade || 'Sem cadastro';
+                unidades[uni] = (unidades[uni] || 0) + 1;
+            });
+            
+            const sortedUnidades = Object.entries(unidades).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            unidadeChart.data.labels = sortedUnidades.map(u => u[0]);
+            unidadeChart.data.datasets[0].data = sortedUnidades.map(u => u[1]);
+            unidadeChart.update();
+            
+            // Atualizar Status por Região (Top 5)
+            const statusPorRegiao = {};
+            dataSource.forEach(v => {
+                const regiao = v.regiao || 'Sem cadastro';
+                if (!statusPorRegiao[regiao]) {
+                    statusPorRegiao[regiao] = { Online: 0, 'Não Ativo': 0, Offline: 0 };
+                }
+                statusPorRegiao[regiao][v.status || 'Offline']++;
+            });
+            
+            const top5Regioes = Object.entries(statusPorRegiao)
+                .map(([regiao, statuses]) => ({
+                    regiao,
+                    total: Object.values(statuses).reduce((a, b) => a + b, 0),
+                    ...statuses
+                }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+            
+            statusRegiaoChart.data.labels = top5Regioes.map(r => r.regiao);
+            statusRegiaoChart.data.datasets[0].data = top5Regioes.map(r => r.Online);
+            statusRegiaoChart.data.datasets[1].data = top5Regioes.map(r => r['Não Ativo']);
+            statusRegiaoChart.data.datasets[2].data = top5Regioes.map(r => r.Offline);
+            statusRegiaoChart.update();
+            
+            // Atualizar insights
+            generateInsights();
+        }
+        
+        function renderTable() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const dataToDisplay = filteredData && filteredData.length > 0 ? filteredData : fleetData;
+            const pageData = dataToDisplay.slice(startIndex, endIndex);
+            
+            tableBody.innerHTML = pageData.map(v => `
+                <tr>
+                    <td><strong>${v.placa || 'N/A'}</strong></td>
+                    <td>${v['número de série g9'] || 'N/A'}</td>
+                    <td><span class="status-badge status-${(v.status || '').toLowerCase()}">${v.status || 'N/A'}</span></td>
+                    <td>${v['última data de comunicação'] || 'N/A'}</td>
+                    <td>${v['último endereço conhecido'] || 'N/A'}</td>
+                    <td>${v.grupo || 'N/A'}</td>
+                    <td>${v['tipo de combustível'] || 'N/A'}</td>
+                    <td>${v['tipo de cambio'] || 'N/A'}</td>
+                    <td>${v.fabricante || 'N/A'}</td>
+                    <td>${v.motorização || 'N/A'}</td>
+                    <td>${v.regiao || 'N/A'}</td>
+                    <td>${v.transportadora || 'N/A'}</td>
+                    <td>${v.unidade || 'N/A'}</td>
+                    <td>${v['tipo de veículo'] || 'N/A'}</td>
+                    <td>${v.velocidade || 'N/A'}</td>
+                </tr>
+            `).join('');
+            
+            renderPagination();
+        }
+        
+        function renderPagination() {
+            const paginationDiv = document.getElementById('pagination');
+            const dataToDisplay = filteredData && filteredData.length > 0 ? filteredData : fleetData;
+            const totalPages = Math.ceil(dataToDisplay.length / itemsPerPage);
+            let html = '';
+            
+            if (totalPages > 1) {
+                html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(1)">« Primeira</button>`;
+                html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">‹ Anterior</button>`;
+                
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+                
+                if (startPage > 1) html += '<span>...</span>';
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<button ${i === currentPage ? 'class="active"' : ''} onclick="goToPage(${i})">${i}</button>`;
+                }
+                
+                if (endPage < totalPages) html += '<span>...</span>';
+                
+                html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">Próxima ›</button>`;
+                html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${totalPages})">Última »</button>`;
+                
+                html += `<span class="page-info">Página ${currentPage} de ${totalPages}</span>`;
+            }
+            
+            paginationDiv.innerHTML = html;
+        }
+        
+        function goToPage(page) {
+            const dataToDisplay = filteredData && filteredData.length > 0 ? filteredData : fleetData;
+            const totalPages = Math.ceil(dataToDisplay.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderTable();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+        
+        function showToast() {
+            toastNotification.classList.add('show');
+            setTimeout(() => toastNotification.classList.remove('show'), 3000);
+        }
+        
+        
+        // Ativar link correto no sidebar baseado na página atual
+        function activateCurrentLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const basePageName = currentPage.replace('.html', '');
+            
+            // Remove 'active' de todos os links
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Adiciona 'active' ao link correto
+            const currentLink = document.querySelector(`.sidebar-menu a[href*="${currentPage}"]`) ||
+                               document.querySelector(`.sidebar-menu a[href*="${basePageName}"]`);
+            if (currentLink) {
+                currentLink.classList.add('active');
+            }
+        }
+        
+        function toggleDark() {
+            console.log('toggleDark chamado');
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            console.log('isDark agora:', isDark);
+            try {
+                localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            } catch(e) {
+                console.warn('⚠️ localStorage bloqueado:', e.message);
+            }
+            const btn = document.querySelector('.btn-toggle');
+            if (btn) {
+                btn.textContent = isDark ? '☀️ Light' : '🌙 Dark / ☀️ Light';
+                console.log('Botão atualizado:', btn.textContent);
+            }
+            // Atualizar gráficos com cores do dark mode
+            if (statusChart) {
+                console.log('Atualizando gráficos...');
+                updateChartColors();
+            }
+        }
+
+        function clearCache() {
+            try {
+                localStorage.removeItem('statusFrotaData');
+                localStorage.removeItem('frotaFiltroSemCadastro');
+                alert('✅ Cache limpo com sucesso!\n\nRecarregue a página e carregue o CSV novamente.');
+                console.log('✅ Cache de dados da frota removido');
+            } catch(e) {
+                alert('❌ Erro ao limpar cache: ' + e.message);
+                console.error('Erro ao limpar cache:', e);
+            }
+        }
+
+        function updateChartColors() {
+            // Destruir todos os gráficos com proteção
+            const chartsToDestroy = [
+              { name: 'statusChart', chart: statusChart },
+              { name: 'regionChart', chart: regionChart },
+              { name: 'fabricanteChart', chart: fabricanteChart },
+              { name: 'cambioChart', chart: cambioChart },
+              { name: 'tipoVeiculoChart', chart: tipoVeiculoChart },
+              { name: 'transportadoraChart', chart: transportadoraChart },
+              { name: 'unidadeChart', chart: unidadeChart },
+              { name: 'statusRegiaoChart', chart: statusRegiaoChart }
+            ];
+            
+            chartsToDestroy.forEach(item => {
+              if (item.chart) {
+                try {
+                  item.chart.destroy();
+                } catch(e) {
+                  console.warn('⚠️ Erro ao destruir ' + item.name + ':', e.message);
+                }
+              }
+            });
+            
+            // Recriar gráficos
+            initCharts();
+            
+            // Recarregar dados
+            if (fleetData && fleetData.length > 0) {
+                updateDashboard();
+            }
+        }
+        
+
+        
+        // ========== FUNÇÕES PARA MOSTRAR PLACAS POR CATEGORIA ==========
+        
+        function mostrarPlacas(titulo, veiculos) {
+            if (veiculos.length === 0) {
+                alert(`Nenhum veículo encontrado para: ${titulo}`);
+                return;
+            }
+            
+            const placas = [...new Set(veiculos.map(v => v.placa || 'N/A'))].sort();
+            const isDark = document.body.classList.contains('dark');
+            
+            const modalHtml = `
+                <div class="placas-modal-overlay" onclick="this.remove()">
+                    <div class="placas-modal" onclick="event.stopPropagation()">
+                        <div class="placas-modal-header">
+                            <h2>${titulo}</h2>
+                            <button class="placas-modal-close" onclick="this.closest('.placas-modal-overlay').remove()">✕</button>
+                        </div>
+                        <div class="placas-modal-content">
+                            <div class="placas-grid">
+                                ${placas.map(placa => `<div class="placa-item">${placa}</div>`).join('')}
+                            </div>
+                            <p class="placas-count">Total: ${placas.length} veículos</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            if (!document.getElementById('placas-modal-styles')) {
+                const styles = `
+                    <style id="placas-modal-styles">
+                        .placas-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+                        .placas-modal { background: ${isDark ? '#2d3748' : '#ffffff'}; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; animation: slideIn 0.3s ease-out; }
+                        .placas-modal-header { padding: 20px; border-bottom: 2px solid ${isDark ? '#4a5568' : '#e0e0e0'}; display: flex; justify-content: space-between; align-items: center; }
+                        .placas-modal-header h2 { margin: 0; color: ${isDark ? '#e0e0e0' : '#333'}; }
+                        .placas-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: ${isDark ? '#a0aec0' : '#666'}; }
+                        .placas-modal-content { padding: 20px; }
+                        .placas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
+                        .placa-item { background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%); color: #000; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 14px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+                        .placas-count { text-align: center; color: ${isDark ? '#a0aec0' : '#666'}; font-weight: 600; margin: 0; }
+                        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                    </style>
+                `;
+                document.head.insertAdjacentHTML('beforeend', styles);
+            }
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        function mostrarPlacasPorStatus(status) {
+            const veiculos = fleetData.filter(v => (v.status || 'Offline') === status);
+            mostrarPlacas(`Placas com Status: ${status}`, veiculos);
+        }
+        
+        function mostrarPlacasPorRegiao(regiao) {
+            const veiculos = fleetData.filter(v => (v.regiao || 'Sem cadastro') === regiao);
+            mostrarPlacas(`Placas da Região: ${regiao}`, veiculos);
+        }
+        
+        function mostrarPlacasPorFabricante(fabricante) {
+            const veiculos = fleetData.filter(v => (v.fabricante || 'Sem cadastro') === fabricante);
+            mostrarPlacas(`Placas Fabricante: ${fabricante}`, veiculos);
+        }
+        
+        function mostrarPlacasPorCambio(cambio) {
+            const veiculos = fleetData.filter(v => (v['tipo de cambio'] || v.cambio || 'Sem cadastro') === cambio);
+            mostrarPlacas(`Placas Câmbio: ${cambio}`, veiculos);
+        }
+        
+        function mostrarPlacasPorTipo(tipo) {
+            const veiculos = fleetData.filter(v => (v['tipo de veículo'] || v['tipo de veiculo'] || 'Sem cadastro') === tipo);
+            mostrarPlacas(`Placas Tipo: ${tipo}`, veiculos);
+        }
+        
+        function mostrarPlacasPorTransportadora(transportadora) {
+            const veiculos = fleetData.filter(v => (v.transportadora || 'Sem cadastro') === transportadora);
+            mostrarPlacas(`Placas Transportadora: ${transportadora}`, veiculos);
+        }
+        
+        function mostrarPlacasPorRegiaoStatus(regiao, status) {
+            const veiculos = fleetData.filter(v => (v.regiao || 'Sem cadastro') === regiao && (v.status || 'Offline') === status);
+            mostrarPlacas(`Placas ${regiao} - ${status}`, veiculos);
+        }
+        
+        function mostrarPlacasPorUnidade(unidade) {
+            // Filtrar veículos da unidade selecionada
+            const veiculosDaUnidade = fleetData.filter(v => {
+                const uni = v.unidade || 'Sem cadastro';
+                return uni === unidade;
+            });
+            
+            if (veiculosDaUnidade.length === 0) {
+                alert(`Nenhum veículo encontrado para a unidade: ${unidade}`);
+                return;
+            }
+            
+            // Extrair placas únicas e ordenar
+            const placas = [...new Set(veiculosDaUnidade.map(v => v.placa || 'N/A'))].sort();
+
+            
+            // Criar modal
+            const isDark = document.body.classList.contains('dark');
+            const modalHtml = `
+                <div class="placas-modal-overlay" onclick="this.remove()">
+                    <div class="placas-modal" onclick="event.stopPropagation()">
+                        <div class="placas-modal-header">
+                            <h2>Placas da Unidade: ${unidade}</h2>
+                            <button class="placas-modal-close" onclick="this.closest('.placas-modal-overlay').remove()">✕</button>
+                        </div>
+                        <div class="placas-modal-content">
+                            <div class="placas-grid">
+                                ${placas.map(placa => `<div class="placa-item">${placa}</div>`).join('')}
+                            </div>
+                            <p class="placas-count">Total: ${placas.length} veículos</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Adicionar estilos CSS se não existirem
+            if (!document.getElementById('placas-modal-styles')) {
+                const styles = `
+                    <style id="placas-modal-styles">
+                        .placas-modal-overlay {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: rgba(0, 0, 0, 0.5);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            z-index: 10000;
+                        }
+                        
+                        .placas-modal {
+                            background: ${isDark ? '#2d3748' : '#ffffff'};
+                            border-radius: 12px;
+                            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                            max-width: 800px;
+                            width: 90%;
+                            max-height: 80vh;
+                            overflow-y: auto;
+                            animation: slideIn 0.3s ease-out;
+                        }
+                        
+                        @keyframes slideIn {
+                            from {
+                                transform: translateY(-50px);
+                                opacity: 0;
+                            }
+                            to {
+                                transform: translateY(0);
+                                opacity: 1;
+                            }
+                        }
+                        
+                        .placas-modal-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 20px;
+                            border-bottom: 2px solid #3498DB;
+                            background: ${isDark ? '#1a202c' : '#f8f9fa'};
+                        }
+                        
+                        .placas-modal-header h2 {
+                            color: ${isDark ? '#ffffff' : '#2c3e50'};
+                            margin: 0;
+                            font-size: 18px;
+                        }
+                        
+                        .placas-modal-close {
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: #e74c3c;
+                            padding: 0;
+                            width: 30px;
+                            height: 30px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 4px;
+                            transition: background 0.2s;
+                        }
+                        
+                        .placas-modal-close:hover {
+                            background: rgba(231, 76, 60, 0.1);
+                        }
+                        
+                        .placas-modal-content {
+                            padding: 20px;
+                        }
+                        
+                        .placas-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                            gap: 12px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        .placa-item {
+                            background: linear-gradient(135deg, #3498DB, #2980B9);
+                            color: #ffffff;
+                            padding: 12px;
+                            border-radius: 8px;
+                            text-align: center;
+                            font-weight: bold;
+                            font-size: 14px;
+                            font-family: monospace;
+                            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+                            transition: transform 0.2s, box-shadow 0.2s;
+                        }
+                        
+                        .placa-item:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.5);
+                        }
+                        
+                        .placas-count {
+                            text-align: center;
+                            color: ${isDark ? '#cbd5e0' : '#7f8c8d'};
+                            font-size: 14px;
+                            margin: 0;
+                        }
+                    </style>
+                `;
+                document.head.insertAdjacentHTML('beforeend', styles);
+            }
+            
+            // Inserir modal no DOM
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function generateInsights() {
+            const dataSource = filteredData && filteredData.length > 0 ? filteredData : fleetData;
+            
+            if (dataSource.length === 0) {
+                document.getElementById('insightsContainer').style.display = 'none';
+                return;
+            }
+            
+            // Calcular métricas
+            const online = dataSource.filter(v => v.status === 'Online').length;
+            const offline = dataSource.filter(v => v.status === 'Offline').length;
+            const total = dataSource.length;
+            const taxaDisponibilidade = Math.round((online / total) * 100);
+            
+            // Fabricante líder
+            const fabricantes = {};
+            dataSource.forEach(v => {
+                const fab = v.fabricante || 'Sem cadastro';
+                fabricantes[fab] = (fabricantes[fab] || 0) + 1;
+            });
+            const fabricanteLider = Object.entries(fabricantes).sort((a, b) => b[1] - a[1])[0];
+            const fabricanteCount = fabricanteLider ? fabricanteLider[1] : 0;
+            const fabricantePct = fabricanteLider ? Math.round((fabricanteCount / total) * 100) : 0;
+            
+            // Combustível líder
+            const combustiveis = {};
+            dataSource.forEach(v => {
+                const comb = v['tipo de combustível'] || 'Sem cadastro';
+                combustiveis[comb] = (combustiveis[comb] || 0) + 1;
+            });
+            const combLider = Object.entries(combustiveis).sort((a, b) => b[1] - a[1])[0];
+            const combCount = combLider ? combLider[1] : 0;
+            const combPct = combLider ? Math.round((combCount / total) * 100) : 0;
+            
+            // Transportadora líder
+            const transportadoras = {};
+            dataSource.forEach(v => {
+                const trans = v.transportadora || 'Sem cadastro';
+                transportadoras[trans] = (transportadoras[trans] || 0) + 1;
+            });
+            const transLider = Object.entries(transportadoras).sort((a, b) => b[1] - a[1])[0];
+            const transCount = transLider ? transLider[1] : 0;
+            const transPct = transLider ? Math.round((transCount / total) * 100) : 0;
+            
+            // Insights Principal
+            const insightPrincipal = `A frota possui <strong>${total} veículos</strong> com taxa de disponibilidade de <strong>${taxaDisponibilidade}%</strong> (${online} online). A maior concentração é de <strong>${fabricanteLider ? fabricanteLider[0] : 'N/A'}</strong> com <strong>${fabricantePct}%</strong> da frota, e a transportadora líder é <strong>${transLider ? transLider[0] : 'N/A'}</strong> com <strong>${transPct}%</strong> dos veículos.`;
+            
+            // Padrões detectados
+            const padroes = [
+                `📊 Total de veículos: <strong>${total}</strong>`,
+                `✅ Veículos online: <strong>${online}</strong> (${taxaDisponibilidade}%)`,
+                `⚠️ Veículos offline: <strong>${offline}</strong> (${100 - taxaDisponibilidade}%)`,
+                `🏭 Fabricante predominante: <strong>${fabricanteLider ? fabricanteLider[0] : 'N/A'}</strong> (${fabricantePct}%)`,
+                `⛽ Combustível principal: <strong>${combLider ? combLider[0] : 'N/A'}</strong> (${combPct}%)`,
+                `🚛 Transportadora líder: <strong>${transLider ? transLider[0] : 'N/A'}</strong> (${transPct}%)`
+            ];
+            
+            // Recomendações
+            const recomendacoes = [];
+            if (taxaDisponibilidade >= 85) {
+                recomendacoes.push('✅ Frota operacional em bom estado - manter rotina de manutenção preventiva');
+            } else if (taxaDisponibilidade >= 70) {
+                recomendacoes.push('⚠️ Disponibilidade aceitável - priorizar manutenção dos ' + offline + ' veículos offline');
+            } else {
+                recomendacoes.push('🚨 CRÍTICO: Disponibilidade baixa (' + taxaDisponibilidade + '%) - investigar e resolver desconexões');
+            }
+            
+            if (fabricantePct > 50) {
+                recomendacoes.push(`📌 Frota muito concentrada em ${fabricanteLider[0]} - diversificar fornecedores`);
+            }
+            
+            if (transPct > 40) {
+                recomendacoes.push(`🚛 ${transLider[0]} representa ${transPct}% da frota - considerar terceirização`);
+            }
+            
+            recomendacoes.push('📈 Monitorar continuamente a disponibilidade operacional');
+            recomendacoes.push('🔧 Realizar manutenção preventiva em cronograma regular');
+            
+            // Atualizar DOM
+            document.getElementById('insightPrincipal').innerHTML = insightPrincipal;
+            document.getElementById('insightPadroes').innerHTML = padroes.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('insightRecomendacoes').innerHTML = recomendacoes.map(r => `<li>${r}</li>`).join('');
+            
+            // Mostrar container
+            document.getElementById('insightsContainer').classList.add('visible');
+            document.getElementById('insightsContainer').style.display = 'block';
+            
+            // Plotar mapa
+            setTimeout(() => { plotarNoMapa().catch(console.error); }, 100);
+        }
+        
+        // ============ MAPA COM LEAFLET ============
+        let map = null;
+        let mapMarkers = [];
+        
+        function initializeMap() {
+            if (map) return;
+            map = L.map('map').setView([-15.79, -47.88], 4); // Centro Brasil
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18,
+            }).addTo(map);
+        }
+        
+        // cache para geocoding de endereços
+        const geocodeCache = {};
+        async function geocodeAddress(endereco) {
+            if (!endereco) return [-14.235, -51.925];
+            if (geocodeCache[endereco]) return geocodeCache[endereco];
+            try {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`);
+                const data = await resp.json();
+                if (data && data.length) {
+                    const c = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                    geocodeCache[endereco] = c;
+                    return c;
+                }
+            } catch(e) {
+                console.warn('geocode falhou', e);
+            }
+            const fallback = extrairCoordenadaDoEndereco(endereco);
+            geocodeCache[endereco] = fallback;
+            return fallback;
+        }
+
+        function extrairCoordenadaDoEndereco(endereco) {
+            if (!endereco) return [-14.235, -51.925];
+            
+            // Mapa de cidades principais com suas coordenadas
+            const CIDADES_COORDS = {
+                'São Paulo': [-23.5505, -46.6333],
+                'Rio de Janeiro': [-22.9068, -43.1729],
+                'Belo Horizonte': [-19.9191, -43.9386],
+                'Salvador': [-12.9714, -38.5014],
+                'Curitiba': [-25.4284, -49.2733],
+                'Brasília': [-15.7975, -47.8919],
+                'Fortaleza': [-3.7319, -38.5267],
+                'Recife': [-8.0476, -34.8771],
+                'Porto Alegre': [-30.0277, -51.5805],
+                'Florianópolis': [-27.5954, -48.5482],
+                'Goiânia': [-15.7942, -48.2694],
+                'Campo Grande': [-20.4697, -54.6201],
+                'Vitória': [-20.3155, -40.2558],
+                'Belém': [-1.4554, -48.4915],
+                'São Luís': [-2.8883, -44.2395],
+                'Teresina': [-5.0892, -42.8045],
+                'Natal': [-5.7945, -35.2110],
+                'Maceió': [-9.6498, -35.7351],
+                'Manaus': [-3.1190, -60.0217],
+                'Porto Velho': [-8.7619, -63.9039],
+                'Palmas': [-10.1753, -48.2982],
+                'Cuiabá': [-15.5527, -56.2393],
+                'João Pessoa': [-7.1195, -34.8450],
+            };
+            
+            // Procurar por cidades conhecidas no endereço
+            for (const [cidade, coords] of Object.entries(CIDADES_COORDS)) {
+                if (endereco.includes(cidade)) {
+                    return coords;
+                }
+            }
+            
+            // Fallback: extrair UF (estado) e mapear para coordenadas
+            const ufMatch = endereco.match(/,?\s*([A-Z]{2})(?:\s|,|$)/);
+            if (ufMatch) {
+                const uf = ufMatch[1];
+                const ufCoords = {
+                    'SP': [-23.5505, -46.6333],
+                    'RJ': [-22.9068, -43.1729],
+                    'MG': [-19.9191, -43.9386],
+                    'BA': [-12.9714, -38.5014],
+                    'PR': [-25.4284, -49.2733],
+                    'SC': [-27.5954, -48.5482],
+                    'RS': [-30.0277, -51.5805],
+                    'PE': [-8.0476, -34.8771],
+                    'CE': [-3.7319, -38.5267],
+                    'DF': [-15.7975, -47.8919],
+                    'GO': [-15.7942, -48.2694],
+                    'MS': [-20.4697, -54.6201],
+                    'ES': [-20.3155, -40.2558],
+                    'PA': [-1.4554, -48.4915],
+                    'MA': [-2.8883, -44.2395],
+                    'PI': [-5.0892, -42.8045],
+                    'RN': [-5.7945, -35.2110],
+                    'AL': [-9.6498, -35.7351],
+                    'SE': [-10.5105, -37.0735],
+                    'RO': [-8.7619, -63.9039],
+                    'AC': [-9.9757, -67.8243],
+                    'AM': [-3.1190, -60.0217],
+                    'AP': [0.0349, -51.0494],
+                    'TO': [-10.1753, -48.2982],
+                    'MT': [-15.5527, -56.2393],
+                    'PB': [-7.1195, -34.8450],
+                };
+                return ufCoords[uf] || [-14.235, -51.925];
+            }
+            
+            // Se nada funcionar, usar centro do Brasil
+            return [-14.235, -51.925];
+        }
+        
+        async function plotarNoMapa() {
+            if (!map) initializeMap();
+            
+            // Limpar markers antigos
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+            
+            // Agrupar veículos por endereço
+            const veiculosPorEndereco = {};
+            
+            if (!fleetData || fleetData.length === 0) {
+                console.log('🗺️ Nenhum dado para plotar no mapa');
+                return;
+            }
+            
+            console.log(`📍 Total de veículos para mapear: ${fleetData.length}`);
+            console.log(`📍 Veículos com endereço: ${fleetData.filter(v => v.endereco && v.endereco.trim() !== '').length}`);
+            
+            // Agrupar por endereço
+            fleetData.forEach(veiculo => {
+                const endereco = veiculo.endereco || 'N/A';
+                if (endereco === 'N/A' || endereco.trim() === '') return;
+                
+                if (!veiculosPorEndereco[endereco]) {
+                    veiculosPorEndereco[endereco] = [];
+                }
+                veiculosPorEndereco[endereco].push(veiculo);
+            });
+            
+            const enderecosUnicos = Object.keys(veiculosPorEndereco).length;
+            console.log(`🗺️ ${enderecosUnicos} endereços únicos no mapa`);
+            
+            // Plotar cada veículo individualmente com offset (async loop)
+            for (const [endereco, veiculos] of Object.entries(veiculosPorEndereco)) {
+                // Obter coordenadas base do endereço através de geocode
+                const coordsBase = await geocodeAddress(endereco);
+                
+                console.log(`  📌 ${endereco} -> ${veiculos.length} veículo(s) em [${coordsBase[0].toFixed(4)}, ${coordsBase[1].toFixed(4)}]`);
+                
+                // Plotar cada veículo individualmente
+                veiculos.forEach((veiculo, index) => {
+                    // Se há múltiplos veículos no mesmo endereço, dar um offset pequeno
+                    let coords = coordsBase;
+                    
+                    if (veiculos.length > 1) {
+                        // Offset bem pequeno: apenas para não sobrepor
+                        const zoomLevel = map.getZoom();
+                        let offsetGraus = 0.00005; // Base muito pequeno
+                        if (zoomLevel > 6) {
+                            offsetGraus = 0.00005 * Math.pow(1.5, zoomLevel - 6);
+                        }
+                        
+                        const angulo = (index / veiculos.length) * Math.PI * 2;
+                        const lat = coordsBase[0] + offsetGraus * Math.cos(angulo);
+                        const lon = coordsBase[1] + offsetGraus * Math.sin(angulo);
+                        
+                        coords = [lat, lon];
+                    }
+                    
+                    // Determinar cor baseado no status
+                    let cor = '#6c757d'; // Cinza - sem info
+                    if (veiculo.status === 'Online') {
+                        cor = '#28a745'; // Verde
+                    } else if (veiculo.status === 'Offline') {
+                        cor = '#dc3545'; // Vermelho
+                    } else if (veiculo.status === 'Não Ativo') {
+                        cor = '#ffc107'; // Amarelo
+                    }
+                    
+                    // Criar marcador para cada veículo
+                    const marker = L.circleMarker(coords, {
+                        radius: 6,
+                        fillColor: cor,
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(map);
+                    
+                    // Popup com informações do veículo
+                    const statusEmoji = veiculo.status === 'Online' ? '🟢' : (veiculo.status === 'Offline' ? '🔴' : '🟡');
+                    
+                    const popup = `
+                        <div style="font-size: 0.9rem; min-width: 280px;">
+                            <div style="border-bottom: 2px solid #63a3d8; padding-bottom: 8px; margin-bottom: 8px;">
+                                <strong style="color: #63a3d8; font-size: 1rem;">${statusEmoji} ${veiculo.placa}</strong>
+                                ${veiculos.length > 1 ? `<br><span style="color: #999; font-size: 0.8rem;">(${index + 1}/${veiculos.length} neste local)</span>` : ''}
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <div><strong>Status:</strong> ${veiculo.status}</div>
+                                <div><strong>Transportadora:</strong> ${veiculo.transportadora || 'N/A'}</div>
+                                <div><strong>Unidade:</strong> ${veiculo.unidade || 'N/A'}</div>
+                                <div><strong>Região:</strong> ${veiculo.regiao || 'N/A'}</div>
+                            </div>
+                            <div style="border-top: 1px solid #ddd; padding-top: 8px;">
+                                <div style="font-size: 0.85rem; color: #666;">
+                                    📍 ${endereco}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popup);
+                    mapMarkers.push(marker);
+                });
+            };
+            
+            console.log(`✅ ${mapMarkers.length} veículos plotados no mapa`);
+        }
+
+        // ===== HANDLER DE CLIQUES NOS GRÁFICOS - FUNCIONA NO GITHUB PAGES =====
+        window.handleChartClick = function(chartType) {
+            console.log('🎯 Clicou em gráfico:', chartType);
+            
+            const chartMap = {
+                'status': { fn: () => { const labels = charts.status?.data?.labels || []; mostrarOpcoes('Status', labels, mostrarPlacasStatus); } },
+                'fabricante': { fn: () => { const labels = charts.fabricante?.data?.labels || []; mostrarOpcoes('Fabricante', labels, mostrarPlacasPorFabricante); } },
+                'regiao': { fn: () => { const labels = charts.regiao?.data?.labels || []; mostrarOpcoes('Região', labels, mostrarPlacasPorRegiao); } },
+                'cambio': { fn: () => { const labels = charts.cambio?.data?.labels || []; mostrarOpcoes('Câmbio', labels, mostrarPlacasPorCambio); } },
+                'tipoVeiculo': { fn: () => { const labels = charts.tipoVeiculo?.data?.labels || []; mostrarOpcoes('Tipo Veículo', labels, mostrarPlacasPorTipo); } },
+                'transportadora': { fn: () => { const labels = charts.transportadora?.data?.labels || []; mostrarOpcoes('Transportadora', labels, mostrarPlacasPorTransportadora); } },
+                'unidade': { fn: () => { const labels = charts.unidade?.data?.labels || []; mostrarOpcoes('Unidade', labels, mostrarPlacasPorUnidade); } },
+                'statusRegiao': { fn: () => { const labels = charts.statusRegiao?.data?.labels || []; mostrarOpcoes('Status por Região', labels, (l) => console.log('Clicou em', l)); } }
+            };
+            
+            if (chartMap[chartType]) {
+                chartMap[chartType].fn();
+            } else {
+                console.error('❌ Gráfico não encontrado:', chartType);
+            }
+        };
+
+        function mostrarOpcoes(tipo, labels, callback) {
+            if (!labels || labels.length === 0) {
+                alert('❌ Nenhuma opção disponível para este gráfico');
+                return;
+            }
+            
+            const selected = prompt(`Escolha uma opção de ${tipo}:\n\n${labels.map((l, i) => `${i + 1}. ${l}`).join('\n')}\n\nDigite o número:`, '1');
+            
+            if (selected) {
+                const index = parseInt(selected) - 1;
+                if (index >= 0 && index < labels.length) {
+                    const value = labels[index];
+                    console.log('✓ Selecionou:', value);
+                    callback(value);
+                } else {
+                    alert('❌ Opção inválida');
+                }
+            }
+        }
+    </script>
+            </div>
+        </main>
+</body>
+</html>
